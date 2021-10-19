@@ -1,0 +1,65 @@
+{
+  "_from": "pixi-simple-gesture",
+  "_id": "pixi-simple-gesture@0.2.2",
+  "_inBundle": false,
+  "_integrity": "sha1-Do9h9XGjJituShyEqnLxaHcB3W4=",
+  "_location": "/pixi-simple-gesture",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "pixi-simple-gesture",
+    "name": "pixi-simple-gesture",
+    "escapedName": "pixi-simple-gesture",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/pixi-simple-gesture/-/pixi-simple-gesture-0.2.2.tgz",
+  "_shasum": "0e8f61f571a3262b6e4a1c84aa72f1687701dd6e",
+  "_spec": "pixi-simple-gesture",
+  "_where": "D:\\Users\\Fox\\Desktop\\ModX",
+  "author": {
+    "name": "dekimasoon"
+  },
+  "bugs": {
+    "url": "https://github.com/dekimasoon/pixi-simple-gesture/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Add Pinch, Pan, Tap gesture support to pixi.js sprites",
+  "devDependencies": {
+    "babel-cli": "^6.3.17",
+    "babel-preset-es2015": "^6.3.13",
+    "eslint": "^1.10.3",
+    "eslint-config-standard": "^4.4.0",
+    "eslint-plugin-standard": "^1.3.1"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "homepage": "https://github.com/dekimasoon/pixi-simple-gesture#readme",
+  "keywords": [
+    "pixi.js",
+    "pixijs",
+    "pixi"
+  ],
+  "license": "MIT",
+  "main": "lib/index.js",
+  "name": "pixi-simple-gesture",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dekimasoon/pixi-simple-gesture.git"
+  },
+  "scripts": {
+    "build": "babel src --out-dir lib --source-maps inline",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "babel src --out-dir lib --watch --source-maps inline"
+  },
+  "version": "0.2.2"
+}
