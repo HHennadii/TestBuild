@@ -6,9 +6,12 @@ import {
 	Raycaster,
 	Vector2,
 	Vector3,
+	BoxGeometry,
 	BufferGeometry,
 	MeshStandardMaterial,
 	MeshPhongMaterial,
+	MeshLambertMaterial,
+	MeshMatcapMaterial,
 	Mesh,
 	CircleGeometry,
 	CylinderGeometry,
@@ -18,119 +21,95 @@ import {
 	TextureLoader,
 	RepeatWrapping
 } from '../jsm/three.module.js';
+import {RMBmenu} from './ConfiguratorInterfaceModuls.js';
+import { GLTFExporter } from '../jsm/exporters/GLTFExporter.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
-import {BufferGeometryUtils} from '../jsm/utils/BufferGeometryUtils.js';
 import { OBJLoader } from '../jsm/loaders/OBJLoader.js';
+
+import {BufferGeometryUtils} from '../jsm/utils/BufferGeometryUtils.js';
 import { HDRCubeTextureLoader } from '../jsm/loaders/HDRCubeTextureLoader.js';
-import { CameraControls } from './CameraControls.js';
+import { getPostCoef } from './Coefs.js';
+import { ConfigurableList, OrdinaryObjects } from './ConfigurableList.js';
+import {getColorCode} from './Coefs.js';
+
+import {CSG} from './EnviromentTools/three-csg-ts/lib/esm/CSG.js'
+//import {CSG} from './EnviromentTools/three-csg.js';
 
 
 
-
-var ItemController = function(container, _domElement, app)
+var ItemController = function(container, _domElement, app, _shopitems3d)
 {   
-	
-    app.loader.baseUrl = "svgs";
-    app.loader
-        //.add("Fridge","Fridge.svg")
-        //.add("Dispenser","Dispenser.svg")
-        //.add("Wheelrack","Wheelrack.svg") 
-        .add("FreshBox","FreshBox.svg")
-        .add("ZK","ZK.svg")
-        .add("LOKO","LOKO.svg");
+	var hdrCubeRenderTarget;
+	let timer;
+    app.loader.baseUrl = "sprites/ordinary/PixiPreview";
+	for (let i in OrdinaryObjects) {
+		app.loader.add(i,i+'.svg');
+	}
     app.loader.onComplete.add(doneLoading);
     app.loader.load();
     var menuDiv;
 	var clickTimer = null;
 
-    function doneLoading(e)
-    {
+    function doneLoading(e) {
         console.log("done loading");
     }
 
-    function activate()
-    {
-        //_domElement.addEventListener( 'pointermove', onPointerMove );
-    }
 
-    function deactivate()
-    {
-    }
 
 	function showContextMenu(x,y)
 	{
-		if(menuDiv!=null) menuDiv.remove();
-		menuDiv = document.createElement("div");
-		var indiv = document.createElement("div");
-		var indiv2 = document.createElement("div");
-		var range = document.createElement("input");
-		var but1 = document.createElement("button");
-		var but3 = document.createElement("button");
-		var img = document.createElement("img");
-		var img1 = document.createElement("img");
+		let menuDiv = document.createElement("div");
+		menuDiv.id = "ORClick";
+		menuDiv.className = "OR-cover";
 
-		menuDiv.id="menu";
-        menuDiv.setAttribute("class",  "objct_settings");
-		menuDiv.style.position = "absolute";
-		menuDiv.style.top = y+'px';
-		menuDiv.style.left = x+30+'px';
-
-		indiv.setAttribute("style",  "width: 100%; align-items: center; display: flex; justify-content: start;");
-        indiv2.setAttribute("style",  "width: 100%; height: 60px; align-items: center; display: flex; justify-content: center;   background-color: #EDEDED;  border: 0.5px solid  black;");
-		
-        but1.setAttribute( 'class', "button_float" );
-		but1.setAttribute( 'id', "remove" );
-		but1.addEventListener( 'click', ()=>{
-        container.removeChild(selectedItem);
-		hideContextMenu(); 
-    } );
-		
-        but3.setAttribute( 'class', "button_float" );
-		but3.addEventListener( 'click', hideContextMenu );  
-        
-        img.setAttribute('class' , "bar-icon");
-        img.setAttribute('src' , "./Icons/Bin.svg");
-       
-        img1.setAttribute('class' , "bar-icon");
-        img1.setAttribute('src' , "./Icons/Cross.svg");
-
-		range.setAttribute("class", "rotation custom-range");
-		range.setAttribute("type","range");
-		range.setAttribute("min","0");
-		range.setAttribute("max","8");
-		range.setAttribute("step","1");
-		range.setAttribute("value","0");
-		range.addEventListener( 'input', ()=>{
-			selectedItem.rotation = (+range.value/180*Math.PI)*45;
-		});
-
-		menuDiv.appendChild(indiv);
-		menuDiv.appendChild(indiv2);
-		indiv2.appendChild(range);
-		indiv.appendChild(but1);
-		indiv.appendChild(but3);
-        but3.appendChild(img1);
-        but1.appendChild(img);
-
+		menuDiv.innerHTML = RMBmenu;
 		document.body.appendChild(menuDiv);
+		$("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
+		$("#ORclose").click(()=>{hideContextMenu()});
+		$("#ORremove").click(()=>{container.removeChild(selectedItem); hideContextMenu();});
+		$("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+		$("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
+
+		$("input[name=test]").change(()=>{
+			setItemColor();
+		});
+		 //color set
+		const colorSet = document.querySelectorAll('input[name="test"]');
+        const selected_color=selectedItem.colors.join(' ');
+        colorSet.forEach(i=> {if(selected_color == i.value) 
+                                       i.checked = true;
+                            }
+							);
 	}
+
 
 	function hideContextMenu()
 	{
-		document.getElementById("menu").remove();
+		document.getElementById("ORClick").remove();
+	}
+
+
+	function setItemColor() {
+		selectedItem.colors = document.querySelector('input[name="test"]:checked').value.split(' ');
 	}
 
 
 
-    function addItem(name)
+    function addItem(name,x=0,y=0,rot=0,colors=[127,134,138])
     {
         function onDragStart(event)
         {
-            document.getElementById("rulet").value = 0;
+			if([0,1,6].includes(app.userData.mod) && app.userData.canTranslate)
+			{
+			var initial = new PIXI.Point(this.x, this.y);
+			var point = event.data.getLocalPosition(this.parent);
+			this.delta = {x: point.x-initial.x, y: point.y-initial.y};
+            app.canMove = 0;
             selectedItem = this;  
             this.data = event.data;
             this.alpha = 0.5;
             this.dragging = true;
+			}
         }
         
         function onDragEnd()
@@ -138,37 +117,86 @@ var ItemController = function(container, _domElement, app)
             this.alpha = 1;
             this.dragging = false;
             this.data = null;
-			document.getElementById("rulet").value = 1;
+			app.canMove = 1;
         }
         
         function onDragMove()
         {
-            if (this.dragging)
+            if (this.dragging && app.userData.canTranslate )
             {
                 const newPosition = this.data.getLocalPosition(this.parent);
-                this.x = newPosition.x;
-                this.y = newPosition.y;
-                if ($("#stickmod").css("background-color")=="rgb(147, 210, 255)")
+                this.x = newPosition.x - this.delta.x;
+                this.y = newPosition.y - this.delta.y;
+                if (app.userData.snapvert)
                 {
                 var closestpoint = findClosestPoint(selectedItem,findObjectsInRange());
                 stickToItem(closestpoint);
                 }
             }
+			else
+				this.alpha = 1;
         }
 
-        let item;
-        switch(name)
-        {
-            //case '1': item = PIXI.Sprite.from(app.loader.resources.Dispenser.texture); name = "Dispenser"; break;
-            //case '2': item = PIXI.Sprite.from(app.loader.resources.Fridge.texture); name = "Fridge"; break;
-            //case '4': item = PIXI.Sprite.from(app.loader.resources.Wheelrack.texture); name = "Wheelrack"; break;
-            case '9': item = PIXI.Sprite.from(app.loader.resources.FreshBox.texture); name = "FreshBox"; break;
-            case '10': item = PIXI.Sprite.from(app.loader.resources.ZK.texture); name = "ZK"; break;
-            case '8': item = PIXI.Sprite.from(app.loader.resources.LOKO.texture); name = "LOKO"; break;
-            default: return;
-        }
-        
+
+        let item = PIXI.Sprite.from(app.loader.resources[name].texture);
+		item.sayHi = function() {
+			const ord = OrdinaryObjects[this.name];
+			var color = getColorCode(this.colors);
+			const art = ord.art;
+			const name = ord.Name+' '+color;
+			const price = ord.price;
+			//console.log(name);
+			return [art,name,0,price,0];
+		}
         item.name = name;
+		item.x = x; item.y = y;
+		item.rotation = rot;
+		item.colors = colors;
+		item.saveIt = function() {
+			var thisObject = {
+				name:this.name,
+				colors: this.colors,
+				x:this.x,
+				y:this.y,
+				rotation:this.rotation,
+			}
+			return thisObject;
+		}
+		item.create3D = async function loadOrdinaryItem(item) {
+				const pmremGenerator = new THREE.PMREMGenerator( app.userData.renderer );
+				hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
+				pmremGenerator.compileCubemapShader();
+			
+			const name = item.name;
+			const gltfData = await modelLoader('./sprites/ordinary/Models/'+name+'.gltf');
+			var mesh = gltfData.scene.children[0];
+			if(mesh.children.length>0)
+			{
+				var mergedmesh = createMesh(mesh.children);
+				_shopitems3d.add(mergedmesh);
+				mergedmesh.name = name;
+				mergedmesh.rotation.set(Math.PI/2,-item.rotation,0);
+				mergedmesh.position.set(item.x/64, -item.y/64, 0);
+				mergedmesh.material[1].color.r = item.colors[0]/255;
+				mergedmesh.material[1].color.g = item.colors[1]/255;
+				mergedmesh.material[1].color.b = item.colors[2]/255;
+				let renderTarget = hdrCubeRenderTarget;
+				const newEnvMap = renderTarget ? renderTarget.texture : null;
+				if ( newEnvMap && newEnvMap !== mergedmesh.material.envMap )
+				{
+					mergedmesh.material.forEach(mat=>mat.envMap = newEnvMap);
+				}
+				mergedmesh.castShadow = true;
+			}
+			else
+			{
+				_shopitems3d.add(mesh);
+				mesh.name = name;
+				mesh.rotation.set(Math.PI/2,0,0);
+				mesh.position.set(item.x/64, -item.y/64, 0);
+			}
+		}
+
         container.addChild(item);
         item.interactive = true;
         item.buttonMode = true;
@@ -184,23 +212,24 @@ var ItemController = function(container, _domElement, app)
             .on('pointerover',filterOn)
             .on('pointerout',filterOff)
 			.on('touchstart',function(event) {
-                if (clickTimer == null) {
-                    clickTimer = setTimeout(function () {
-                    clickTimer = null;}, 500)
-					console.log(clickTimer);
-                } else {
-					console.log(clickTimer);
-                    clearTimeout(clickTimer);
-                    clickTimer = null;
-					console.log(clickTimer);
-                    showContextMenu(event.data.global.x, event.data.global.y);
-                }
-             })
+				//console.log(timer);
+				//console.log(event)
+				if (!timer) {
+					timer = setTimeout(function() {onlongtouch(event);}, 2000);
+				}      
+			 })
+			 
+			 .on('touchend',function() {
+				if (timer) {
+					clearTimeout(timer);
+					timer = null;
+				}
+			 }) 
 			.on('rightclick',function(event){
 				showContextMenu(event.data.global.x, event.data.global.y);
             });
         //filterOff.call(item);
-        item.x = 0; item.y = 0;
+        //item.x = 0; item.y = 0;
 
         var helper = new PIXI.Container();
         helper.x = item.texture.width/2;
@@ -225,6 +254,14 @@ var ItemController = function(container, _domElement, app)
         return item;
     }
 
+
+	function onlongtouch(event) { 
+        //console.log(timer);
+        timer = null;
+		if(app.userData.canTranslate)
+        showContextMenu(event.data.global.x, event.data.global.y);
+    };
+
 	function findObjectsInRange()
 	{
         var objectsInRange = [];
@@ -239,7 +276,6 @@ var ItemController = function(container, _domElement, app)
         }
         return objectsInRange;
 	}
-
 
     function findClosestPoint(selecteditem, rangeitemsarray)
     {
@@ -274,29 +310,20 @@ var ItemController = function(container, _domElement, app)
             var clp = localWorld(closestpointsarr[0]);
             var clp2 = realPosition(selectedItem);
             var offset = {x: (clp.x-clp2.x)*64,y: (clp.y-clp2.y)*64};
-            //console.log(closestpointsarr[1]);
             var newItemPosition = {x: closestpointsarr[1].x*64, y: closestpointsarr[1].y*64};
 			selectedItem.x = newItemPosition.x; selectedItem.y = newItemPosition.y;
             selectedItem.x-=offset.x; selectedItem.y-=offset.y;
 		}
-
 	}
 
-    activate();
-    this.activate = activate;
-    this.deactivate = deactivate;
     this.addItem = addItem;
     this.findObjectsInRange = findObjectsInRange;
 
-	
 	function localWorld(item)
 	{
 		var p = {x: (item.getGlobalPosition().x - app.stage.x) / (app.stage.scale.x*64), y: (item.getGlobalPosition().y - app.stage.y)/(app.stage.scale.y*64)};
 		return p;
 	}
-    
-
-    
 };
 
 var selectedItem = null;
@@ -317,9 +344,6 @@ var x_pos = document.getElementById("x_pos");
 var y_pos = document.getElementById("y_pos");
 
 
-
-
-
 function distanceTo(point1, point2)
 {
     return (Math.sqrt((point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)))/64;
@@ -333,979 +357,56 @@ function realPosition(item)
     return p;
 }
 
-
-var Configurator = function (_group,  _camera, _domElement,_container2d, app ) {//_scene, 
-	//
-	
-	var scope = this;
-	var meshes=[];
-	var sprites=[];
-	var renderedsprite = null;
-	var menuDiv;
-	var clickTimer = null;
-	
-	function createMesh(insertedMeshes)
-	{
-	var materials = [],
-	geometries = [],
-	mergedGeometry = new BufferGeometry(),
-	meshMaterial,
-	mergedMesh;
-	insertedMeshes.forEach(function(mesh, index) {
-	  mesh.updateMatrix();
-	  geometries.push(mesh.geometry);
-	  meshMaterial = new MeshStandardMaterial(mesh.material);
-	  materials.push(meshMaterial);
-	});
-	mergedGeometry = BufferGeometryUtils.mergeBufferGeometries(geometries, true);
-	mergedGeometry.groupsNeedUpdate = true;
-	mergedMesh = new Mesh(mergedGeometry, materials);
-	
-	return mergedMesh;
-	}
-	
-	function localWorld(item)
-	{
-		var p = {x: (item.getGlobalPosition().x - app.stage.x) / (app.stage.scale.x*64), y: (item.getGlobalPosition().y - app.stage.y)/(app.stage.scale.y*64)};
-		return p;
-	}
-
-	function testCreateMesh(insertedGroup)
-	{
-	var materials = [],
-	geometries = [],
-	mergedGeometry = new BufferGeometry(),
-	meshMaterial,
-	mergedMesh;
-	insertedGroup.forEach(function(object){
-		if(object.children.length>0)
-		{
-			object.children.forEach(function(mesh,index){
-				mesh.updateMatrix();
-				geometries.push(mesh.geometry.clone().applyMatrix4(mesh.matrixWorld));
-				meshMaterial = new MeshStandardMaterial(mesh.material);
-				materials.push(meshMaterial);
-				console.log(meshMaterial);
-			});
-		}
-		else
-		{
-			object.updateMatrix();
-			geometries.push(object.geometry.clone().applyMatrix4(object.matrixWorld));
-			meshMaterial = new MeshStandardMaterial(object.material);
-			materials.push(meshMaterial);
-			console.log(meshMaterial);
-		}
-		});
-	mergedGeometry = BufferGeometryUtils.mergeBufferGeometries(geometries, true);
-	mergedGeometry.groupsNeedUpdate = true;
-	mergedMesh = new Mesh(mergedGeometry, materials);
-	mergedMesh.rotation.x=Math.PI/2;
-	mergedMesh.geometry.computeBoundingBox();
-	
-			var geometry = new CircleGeometry(0.1,12);
-			var material = new MeshBasicMaterial( { color: 0x00ffff } );
-			var mesh = new Mesh(geometry,material);
-			mesh.rotation.x=-Math.PI/2;
-			mergedMesh.add(mesh);
-			mesh.position.set(mergedMesh.geometry.boundingBox.min.x,0,mergedMesh.geometry.boundingBox.min.z);
-			mesh.visible = false;
-			
-			var mesh = mesh.clone();
-			mesh.position.set(mergedMesh.geometry.boundingBox.max.x,0,mergedMesh.geometry.boundingBox.max.z);
-			mergedMesh.add(mesh);
-
-			var mesh = mesh.clone();
-			mesh.position.set(mergedMesh.geometry.boundingBox.min.x,0,mergedMesh.geometry.boundingBox.max.z);
-			mergedMesh.add(mesh);
-			
-			var mesh = mesh.clone();
-			mesh.position.set(mergedMesh.geometry.boundingBox.max.x,0,mergedMesh.geometry.boundingBox.min.z);
-			mergedMesh.add(mesh);
-	
-	return mergedMesh;
-	}
-	
-	
-	function preloadMeshes(id)
-	{
-		console.log("Preloading "+id);
-		meshes=[];
-		switch(id)
-		{
-			// 5: testPreloadBread(); break;
-			//case 2: preloadPolka(); break;
-			//case 4: testPreloadRack(); break;
-			case 6: testPreloadRoof(); break;
-			case 4: testPreloadPostBox(); break;
-			case 7: testPreloadBanch(); break;
-			case 5: testPreloadPlant(); break;
-		}
-	}
-	
-	
-	function testPreloadRack()
-	{
-		var mesh1;
-		const loader = new GLTFLoader();
-			loader.load(
-			'../../sprites/configurator/2/'+'Bottom_connector'+'.glb',
-
-
-			'../../sprites/configurator/2/'+'Bottom_connector'+'.glb',
-
-
-			function( gltf)
-			{
-				mesh1 = gltf.scene.children[0];	
-				meshes.push(mesh1);
-		var mesh2;
-			loader.load(
-			'../../sprites/configurator/2/'+'Bottom_shelf'+'.glb',
-			function( gltf)
-			{
-				mesh2 = gltf.scene.children[0];	
-				meshes.push(mesh2);
-		var mesh3;
-			loader.load(
-			'../../sprites/configurator/2/'+'Main_connector'+'.glb',
-			function( gltf)
-			{
-				mesh3 = gltf.scene.children[0];	
-				meshes.push(mesh3);
-		var mesh4;
-			loader.load(
-			'../../sprites/configurator/2/'+'Shelf'+'.glb',
-			function( gltf)
-			{
-				mesh4 = gltf.scene.children[0];	
-				meshes.push(mesh4);
-		var mesh5;
-			loader.load(
-			'../../sprites/configurator/2/'+'Wall'+'.glb',
-			function( gltf)
-			{
-				mesh5 = gltf.scene.children[0];	
-				meshes.push(mesh5);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-	}
-
-	
-	function preloadPolka()
-	{
-		var mesh1;
-		const loader = new GLTFLoader();
-			loader.load(
-			'../../sprites/configurator/3/'+'polka'+'.glb',
-			function( gltf)
-			{
-				mesh1 = gltf.scene.children[0];
-				if(mesh1.children.length>0)
-				{
-					mesh1 = createMesh(mesh1.children);
-				}		
-				meshes.push(mesh1);
-		var mesh2;
-			loader.load(
-			'../../sprites/configurator/3/'+'stolbik'+'.glb',
-			function( gltf)
-			{
-				mesh2 = gltf.scene.children[0];
-				if(mesh2.children.length>0)
-				{
-					mesh2 = createMesh(mesh2.children);
-				}		
-				meshes.push(mesh2);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-	}
-
-
-	
-	function spawnPolkaNew(quantity)
-	{
-		var delta_h = 0.8/quantity;
-		for(var cnt = 0; cnt<quantity; cnt++)
-		{
-			var polka = meshes[0].clone();
-			polka.position.y = polka.position.y+delta_h*cnt;
-			_group.add(polka);
-		}
-	}
-	
-	function spawnStolbikNew(param)
-	{
-		var mesh = meshes[1].clone();
-		var smesh = mesh.clone();
-		_group.remove(..._group.children);
-		_group.add(mesh)
-		_group.add(smesh);
-		smesh.position.z = -0.5;
-	}
-	
-	
-	function testPreloadBread()
-	{
-		var mesh1;
-		const loader = new GLTFLoader();
-			loader.load(
-			'../../sprites/configurator/1/'+'End_connector'+'.glb',
-			function( gltf)
-			{
-				mesh1 = gltf.scene.children[0];	
-				meshes.push(mesh1);
-		var mesh2;
-			loader.load(
-			'../../sprites/configurator/1/'+'Mian_shelf'+'.glb',
-			function( gltf)
-			{
-				mesh2 = gltf.scene.children[0];
-				meshes.push(mesh2);
-		var mesh3;
-			loader.load(
-			'../../sprites/configurator/1/'+'Middle_connector'+'.glb',
-			function( gltf)
-			{
-				mesh3 = gltf.scene.children[0];
-				meshes.push(mesh3);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			}
-			);
-	}
-	
-	function configurateBread(repeats)
-	{
-		var times;
-		var mesh = meshes[0].clone();
-		_group.add(mesh)
-		for(var cnt=0; cnt<repeats; cnt++)
-		{
-			var mesh = meshes[1].clone();
-			_group.add(mesh);
-			mesh.translateX(-cnt*0.8);
-			if(repeats>1 && cnt!=repeats-1)
-			{
-				var mesh = meshes[2].clone();
-				_group.add(mesh)	
-				mesh.translateX(-cnt*0.8);
-			}
-			times = -cnt;
-		}
-		var mesh = meshes[0].clone();
-		_group.add(mesh);
-		mesh.rotation.y = Math.PI;
-		mesh.translateX(-times*0.8);
-		_group.children.forEach( item => {item.position.x-=times*0.8/2;});
-		_camera.position.z = 4;
-		_camera.position.y = 1;
-	}
-	
-	
-	
-	function configuratePolka(polki)
-	{
-		spawnStolbikNew(1);
-		spawnPolkaNew(polki);
-	}
-	
-	function configurateRack(mirror, repeats)
-	{
-		var times;
-		for(var cnt=0; cnt<repeats; cnt++)
-		{
-			var m_mesh = meshes[0].clone();
-			_group.add(m_mesh);
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[1].clone();
-			_group.add(m_mesh);
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[2].clone();
-			_group.add(m_mesh);
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[3].clone();
-			_group.add(m_mesh);
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[4].clone();
-			_group.add(m_mesh);
-			m_mesh.translateZ(cnt);
-			if(mirror==true)
-			{
-			var m_mesh = meshes[0].clone();
-			_group.add(m_mesh);
-			m_mesh.scale.x*=-1;
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[1].clone();
-			_group.add(m_mesh);
-			m_mesh.scale.x*=-1;
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[3].clone();
-			_group.add(m_mesh);
-			m_mesh.scale.x*=-1;
-			m_mesh.translateZ(cnt);
-			var m_mesh = meshes[4].clone();
-			_group.add(m_mesh);
-			m_mesh.scale.x*=-1;
-			m_mesh.translateZ(cnt);
-			}
-			times = cnt;
-		}
-		var mesh = meshes[0].clone();
-		mesh.translateZ(times+1);
-		_group.add(mesh);
-		if(mirror==true)
-		{
-		var mesh = meshes[0].clone();
-		mesh.translateZ(times+1);
-		_group.add(mesh);
-		mesh.scale.x*=-1;
-		}
-		var mesh = meshes[2].clone();
-		mesh.translateZ(times+1);
-		_group.add(mesh);
-		_group.children.forEach( item => {item.position.z-=times/2;});
-	}
-		
-		
-	function formPostBoxItemsArray()
-	{
-		return $('#postbox_controlset .slick-current').map(function(){return (+$(this).attr('data-slick-index'))+1;}).get();
-
-	}
-
-	function getPostCoef(id)
-	{
-		switch(id)
-		{
-			case 1: return 0.699;
-			case 2: return 0.49;
-			case 3: return 0.49;
-			case 4: return 0.49;
-			case 5: return 0.49;
-			case 6: return 0.49;
-			case 7: return 0.49;
-			case 8: return 0.49;
-			case 9: return 0.0265;
-		}
-	}
-
-
-	function configuratePostBox()
-	{	
-		renderedsprite = new PIXI.Container();
-		renderedsprite.name = "PostBox";
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-		var dist=0;
-		var seq = formPostBoxItemsArray();
-
-		renderedsprite.colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-		renderedsprite.configuration = seq;
-
-		_group.add(meshes[8].clone());
-
-		console.log(seq);
-		for(var i = 0; i<seq.length; i++)
-		{
-			var mesh = meshes[+seq[i]-1].clone();
-			var sprite = new PIXI.Sprite.from("sprites/configurator/4/"+seq[i]+".svg");
-
-			_group.add(mesh);
-			renderedsprite.addChild(sprite);
-
-			var colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-			mesh.children[0].material.color.r = colors[0]/255;
-			mesh.children[0].material.color.g = colors[1]/255;
-			mesh.children[0].material.color.b = colors[2]/255;
-
-			mesh.translateX(getPostCoef(+seq[i])/2+dist);
-			sprite.anchor.set(0.5);
-			sprite.x+=(getPostCoef(+seq[i])*32+dist*64);
-			dist += getPostCoef(+seq[i]);
-		}
-		var lastwall = meshes[8].clone();
-		lastwall.translateX(dist);
-		_group.add(lastwall);
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-		renderedsprite.children.forEach(item=>item.position.x-=dist*32);
-
-		renderedsprite.children[0].x = -dist*32; renderedsprite.children[0].y = -22;
-		renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -22;
-		renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 22;
-		renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 22;
-	}	
-
-
-
-	function formBanchItemsArray()
-	{
-		return  $('#postbox_controlset .slick-current').map(function(){return (+$(this).attr('data-slick-index'))+1;}).get();
-	}
-
-	function getBanchCoef(id)
-	{
-		switch(id)
-		{
-			case 1: return 0.49;
-			case 2: return 0.2;
-		}
-	}
-
-
-	function configurateBanch()
-	{		
-		renderedsprite = new PIXI.Container();
-		renderedsprite.name = "Banch";
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-
-		var dist=0;
-		var seq = formBanchItemsArray();
-
-		renderedsprite.colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-		renderedsprite.configuration = seq;
-
-		console.log(seq);
-		for(var i = 0; i<seq.length; i++)
-		{
-			var mesh = meshes[+seq[i]-1].clone();
-			var sprite = new PIXI.Sprite.from("sprites/configurator/5/"+seq[i]+".svg");
-			_group.add(mesh);
-			renderedsprite.addChild(sprite);
-
-			var colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-			mesh.children[0].material.color.r = colors[0]/255;
-			mesh.children[0].material.color.g = colors[1]/255;
-			mesh.children[0].material.color.b = colors[2]/255;
-						
-			mesh.translateX(getBanchCoef(+seq[i])/2+dist);
-			sprite.anchor.set(0.5);
-			sprite.x+=(getBanchCoef(+seq[i])*32+dist*64);
-			dist += getBanchCoef(+seq[i]);
-		}
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-		renderedsprite.children.forEach(item=>item.position.x-=dist*32);
-		_camera.position.z = 5;
-		_camera.position.y = 1.2;
-		renderedsprite.children[0].x = -dist*32; renderedsprite.children[0].y = -16;
-		renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -16;
-		renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 16;
-		renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 16;
-	}
-
-	function testPreloadPlant()
-	{
-		const loader = new GLTFLoader();
-			loader.load(
-				'../../sprites/configurator/6/'+'1'+'.glb',
-				function(gltf){
-					for(var i = 0; i<gltf.scene.children.length; i++)
-					{
-						meshes.push(gltf.scene.children[i]);
-						document.getElementById("loadscreen2").style.display="none";
-					}
-				},
-				function ( xhr ) {
-					console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-				},
-				function ( error ) {
-					console.log( 'An error happened' );
-				});	
-	}
-
-	function testPreloadRoof()
-	{
-		const loader = new GLTFLoader();
-			loader.load(
-				'../../sprites/configurator/8/'+'Roof'+'.glb',
-				function(gltf){
-					for(var i = 0; i<gltf.scene.children.length; i++)
-					{
-						meshes.push(gltf.scene.children[i]);
-						document.getElementById("loadscreen2").style.display="none";
-					}
-				},
-				function ( xhr ) {
-					console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-				},
-				function ( error ) {
-					console.log( 'An error happened' );
-				});	
-	}
-
-	function testPreloadPostBox()
-	{
-		const loader = new GLTFLoader();
-			loader.load(
-				'../../sprites/configurator/4/'+'PB'+'.glb',
-				function(gltf){
-					for(var i = 0; i<gltf.scene.children.length; i++)
-					{
-						meshes.push(gltf.scene.children[i]);
-						document.getElementById("loadscreen2").style.display="none";
-					}
-				},
-				function ( xhr ) {
-					console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-				},
-				function ( error ) {
-					console.log( 'An error happened' );
-				});
-	}
-
-	function testPreloadBanch()
-	{
-		const loader = new GLTFLoader();
-			loader.load(
-				'../../sprites/configurator/5/'+'BN'+'.glb',
-				function(gltf){
-					for(var i = 0; i<gltf.scene.children.length; i++)
-					{
-						meshes.push(gltf.scene.children[i]);
-						document.getElementById("loadscreen2").style.display="none";
-					}
-				},
-				function ( xhr ) {
-					console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-				},
-				function ( error ) {
-					console.log( 'An error happened' );
-				});
-	}
-
-	function formPlantItemsArray()
-	{
-		return $('#postbox_controlset .slick-current').map(function(){return (+$(this).attr('data-slick-index'))+1;}).get();
-	}
-
-	function getPlantCoef(id)
-	{
-		return 0.49;
-	}
-
-
-	function configuratePlant()
-	{	
-		renderedsprite = new PIXI.Container();
-		renderedsprite.name = "Plant";
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-        renderedsprite.addChild(helper);
-
-		var dist=0;
-		var seq = formPlantItemsArray();
-
-		renderedsprite.colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-		renderedsprite.configuration = seq;
-
-		console.log(seq);
-		for(var i = 0; i<seq.length; i++)
-		{
-			var mesh = meshes[+seq[i]-1].clone();
-			var sprite = new PIXI.Sprite.from("sprites/configurator/6/"+seq[i]+".svg");
-			_group.add(mesh);
-			renderedsprite.addChild(sprite);
-
-			var colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-			mesh.children[1].material.color.r = colors[0]/255;
-			mesh.children[1].material.color.g = colors[1]/255;
-			mesh.children[1].material.color.b = colors[2]/255;
-						
-			mesh.translateX(getPlantCoef(+seq[i])/2+dist);
-			sprite.anchor.set(0.5);
-			sprite.x+=(getPlantCoef(+seq[i])*32+dist*64);
-			dist += getPlantCoef(+seq[i]);
-		}
-		console.log(_group.children);
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-		renderedsprite.children.forEach(item=>item.position.x-=dist*32);
-		_camera.position.z = 5;
-		_camera.position.y = 1.2;
-		_group.children.forEach( item => {console.log(item.position);});
-		renderedsprite.children[0].x = -dist*32; renderedsprite.children[0].y = -6;
-		renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -6;
-		renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 6;
-		renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 6;
-	}	
-
-	function getRoofCoef(id)
-	{
-		return 0.485;
-	}	
-
-	function configurateRoof()
-	{	
-		renderedsprite = new PIXI.Container();
-		renderedsprite.name = "Roof";
-
-        var helper = new PIXI.Container();
-		renderedsprite.addChild(helper);
-
-        var helper = new PIXI.Container();
-		renderedsprite.addChild(helper);
-
-
-        var helper = new PIXI.Container();
-		renderedsprite.addChild(helper);
-
-
-        var helper = new PIXI.Container();
-		renderedsprite.addChild(helper);
-
-
-		var dist=0;
-		var seq = formPlantItemsArray();
-		
-		//renderedsprite.colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-		renderedsprite.configuration = seq;
-
-		console.log(seq);
-		for(var i = 0; i<seq.length; i++)
-		{
-			var mesh = meshes[+seq[i]-1].clone();
-			var sprite = new PIXI.Sprite.from("sprites/configurator/8/"+seq[i]+".svg");
-			_group.add(mesh);
-			renderedsprite.addChild(sprite);
-
-			/*var colors = document.querySelector('input[name="test"]:checked').value.split(' ');
-			mesh.children[1].material.color.r = colors[0]/255;
-			mesh.children[1].material.color.g = colors[1]/255;
-			mesh.children[1].material.color.b = colors[2]/255;*/
-						
-			mesh.translateX(getRoofCoef(+seq[i])/2+dist);
-			sprite.anchor.set(0.5);
-			sprite.x+=(getRoofCoef(+seq[i])*32+dist*64);
-			dist += getRoofCoef(+seq[i]);
-		}
-		console.log(_group.children);
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-		renderedsprite.children.forEach(item=>item.position.x-=dist*32);
-		_camera.position.z = 5;
-		_camera.position.y = 1.2;
-		_group.children.forEach( item => {console.log(item.position);});
-		renderedsprite.children[0].x = -dist*32; renderedsprite.children[0].y = -47;
-		renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -47;
-		renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = -43;
-		renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = -43;
-	}	
-
-	function showContextMenu(x,y)
-	{
-		if(menuDiv!=null) menuDiv.remove();
-		menuDiv = document.createElement("div");
-		var indiv = document.createElement("div");
-		var indiv2 = document.createElement("div");
-		var range = document.createElement("input");
-		var but1 = document.createElement("button");
-		var but3 = document.createElement("button");
-		var img = document.createElement("img");
-		var img1 = document.createElement("img");
-
-		menuDiv.id="menu";
-        menuDiv.setAttribute("class",  "objct_settings");
-		menuDiv.style.position = "absolute";
-		menuDiv.style.top = y+'px';
-		menuDiv.style.left = x+30+'px';
-
-		indiv.setAttribute("style",  "width: 100%; align-items: center; display: flex; justify-content: start;");
-        indiv2.setAttribute("style",  "width: 100%; height: 60px; align-items: center; display: flex; justify-content: center;   background-color: #EDEDED;  border: 0.5px solid  black;");
-		
-        but1.setAttribute( 'class', "button_float" );
-		but1.setAttribute( 'id', "remove" );
-		but1.addEventListener( 'click', ()=>{
-			_container2d.removeChild(selectedItem);
-		hideContextMenu(); 
-    } );
-		
-        but3.setAttribute( 'class', "button_float" );
-		but3.addEventListener( 'click', hideContextMenu );  
-        
-        img.setAttribute('class' , "bar-icon");
-        img.setAttribute('src' , "./Icons/Bin.svg");
-       
-        img1.setAttribute('class' , "bar-icon");
-        img1.setAttribute('src' , "./Icons/Cross.svg");
-
-		range.setAttribute("class", "rotation custom-range");
-		range.setAttribute("type","range");
-		range.setAttribute("min","0");
-		range.setAttribute("max","8");
-		range.setAttribute("step","1");
-		range.setAttribute("value","0");
-		range.addEventListener( 'input', ()=>{
-			selectedItem.rotation = (+range.value/180*Math.PI)*45;
-		});
-
-		menuDiv.appendChild(indiv);
-		menuDiv.appendChild(indiv2);
-		indiv2.appendChild(range);
-		indiv.appendChild(but1);
-		indiv.appendChild(but3);
-        but3.appendChild(img1);
-        but1.appendChild(img);
-
-		document.body.appendChild(menuDiv);
-	}
-
-	function hideContextMenu()
-	{
-		document.getElementById("menu").remove();
-	}
-
-		
-	function configurateItem(id, height, width, polki)
-	{
-		_group.remove(..._group.children);
-		switch(id)
-		{
-			//case 5: configurateBread(width); break;
-			//case 2: configuratePolka(polki); break;
-			//case 4: configurateRack(1,width); break;
-			case 6: configurateRoof(); break;
-			case 4: configuratePostBox(); break;
-			case 7: configurateBanch(); break;
-			case 5: configuratePlant(); break;
-		}
-	}
-	
-	function spawnConfigurated()
-	{
-		if(_group.children.length>0)
-		//_scene.add(testCreateMesh(_group.children));
-	formPostBoxItemsArray();
-	_container2d.addChild(renderedsprite);
-	renderedsprite.interactive = true;
-	renderedsprite.buttonMode = true;
-    
-	function onDragStart(event)
-	{
-		selectedItem = this;  
-		this.data = event.data;
-		this.alpha = 0.5;
-		this.dragging = true;
-		document.getElementById("rulet").value = 0;
-	}
-	
-	function onDragEnd()
-	{   
-		this.alpha = 1;
-		this.dragging = false;
-		this.data = null;
-		document.getElementById("rulet").value = 1;
-	
-	}
-	function onDragMove()
-	{
-		if (this.dragging)
-		{
-			const newPosition = this.data.getLocalPosition(this.parent);
-			this.x = newPosition.x;
-			this.y = newPosition.y;
-			if ($("#stickmod").css("background-color")=="rgb(147, 210, 255)")
-			{
-			var closestpoint = findClosestPoint(selectedItem,findObjectsInRange());
-			stickToItem(closestpoint);
-			}
-		}
-	}
-	renderedsprite
-			.on('pointerdown', onDragStart)
-			.on('pointerup', onDragEnd)
-			.on('pointerupoutside', onDragEnd)
-			.on('pointermove', onDragMove)
-			.on('pointerover',filterOn)
-			.on('pointerout',filterOff)
-			.on('touchstart',function(event) {
-                if (clickTimer == null) {
-                    clickTimer = setTimeout(function () {
-                    clickTimer = null;}, 500)
-                } else {
-                    clearTimeout(clickTimer);
-                    clickTimer = null;
-                    showContextMenu(event.data.global.x, event.data.global.y);
-                }
-             })
-			.on('rightclick',function(event){
-                showContextMenu(event.data.global.x, event.data.global.y);
-            });
-	}
-
-
-
-	function findObjectsInRange()
-	{
-        var objectsInRange = [];
-        if(selectedItem)
-        {
-            _container2d.children.forEach(element => {
-                if(element!=selectedItem)
-                {
-                    if(distanceTo(selectedItem, element)<11) objectsInRange.push(element);
-                }
-            });
-        }
-        return objectsInRange;
-	}
-
-
-    function findClosestPoint(selecteditem, rangeitemsarray)
-    {
-        var selectedpoints = selecteditem.children;
-        var _distance = 5000;
-        var selectedpoint, closestpoint;
-        for(var i = 0; i<rangeitemsarray.length; i++)
-        {
-            for(var j = 0; j<4; j++)
-            {
-                for(var k = 0; k<4; k++)
-                {
-                    var firstpos = localWorld(selectedpoints[j]);
-                    var secpos = localWorld(rangeitemsarray[i].children[k]);
-                    var distance = distanceTo(firstpos,secpos)*64;
-                    if(distance<_distance)
-                    {
-                        _distance = distance;
-                        selectedpoint = selectedpoints[j];
-                        closestpoint = localWorld(rangeitemsarray[i].children[k]);
-                    }
-                }
+var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _edgegroup3d, _floorgroup3d, _columngroup, WallGeometry, renderer, _blockgroup)
+{
+	const loader = new GLTFLoader();
+    var objloader = new OBJLoader();
+    var DoorGeometry;
+    var WindowGeometry;
+    var WallGeometry;
+
+
+	function preload(){
+        loader.load(
+            '../Media/OBJ/door.glb',
+            function ( gltf ) {
+				DoorGeometry = gltf.scene.children[0];
+            },
+            function ( xhr ) {
+                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            function ( error ) {
+                //console.log( 'An error happened' );
             }
-        }
-        return [selectedpoint, closestpoint, _distance];
+        );
+        loader.load(
+            '../Media/OBJ/window.glb',
+            function ( gltf ) {
+				WindowGeometry = gltf.scene.children[0];
+            },
+            function ( xhr ) {
+                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            function ( error ) {
+                //console.log( 'An error happened' );
+            }
+        );
+        objloader.load(
+            '../Media/OBJ/wallTest.obj',
+            function ( object ) {
+                WallGeometry = object.children[0].geometry;
+            },
+            function ( xhr ) {
+                //console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+            },
+            function ( error ) {
+                //console.log( 'An error happened' );
+            }
+        );
     }
 
-	function stickToItem(closestpointsarr)
-	{
-		if(closestpointsarr[2]<1)
-		{
-            var clp = localWorld(closestpointsarr[0]);
-            var clp2 = realPosition(selectedItem);
-            var offset = {x: (clp.x-clp2.x)*64,y: (clp.y-clp2.y)*64};
-            //console.log(closestpointsarr[1]);
-            var newItemPosition = {x: closestpointsarr[1].x*64, y: closestpointsarr[1].y*64};
-			selectedItem.x = newItemPosition.x; selectedItem.y = newItemPosition.y;
-            selectedItem.x-=offset.x; selectedItem.y-=offset.y;
-		}
-
-	}
-
-	this.configurateItem = configurateItem;
-	this.preloadMeshes = preloadMeshes;
-	this.spawnConfigurated = spawnConfigurated;
-	//this.prFromOneFile = prFromOneFile;
-
-};
-
-Configurator.prototype = Object.create( EventDispatcher.prototype );
-Configurator.prototype.constructor = Configurator;
 
 
-var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _edgegroup3d, _floorgroup3d, _columngroup, WallGeometry, renderer)
-{
 	var hdrCubeRenderTarget, mem, hdrCubeMap;
 	THREE.DefaultLoadingManager.onLoad = function ( ) {
 		pmremGenerator.dispose();
@@ -1313,7 +414,7 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 
 	const hdrUrls = [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ];
 	hdrCubeMap = new HDRCubeTextureLoader()
-		.setPath( '../textures/pisaHDR/' )
+		.setPath( '../Media/HDR/' )
 		.setDataType( THREE.UnsignedByteType )
 		.load( hdrUrls, function () {
 			hdrCubeRenderTarget = pmremGenerator.fromCubemap( hdrCubeMap );
@@ -1322,40 +423,500 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 	const pmremGenerator = new THREE.PMREMGenerator( renderer );
 	pmremGenerator.compileCubemapShader();
 
-	function clear3d()
+	async function exportGLTF(input)
 	{
 		_shopitems3d.remove(..._shopitems3d.children);
 		_edgegroup3d.remove(..._edgegroup3d.children);
 		_floorgroup3d.remove(..._floorgroup3d.children);
-	}
-
-	function parseTo3D()
-	{
-		_shopitems3d.remove(..._shopitems3d.children);
-		_edgegroup3d.remove(..._edgegroup3d.children);
-		_floorgroup3d.remove(..._floorgroup3d.children);
-
-		_container2d.children.forEach(item=> {
-			load3DItem(item);
-		});
-		
-		_edgegroup.children.forEach(item=> {
-			load3DWall(item);
-		});
-
-		_floorgroup.children.forEach(item=> {
-			load3dFloor(item);
-		});
-
-		_columngroup.children.forEach(item=> {
-			load3dColumn(item);
+		let promises = [];
+		_container2d.children.forEach(item => {
+			promises.push(asyncLoad3DItem(item));
+		})
+		_edgegroup.children.forEach(edge => {
+            promises.push(asyncLoadWall(edge))
+        })
+		_columngroup.children.forEach(column => {
+            promises.push(load3dColumn(column))
+        })
+		_blockgroup.children.forEach(block => {
+            promises.push(load3dBlock(block))
+        })
+		_floorgroup.children.forEach(floor => {
+            promises.push(load3dFloor(floor))
+        })
+		Promise.all(promises).then(()=> {
+			const gltfExporter = new GLTFExporter();
+			const options = {
+				trs: false,
+				onlyVisible: false,
+				truncateDrawRange: true,
+				binary: false,
+				maxTextureSize: Number( 4096 ) || Infinity // To prevent NaN value
+			};
+			gltfExporter.parse( input, function ( result ) {
+				if ( result instanceof ArrayBuffer ) {
+					saveArrayBuffer( result, 'scene.glb' );
+				} else {
+					const output = JSON.stringify( result, null, 2 );
+					saveString( output, 'scene.gltf' );
+				}
+			}, options );
 		})
 	}
 
-	function load3dColumn(column2d)
+	function saveString( text, filename )
+	{
+		saveAs( new Blob( [ text ], { type: 'text/plain' } ), filename );
+	}
+
+	function saveArrayBuffer( buffer, filename ) {
+		saveAs( new Blob( [ buffer ], { type: 'application/octet-stream' } ), filename );
+	}
+
+
+    function modelLoader(url) {
+        return new Promise((resolve, reject) => {
+            loader.load(url, data => resolve(data), null, reject);
+        });
+    }
+
+
+
+
+async function asyncLoadPostBox(item) {
+	var meshesObject = {};
+	const gltfData = await modelLoader('../../sprites/configurator/LOKOLOGIS/CORN.glb');
+	for(var i = 0; i< gltfData.scene.children.length; i++) {
+		meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
+	}
+	var _group = new THREE.Group();
+	_shopitems3d.add(_group);
+    let depth = item.depth;
+    var dist=0;
+    var seq = item.configuration;
+    var offset = '';
+    if(depth == 500) offset = 'N';
+    if(depth==500 && seq[0]!="Fridge") _group.add(meshesObject['EndwallN'].clone())
+    else _group.add(meshesObject['Endwall'].clone());
+    
+    var pc_idx;
+    if(item.kazyrek)
+    {
+        if(seq.length == 2)
+        {
+            var kaz1;
+            kaz1 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
+            kaz1.translateX(0.485/2);
+            _group.add(kaz1);
+
+            var kaz2;
+            kaz2 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
+            kaz2.translateX(0.485+0.485/2);
+            _group.add(kaz2);
+        }
+        else
+        {
+            for(var i = 0; i<seq.length; i++) {
+                if(seq[i]=='TerminalPro' || seq[i]=='TerminalST' || seq[i]=='TerminalSTFR') {pc_idx = i; break; }
+            }
+        }
+    }
+
+    var colors = item.colors;
+
+
+    for(var i = 0; i<seq.length; i++)
+    {
+        var mesh = meshesObject[seq[i]+offset].clone();
+        _group.add(mesh);
+        mesh.children[0].material.color.r = colors[0]/255;
+        mesh.children[0].material.color.g = colors[1]/255;
+        mesh.children[0].material.color.b = colors[2]/255;
+        mesh.translateX(getPostCoef(seq[i])/2+dist);
+		let renderTarget = hdrCubeRenderTarget;
+		const newEnvMap = renderTarget ? renderTarget.texture : null;
+		if (newEnvMap)
+		{
+			mesh.children.forEach(ch=>{
+				ch.castShadow = true;
+				ch.material.envMap = newEnvMap;});
+		}
+        
+        if(seq.length>2 && item.kazyrek)
+        {
+            if((pc_idx!=0 && pc_idx!=seq.length-1) && (i==pc_idx-1 || i==pc_idx || i==pc_idx+1))
+            {
+                var kaz = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
+                kaz.translateX(0.485/2+dist);
+                _group.add(kaz);
+            }
+        }
+        dist += getPostCoef(seq[i]);
+    }
+    var lastwall;
+    if(depth==500 && seq[seq.length-1]!="Fridge") lastwall=meshesObject['EndwallN'].clone();
+    else lastwall=meshesObject['Endwall'].clone();
+    lastwall.children[0].material.color.r = colors[0]/255;
+    lastwall.children[0].material.color.g = colors[1]/255;
+    lastwall.children[0].material.color.b = colors[2]/255;
+    lastwall.translateX(dist);
+    _group.add(lastwall);
+	_group.rotation.set(Math.PI/2,-item.rotation,0);
+	_group.position.set(item.x/64, -item.y/64, 0);
+	_group.children.forEach( item => {item.position.x-=dist/2;});
+}
+
+	async function asyncLoadFresh(item) {
+		var meshesObject = {};
+		const gltfData = await modelLoader('../../sprites/configurator/LOKOFRESH/CORN.glb');
+		for(var i = 0; i< gltfData.scene.children.length; i++) {
+			meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
+		}
+		var _group = new THREE.Group();
+		_shopitems3d.add(_group);
+
+		var dist=0;
+		var seq = item.configuration;
+		var colors = item.colors;
+		var pc_idx;
+		if(item.kazyrek) {
+			if(seq.length == 2) {
+				var kaz1 = meshesObject['Roof'].clone();
+				kaz1.translateX(0.699/2);
+				_group.add(kaz1);
+				var kaz2 = meshesObject['Roof'].clone();
+				kaz2.translateX(0.699+0.699/2);
+				_group.add(kaz2);
+			}
+			else {
+				for(var i = 0; i<seq.length; i++) {
+					if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(seq[i])) {pc_idx = i; break;}
+				}
+				if(pc_idx!=0 && pc_idx!=(seq.length-1)) {
+					var locdist = 0.699*(pc_idx-1);
+					var kaz1 = meshesObject['Roof'].clone();
+					kaz1.translateX(locdist+0.699/2);
+					locdist+=0.699;
+					_group.add(kaz1);
+					var kaz2 = meshesObject['Roof'].clone();
+					kaz2.translateX(locdist+0.699/2);
+					locdist+=0.699;
+					_group.add(kaz2);
+					var kaz3 = meshesObject['Roof'].clone();
+					kaz3.translateX(locdist+0.699/2);
+					_group.add(kaz3);
+				}
+			}
+		}
+		_group.add(meshesObject['Endwall'].clone());
+		for(var i = 0; i<seq.length; i++)
+		{
+			var mesh = meshesObject[seq[i]].clone();
+			_group.add(mesh);
+			mesh.children[0].material.color.r = colors[0]/255;
+			mesh.children[0].material.color.g = colors[1]/255;
+			mesh.children[0].material.color.b = colors[2]/255;    
+			mesh.translateX(0.699/2+dist);
+			dist += 0.699;
+
+			let renderTarget = hdrCubeRenderTarget;
+			const newEnvMap = renderTarget ? renderTarget.texture : null;
+			if (newEnvMap)
+			{
+				mesh.children.forEach(ch=>{
+					ch.castShadow = true;
+					ch.material.envMap = newEnvMap;});
+			}
+		}
+		var lastwall = meshesObject['Endwall'].clone();
+		lastwall.children[0].material.color.r = colors[0]/255;
+		lastwall.children[0].material.color.g = colors[1]/255;
+		lastwall.children[0].material.color.b = colors[2]/255;
+		lastwall.translateX(dist);
+		_group.add(lastwall);
+		_group.rotation.set(Math.PI/2,-item.rotation,0);
+		_group.position.set(item.x/64, -item.y/64, 0);
+		_group.children.forEach( item => {item.position.x-=dist/2;});
+	}
+
+	async function asyncLoadEcoLogis(item)
+	{
+		var meshesObject = {};
+		const gltfData = await modelLoader('../../sprites/configurator/ECOLOGIS/CORN.glb');
+		for(var i = 0; i< gltfData.scene.children.length; i++) {
+			meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
+		}
+		var _group = new THREE.Group();
+		_shopitems3d.add(_group);
+		var dist=0;
+		var seq = item.configuration;
+		let depth = item.depth;
+		var offset = '';
+		if(depth == 500) offset = 'N';
+	
+		_group.add(meshesObject['Endwall'+offset].clone());
+		if(item.kazyrek)
+		{
+				var kaz1;
+				kaz1 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
+				kaz1.translateX(0.485/2);
+				_group.add(kaz1);
+				var kaz2;
+				kaz2 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
+				kaz2.translateX(0.485+0.485/2);
+				_group.add(kaz2);
+		}
+		for(var i = 0; i<2; i++)
+		{
+			var mesh = meshesObject[seq[i]+offset].clone();
+			_group.add(mesh);
+			var colors = item.colors;
+			mesh.children[0].material.color.r = colors[0]/255;
+			mesh.children[0].material.color.g = colors[1]/255;
+			mesh.children[0].material.color.b = colors[2]/255;
+			mesh.translateX(0.49/2+dist);
+			dist += 0.49;
+		}
+		var lastwall = meshesObject['Endwall'+offset].clone();
+		lastwall.children[0].material.color.r = colors[0]/255;
+		lastwall.children[0].material.color.g = colors[1]/255;
+		lastwall.children[0].material.color.b = colors[2]/255;
+		lastwall.translateX(dist);
+		_group.add(lastwall);
+		_group.rotation.set(Math.PI/2,-item.rotation,0);
+		_group.position.set(item.x/64, -item.y/64, 0);
+		_group.children.forEach( item => {item.position.x-=dist/2;});
+	}
+
+
+	async function asyncLoadLokoAccesories(item)
+	{
+		var meshesObject = {};
+		const gltfData = await modelLoader('../../sprites/configurator/LOKOACCESSORIES/CORN.glb');
+		for(var i = 0; i< gltfData.scene.children.length; i++) {
+			meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
+		}
+		var _group = new THREE.Group();
+		_shopitems3d.add(_group);
+
+		var dist=0;
+		var seq = item.configuration;
+		var colors = item.colors;
+		for(var i = 0; i<seq.length; i++)
+		{
+			var mesh = meshesObject[seq[i]].clone();
+			_group.add(mesh);
+			mesh.children[0].material.color.r = colors[0]/255;
+			mesh.children[0].material.color.g = colors[1]/255;
+			mesh.children[0].material.color.b = colors[2]/255;   
+			mesh.translateX(getBanchCoef(1)/2+dist);
+			dist += getBanchCoef(1);
+		}
+		_group.rotation.set(Math.PI/2,-item.rotation,0);
+		_group.position.set(item.x/64, -item.y/64, 0);
+		_group.children.forEach( item => {item.position.x-=dist/2;});
+	}
+
+	async function loadOrdinaryItem(item) {
+		const name = item.name;
+		const gltfData = await modelLoader('./sprites/ordinary/Models/'+name+'.gltf');
+		var mesh = gltfData.scene.children[0];
+		if(mesh.children.length>0)
+		{
+			var mergedmesh = createMesh(mesh.children);
+			_shopitems3d.add(mergedmesh);
+			mergedmesh.name = name;
+			mergedmesh.rotation.set(Math.PI/2,-item.rotation,0);
+			mergedmesh.position.set(item.x/64, -item.y/64, 0);
+			mergedmesh.material[1].color.r = item.colors[0]/255;
+			mergedmesh.material[1].color.g = item.colors[1]/255;
+			mergedmesh.material[1].color.b = item.colors[2]/255;
+			let renderTarget = hdrCubeRenderTarget;
+			const newEnvMap = renderTarget ? renderTarget.texture : null;
+			if ( newEnvMap && newEnvMap !== mergedmesh.material.envMap )
+			{
+				mergedmesh.material.forEach(mat=>mat.envMap = newEnvMap);
+			}
+			mergedmesh.castShadow = true;
+		}
+		else
+		{
+			_shopitems3d.add(mesh);
+			mesh.name = name;
+			mesh.rotation.set(Math.PI/2,0,0);
+			mesh.position.set(item.x/64, -item.y/64, 0);
+		}
+	}
+
+	async function asyncParseTo3D() {
+		_shopitems3d.remove(..._shopitems3d.children);
+		_edgegroup3d.remove(..._edgegroup3d.children);
+		_floorgroup3d.remove(..._floorgroup3d.children);
+		let promises = [];
+		_container2d.children.forEach(item => {
+			promises.push(asyncLoad3DItem(item));
+		})
+		Promise.all(promises);
+	}
+
+
+
+    async function asyncLoad3DItem(item) {
+		if(item.configuration) {
+			if(item.name=='LOKOLOGIS') await asyncLoadPostBox(item);
+			if(item.name=='LOKOACCESSORIES') await asyncLoadLokoAccesories(item);
+			if(item.name=='LOKOFRESH') await asyncLoadFresh(item);
+			if(item.name=='ECOLOGIS') await asyncLoadEcoLogis(item);
+		}
+		else await loadOrdinaryItem(item);
+    }
+
+
+	function parseStructuresTo3D() {
+        let promises = []
+        _edgegroup.children.forEach(edge => {
+            promises.push(asyncLoadWall(edge))
+        })
+		_columngroup.children.forEach(column => {
+            promises.push(load3dColumn(column))
+        })
+		_blockgroup.children.forEach(block => {
+            promises.push(load3dBlock(block))
+        })
+		_floorgroup.children.forEach(floor => {
+            promises.push(load3dFloor(floor))
+        })
+        Promise.all(promises);
+    }
+
+	function moveGeometryVertexes(edge, vertnumber, coords)
+	{
+		var one = [1,2,4,14,16,25,26,28,48,51]
+		var three = [7,8,10,13,24,27,29,49]
+		var four = [18,21,23,35,42,45,47,54,57]
+		var five = [19,20,22,30,33,36,39,41,59]
+		//center
+		var zero = [0,3,5,17,32,34,43,44,46,53,55]
+		var two = [6,9,11,12,15,31,37,38,40,50,52,56,58]
+		
+		switch(vertnumber)
+		{
+			case 0:
+				moveGeometryVertex(edge, zero, coords);
+				break;
+			case 1:
+				moveGeometryVertex(edge, one, coords);
+				break;
+			case 2:
+				moveGeometryVertex(edge, two, coords);
+				break;
+			case 3:
+				moveGeometryVertex(edge, three, coords);
+				break;
+			case 4:
+				moveGeometryVertex(edge, four, coords);
+				break;
+			case 5:
+				moveGeometryVertex(edge, five, coords);
+				break;
+		}
+		edge.geometry.attributes.position.needsUpdate = true;
+	}
+
+	function moveGeometryVertex(edge, indexes, coords)
+	{
+		indexes.forEach(id => {
+			edge.geometry.attributes.position.setX(id, coords.x);
+		});
+	}
+
+	function vertnumbers(edge) {
+		var number = -1;
+		for(var i = 0; i<edge.geometry.attributes.position.count; i++) {
+			if(edge.geometry.attributes.position.getX(i) == -0.5 && edge.geometry.attributes.position.getY(i)==0.5) console.log(i);
+		}
+	}
+
+
+    async function asyncLoadWall(wall) {
+        var geometry = WallGeometry.clone();
+        var material = new MeshPhongMaterial({color: 0xffffff , flatShading: false});
+		var wallheight = wall.userData.height;
+        const box = new THREE.Mesh(geometry, material);
+		var left = wall.children[4].x/64;
+		var right = wall.children[5].x/64;
+		var rightup = wall.children[1].x/64;
+		var rightdown = wall.children[3].x/64;
+		var leftdown = wall.children[2].x/64;
+		var leftup = wall.children[0].x/64;
+
+
+		//vertnumbers(box);
+		moveGeometryVertexes(box, 0, {x:left});
+		moveGeometryVertexes(box, 2, {x:right});
+		moveGeometryVertexes(box, 3, {x:rightup});
+		moveGeometryVertexes(box, 5, {x:rightdown});
+		moveGeometryVertexes(box, 1, {x:leftup});
+		moveGeometryVertexes(box, 4, {x:leftdown});
+
+        box.updateMatrix();
+
+		var openings = false;
+        var openingHolesGeometry = new THREE.Mesh(new THREE.BoxGeometry(0,0,0), material)
+        wall.children.forEach(opening => {
+            if(opening.name == 'door') {
+				const door = new THREE.Mesh(new THREE.BoxGeometry(1/wall.scale.x, 1, opening.userData.height/wallheight).translate(0,0,opening.userData.height/2/wallheight), new THREE.MeshNormalMaterial());
+                openingHolesGeometry.updateMatrix();
+                door.updateMatrix();
+                var doorHole = new THREE.Mesh(door.geometry.clone().scale(wall.scale.x*Math.abs(opening.scale.x),1,1).translate(opening.x/64,0,0), material)
+                openingHolesGeometry = CSG.union(openingHolesGeometry, doorHole);
+				openings = true;
+            }
+            if(opening.name == 'window') {
+				const window = new THREE.Mesh(new THREE.BoxGeometry(1/wall.scale.x, 1, opening.userData.height/wallheight).translate(0,0,(opening.userData.heightoffset+opening.userData.height/2)/wallheight), new THREE.MeshNormalMaterial());
+                openingHolesGeometry.updateMatrix();
+                window.updateMatrix();
+                var doorHole = new THREE.Mesh(window.geometry.clone().scale(wall.scale.x*Math.abs(opening.scale.x),1,1).translate(opening.x/64,0,0), material)
+                openingHolesGeometry = CSG.union(openingHolesGeometry, doorHole);
+				openings = true;
+            }
+        })
+		var result;
+        if(openings) result = CSG.subtract(box, openingHolesGeometry);
+		else result = box;
+		result.castShadow = true;
+		result.receiveShadow = true;
+        wall.children.forEach(opening => {
+            if(opening.name == 'door') {
+                var door = DoorGeometry.clone();
+                door.scale.set(opening.scale.x,1/wall.scale.y, opening.userData.height/wallheight);
+                door.position.x = opening.x/64;
+				door.y = 0.02;
+                door.castShadow = true;
+                result.add(door)
+            }
+            if(opening.name == 'window') {
+                var window = WindowGeometry.clone();
+				window.scale.set(opening.scale.x, 1/wall.scale.y, opening.userData.height/wallheight);
+                window.position.x = opening.x/64;
+                window.position.z = opening.userData.heightoffset/wallheight;
+                result.add(window)
+            }
+        })
+
+        result.scale.x = wall.scale.x;
+        result.scale.y = wall.scale.y;
+        result.scale.z = wall.userData.height;
+        result.position.x = wall.x/64; result.position.y = -wall.y/64;
+        result.rotation.z = -wall.rotation;
+        _shopitems3d.add(result)
+    }
+
+
+	async function load3dColumn(column2d)
 	{
 		var geometry = new CylinderGeometry( 0.5, 0.5, 1, 64 );
-		const material = new MeshPhongMaterial({color: 0xA5A5A5});
+        var material = new MeshPhongMaterial({color: 0xffffff , flatShading: false});
 		var column = new Mesh(geometry, material);
 		column.castShadow = true;
 		column.position.set(column2d.x/64, -column2d.y/64, 0);
@@ -1367,21 +928,31 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 		_edgegroup3d.add(column);
 	}
 
-	function load3DWall(wall)
+	async function load3dBlock(column2d)
 	{
-		const geometry = WallGeometry.clone();
-		const material = new MeshPhongMaterial({color: 0xA5A5A5 , flatShading: true});
-		var edge = new Mesh(geometry, material);
-		edge.castShadow = true;
-		edge.position.set(wall.x/64, -wall.y/64, 0);
-		edge.rotation.z = -wall.rotation;
-		edge.scale.x = wall.scale.x;
-		edge.scale.y = wall.scale.y;
-		edge.scale.z = 3.5;
-		_edgegroup3d.add(edge);
+		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+        var material = new MeshPhongMaterial({color: 0xffffff , flatShading: false});
+		var column = new Mesh(geometry, material);
+		column.castShadow = true;
+		column.position.set(column2d.x/64, -column2d.y/64, 0);
+		column.rotation.x = Math.PI/2;
+		column.scale.x = column2d.scale.x;
+		column.scale.z = column2d.scale.y;
+		column.scale.y = 3.5;
+		column.position.z = 1.75;
+		_edgegroup3d.add(column);
 	}
 
-	function load3dFloor(floor)
+
+	function clear3d()
+	{
+		_shopitems3d.remove(..._shopitems3d.children);
+		_edgegroup3d.remove(..._edgegroup3d.children);
+		_floorgroup3d.remove(..._floorgroup3d.children);
+	}
+
+
+	async function load3dFloor(floor)
 	{
 		var points = [];
 		floor.children.forEach(point=>{
@@ -1394,6 +965,8 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 		mesh.receiveShadow = true;
 		_floorgroup3d.add( mesh );
 		mesh.position.z = 0.01;
+		mesh.position.x = floor.x/64;
+		mesh.position.y = -floor.y/64;
 	}
 	
 	function getBanchCoef(id)
@@ -1421,7 +994,6 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 				var dist=0;
 				var seq = item.configuration;
 				
-				console.log(seq);
 				for(var i = 0; i<seq.length; i++)
 				{
 					var mesh = meshes[+seq[i]-1].clone();
@@ -1455,72 +1027,11 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 			});
 	}
 
-
-
-	function getPostCoef(id)
+	function compareGLTF(a,b)
 	{
-		switch(id)
-		{
-			case 1: return 0.699;
-			case 2: return 0.49;
-			case 3: return 0.49;
-			case 4: return 0.49;
-			case 5: return 0.49;
-			case 6: return 0.49;
-			case 7: return 0.49;
-			case 8: return 0.49;
-			case 9: return 0.0265;
-		}
-	}
-	
-	function loadPostBox(item)
-	{
-		var _group = new THREE.Group();
-		//_group.castShadow = true;
-		_shopitems3d.add(_group);
-		var meshes = [];
-		const loader = new GLTFLoader();
-		loader.load(
-			'../../sprites/configurator/4/'+'PB'+'.glb',
-			function(gltf){
-				for(var i = 0; i<gltf.scene.children.length; i++)
-				{
-					meshes.push(gltf.scene.children[i]);
-				}
-				var dist=0;
-				var seq = item.configuration;
-				console.log(seq);
-				_group.add(meshes[8].clone());
-				for(var i = 0; i<seq.length; i++)
-				{
-					var mesh = meshes[+seq[i]-1].clone();
-					_group.add(mesh);
-					mesh.children[0].material.color.r = item.colors[0]/255;
-					mesh.children[0].material.color.g = item.colors[1]/255;
-					mesh.children[0].material.color.b = item.colors[2]/255;
-					
-					let renderTarget = hdrCubeRenderTarget;
-					const newEnvMap = renderTarget ? renderTarget.texture : null;
-					if (newEnvMap)
-					{
-						mesh.children.forEach(ch=>{
-							ch.castShadow = true;
-							ch.material.envMap = newEnvMap;});
-					}
-					mesh.translateX(getPostCoef(+seq[i])/2+dist);
-					dist += getPostCoef(+seq[i]);
-				}
-
-				var lastwall = meshes[8].clone();
-				lastwall.translateX(dist);
-				_group.add(lastwall);
-
-				_group.rotation.set(Math.PI/2,-item.rotation,0);
-				_group.position.set(item.x/64, -item.y/64, 0);
-				_group.children.forEach( item => {item.position.x-=dist/2;});
-			},
-			function ( xhr ) {console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );},
-			function ( error ) {console.log( 'An error happened' );});
+		if(a.name<b.name) return -1;
+		if(a.name>b.name) return 1;
+		return 0;
 	}
 
 	function getPlantCoef(id)
@@ -1543,7 +1054,6 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 				}
 				var dist=0;
 				var seq = item.configuration;
-				console.log(seq);
 				for(var i = 0; i<seq.length; i++)
 				{
 					var mesh = meshes[+seq[i]-1].clone();
@@ -1586,28 +1096,16 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 		loader.load(
 				'../../sprites/configurator/8/'+'Roof'+'.glb',
 			function(gltf){
-				for(var i = 0; i<gltf.scene.children.length; i++)
-				{
-					meshes.push(gltf.scene.children[i]);
-				}
+				for(var i = 0; i<gltf.scene.children.length; i++) meshes.push(gltf.scene.children[i]);
 				var dist=0;
 				var seq = item.configuration;
-				console.log(seq);
 				for(var i = 0; i<seq.length; i++)
 				{
 					var mesh = meshes[+seq[i]-1].clone();
 					_group.add(mesh);
-					//mesh.children[1].material.color.r = item.colors[0]/255;
-					//mesh.children[1].material.color.g = item.colors[1]/255;
-					//mesh.children[1].material.color.b = item.colors[2]/255;
-					
 					let renderTarget = hdrCubeRenderTarget;
 					const newEnvMap = renderTarget ? renderTarget.texture : null;
-					if (newEnvMap)
-					{
-						mesh.children.forEach(ch=>ch.material.envMap = newEnvMap);
-					}
-
+					if (newEnvMap) mesh.children.forEach(ch=>ch.material.envMap = newEnvMap);
 					mesh.translateX(getRoofCoef(+seq[i])/2+dist);
 					dist += getRoofCoef(+seq[i]);
 				}
@@ -1618,60 +1116,6 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 			function ( xhr ) {console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );},
 			function ( error ) {console.log( 'An error happened' );});
 	}
-
-	function load3DItem(item)
-	{	
-		var name = item.name;
-		const loader = new GLTFLoader();
-		if(item.configuration)
-		{
-			switch(item.name)
-			{
-				case 'PostBox': loadPostBox(item); break;
-				case 'Plant': loadPlant(item); break;
-				case 'Banch': loadBanch(item); break;
-				case 'Roof': loadRoof(item); break;
-			}
-		}
-		else
-		{
-			loader.load(
-				'./sprites/models/'+name+'.gltf',
-				function( gltf)
-				{
-					var mesh = gltf.scene.children[0];
-					if(mesh.children.length>0)
-					{
-						var mergedmesh = createMesh(mesh.children);
-						_shopitems3d.add(mergedmesh);
-						mergedmesh.name = name;
-						mergedmesh.rotation.set(Math.PI/2,-item.rotation,0);
-						mergedmesh.position.set(item.x/64, -item.y/64, 0);
-						let renderTarget = hdrCubeRenderTarget;
-						const newEnvMap = renderTarget ? renderTarget.texture : null;
-						if ( newEnvMap && newEnvMap !== mergedmesh.material.envMap )
-						{
-							mergedmesh.material.forEach(mat=>mat.envMap = newEnvMap);
-						}
-						mergedmesh.castShadow = true;
-						console.log(mergedmesh);
-					}
-					else
-					{
-						_shopitems3d.add(mesh);
-						mesh.name = name;
-						mesh.rotation.set(Math.PI/2,0,0);
-						mesh.position.set(item.x/64, -item.y/64, 0);
-					}
-				},
-				function ( xhr ) { console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );},
-				function ( error ) { console.log( 'An error happened' );}
-				);
-		}
-	}
-
-
-
 
 	function createMesh(insertedMeshes)
 	{
@@ -1688,11 +1132,40 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
 		return mergedMesh;
 	}
 
+
+    preload();
+
+
+
 	this.clear3d = clear3d;
-	this.parseTo3D = parseTo3D;
+	this.parseTo3D = asyncParseTo3D;
+	this.parseStructuresTo3D = parseStructuresTo3D;
+	this.exportGLTF = exportGLTF;
 
 }
 
 
 
-export { ItemController, Configurator, Parser3d };
+export { ItemController, Parser3d };
+
+function modelLoader(url) {
+    const loader = new GLTFLoader();
+    return new Promise((resolve, reject) => {
+        loader.load(url, data => resolve(data), null, reject);
+    });
+}
+
+function createMesh(insertedMeshes)
+{
+	var materials = [], geometries = [], mergedGeometry = new BufferGeometry(), meshMaterial, mergedMesh;
+	insertedMeshes.forEach(function(mesh, index) {
+	mesh.updateMatrix();
+	geometries.push(mesh.geometry);
+	meshMaterial = new MeshStandardMaterial(mesh.material);
+	materials.push(meshMaterial);
+	});
+	mergedGeometry = BufferGeometryUtils.mergeBufferGeometries(geometries, true);
+	mergedGeometry.groupsNeedUpdate = true;
+	mergedMesh = new Mesh(mergedGeometry, materials);
+	return mergedMesh;
+}

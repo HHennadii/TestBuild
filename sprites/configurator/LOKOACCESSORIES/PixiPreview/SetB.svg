@@ -1,0 +1,16 @@
+<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+<style type="text/css">
+	.st0{fill:#FF7F00;stroke:#000000;stroke-width:2;}
+	.st1{fill:none;stroke:#000000;stroke-width:0.2;}
+</style>
+<g>
+	<title>Layer 1</title>
+	<rect id="svg_9" class="st0" width="32" height="32"/>
+	<line id="svg_10" class="st1" x1="-0.1" y1="7.6" x2="31.9" y2="7.6"/>
+	<line id="svg_11" class="st1" x1="0.6" y1="12.7" x2="31.6" y2="12.7"/>
+	<line id="svg_12" class="st1" x1="0.6" y1="18.4" x2="31.5" y2="18.4"/>
+	<line id="svg_14" class="st1" x1="0.5" y1="23" x2="31.1" y2="23"/>
+	<line id="svg_15" class="st1" x1="0.4" y1="27.6" x2="31.5" y2="27.6"/>
+	<line id="svg_16" class="st1" x1="0.6" y1="4.2" x2="31.2" y2="4.2"/>
+</g>
+</svg>

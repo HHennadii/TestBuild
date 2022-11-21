@@ -1,282 +1,84 @@
 <!DOCTYPE html>
 <html>
-
+	
 <head>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link type="text/css" rel="stylesheet" href="main.css">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Krona+One&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Oxygen&display=swap" rel="stylesheet">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Oxygen&display=swap" rel="stylesheet">
 	<meta charset="utf-8">
-	<link rel="icon" href="Icons\Main logo.svg">
-	<title>ModX</title>
-	<script type="module" src="sashagena.js"></script>
-	<script src="./pixi.min.js"></script>
-	<script src="./pixi-filters.js"></script>
-	<script src="./slick/slick.js" type="text/javascript" charset="utf-8"></script>
-	<link rel="stylesheet" type="text/css" href="./slick/slick.css">
-	<link rel="stylesheet" type="text/css" href="./slick/slick-theme.css">
-
+	<link rel="icon" href="Media/SVG/Main logo.svg">
+	<title>MoodX</title>
+	
 </head>
 
-<body oncontextmenu="return false;">
 
+<body oncontextmenu="return false;" >
 	<div id="loadscreen" class="loader">
-		<span>M</span>
-		<span style="--delay: 0.1s">O</span>
-		<span style="--delay: 0.3s">D</span>
-		<span style="--delay: 0.4s">E</span>
-		<span style="--delay: 0.5s">X</span>
+		<span class="span">M</span>
+		<span class="span" style="--delay: 0.1s">O</span>
+		<span class="span" style="--delay: 0.3s">O</span>
+		<span class="span" style="--delay: 0.4s">D</span>
+		<span class="span" style="--delay: 0.5s">X</span>
 	</div>
-	<!-- Floating menus
-		<div class="wall_settings">
-			<div class="box" style="width: 100%; display: flex; justify-content: start;">
-				<button class="button_float Float2" id="" value="11"> <img src="Icons\height.svg" class="bar-icon"> </button>
-				<button class="button_float Float2" id="" value="12"> <img src="Icons\width.svg" class="bar-icon"> </button> 
-				<button class="button_float" id="" value="12"> <img src="Icons\Bin.svg" class="bar-icon"> </button>
-			 	<button class="button_float Float2" id="" value="13"> <img src="Icons\Test.svg" class="bar-icon"> </button> 
-			</div> 
-			<div class="box" style="width: 100%; height: 60px; display: flex; justify-content: center;   background-color: #EDEDED;  border: 0.5px solid  black;">
-				<input id="float_wall_input" type="number" class="xyz_input"  style="width: 180px;" value="0">
-			</div>
-			
+	<div id="loadscreen3" class="loader3">
+		<div class="init-but-cont">
+			<input type="button" class="hide-file" id="newPJ">
+				<label for="newPJ" class="initial-button">
+					<img class="init-img" src="Media/SVG/NewPJ.svg" alt="">
+					
+				</label>
+			<input type="file" class="hide-file" id="loadPJ">
+				<label for="loadPJ" class="initial-button">
+					<img class="init-img" src="Media/SVG/LoadPJ.svg" alt="">
+					
+				</label>			
 		</div>
-		-->
-
-	<!-- Bottom left buttons-->
-	<div class="sideconf" style="height: 60px;">
-		<button class="button_cls2" id="side_close_open"> <img src="Icons\Close.svg" class="bar-icon" id="side_cl_op_id"
-				style="transform: rotate(90deg);"> </button>
-		<button class="button_side" id="rulet" value="1"> <img src="Icons\Rulet.svg" class="bar-icon"> </button>
-		<button class="button_side" id="stickmod" value="2" style="background-color: rgb(147, 210, 255);"> <img
-				src="Icons\ObjCon.svg" class="bar-icon"> </button>
-		<!--<button class="button_side" id="cameramove" value="3"> <img src="Icons\XY.svg" class="bar-icon"> </button>-->
+		<img class="byModern" src="Media/SVG/ByModern.svg" alt="">
+		
 	</div>
-	<!-- -->
 
-	<!-- Configurator-->
-	<div id="confarea" style="display: none;">
-		<div class="conf_background"></div>
-		<div id="loadscreen2" class="loader2">
-			<span>L</span>
-			<span style="--delay: 0.1s">O</span>
-			<span style="--delay: 0.3s">A</span>
-			<span style="--delay: 0.4s">D</span>
-			<span style="--delay: 0.5s">I</span>
-			<span style="--delay: 0.6s">N</span>
-			<span style="--delay: 0.7s">G</span>
-		</div>
-		<div class="configurator">
-			<div id="confmenu"
-				style="width: 600px; height: 700px; background-color: #f1f1f1; border-right: 1px solid black; border-left: 1px solid black;">
-				<div class="color_select">
-					<label>
-						<input class="radio" type="radio" name="test" value="20 20 23">
-						<img src="Icons\C1.svg" class="dots">
-					</label>
-
-					<label>
-						<input class="radio" type="radio" name="test" value="217 192 34">
-						<img src="Icons\C2.svg" class="dots">
-					</label>
-
-					<label>
-						<input class="radio" type="radio" name="test" value="244 248 244" checked>
-						<img src="Icons\C3.svg" class="dots">
-					</label>
-
-					<label>
-						<input class="radio" type="radio" name="test" value="112 31 41">
-						<img src="Icons\C4.svg" class="dots">
-					</label>
-
-					<label>
-						<input class="radio" type="radio" name="test" value="7 115 122">
-						<img src="Icons\C5.svg" class="dots">
-					</label>
-
-					<label>
-						<input class="radio" type="radio" name="test" value="0 93 82">
-						<img src="Icons\C6.svg" class="dots">
-					</label>
-				</div>
-			</div>
-			<div class="paramtr_conf">
-				<!--
-					<div class="wrapper" id="access34">
-						<div class="box cbcont" id="access3">  <input type="checkbox" class="custom-checkbox" id="access3"> <label for="access3">Accessory 3</label></div>
-						<div class="box cbcont" id="access4">  <input type="checkbox" class="custom-checkbox" id="access4"> <label for="access4">Accessory 4</label></div>
-					</div>
-					-->
-				<div id="PostBoxconf" style="display: none; text-align: left;  color:black; padding-top: 50px;">
-					<button class="closeconf"><img class="bar-icon" src="./Icons/Cross.svg"></button>
-					<div id="postbox_controlset">
-					</div>
-					<div class="box" style="margin-top: 30px; justify-content: center; display: flex;">
-						<input type="button" id="stack_add" value="Add stack" class="main_button postbox_control"
-							style="width: 240px; height: 40px; z-index: 12;">
-					</div>
-				</div>
-				<div class="box" style="margin-top: 30px; justify-content: center; display: flex;">
-					<input id="spawnconfigurated" type="button" class="main_button" value="Create"
-						style="width: 240px; height: 50px">
-				</div>
-
-			</div>
-		</div>
+	
+	<div id="setconfigurator">
 	</div>
-	<!-- -->
-
-
-
 	<div id="content">
-		<!-- NavigationBar-->
 		<div class="fixed_nav">
-			<div class="logo-bar"><img src="Icons\ModeX.svg" class="logo-icon">
-				<!--<a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley" target="_blank" style="width: 2px; height: 2px; margin-left: 50px;">--></a>
+			<div class="logo-bar"><img src="Media/SVG/ModeX.svg" class="logo-icon">
+				<img class="RightHead" src="Media/SVG/RightHead.svg" alt="">
 			</div>
-			<div class="box"
-				style="height: 60px; width: 100%; border-top: solid 0.5px black; border-bottom: solid 0.5px black; display: flex; justify-content: space-between;">
+			<div class="hide-nav-controls">
 				<div class="box" style="height: 60px;">
-					<button class="button_nav" id="nav-1" value="1"> <img src="Icons\SetBG.svg" class="bar-icon">
+					<button class="button_nav Nav" id="nav-3"><img src="Media/SVG/TheWall.svg" class="bar-icon">Builder
 					</button>
-					<button class="button_nav" id="nav-2" value="2"> <img src="Icons\TheWall.svg" class="bar-icon">
+					<button class="button_nav Nav" id="nav-4"><img src="Media/SVG/Catalog.svg" class="bar-icon">Catalog
 					</button>
-					<button class="button_nav" id="nav-4" value="4"> <img src="Icons\Catalog.svg" class="bar-icon">
-					</button>
-					<button class="button_nav" id="nav-3" value="3"> <img src="Icons\Save.svg" class="bar-icon">
-					</button>
+					<button class="button_nav" id="cameraswitcher" disabled><img src="Media/SVG/3D.svg" class="bar-icon">3D view </button>			
+					<div id="lock" class="lock">
+						<img src="Media/SVG/Save.svg" class="bar-icon">Save
+						<div class="dropdown-content">
+							<button class="button_save" id="save"> <img src="Media/SVG/PrjSave.svg" class="bar-icon">Save Project &#8203</button>
+							<button class="button_save" id="export" style="display:none"> <img src="Media/SVG/ExportCom.svg" class="bar-icon">Commercial offer &#8203</button>
+							<button class="button_save" id="export3d"> <img src="Media/SVG/3Dexport.svg" class="bar-icon">Export 3D model &#8203</button>
+							<button class="button_save" id="feedbackRequest"> <img src="Media/SVG/ManagetContact.svg" class="bar-icon">Contact Manager &#8203</button>
+						</div>
+					</div>				
 				</div>
-				<div class="box" style="height: 60px;">
-					<div style="display: flex; margin-right: 100px;">
-						2D
-						<input type="range" id="scale2D" style="margin: 10px;" min="0.3" max="3" step=".1" value="1">
-					</div>
-					<button class="button_nav" id="nav-5" value="5" style=" display: none; "> <img
-							src="Icons\TheDoor.svg" class="bar-icon"> </button>
-					<button class="button_3D" id="cameraswitcher"> <img src="Icons\3D.svg" class="bar-icon"> </button>
-				</div>
+				
 			</div>
 		</div>
-		<!---->
-
-		<!--SideBar-->
-		<div id="Sidenav" class="sidenav">
-			<button class="button_cls" id="close-nav"> <img src="Icons\Cross.svg" class="bar-icon"> </button>
-
-			<!--Block1-->
-			<div id="block_1" style="margin: 0px 25px;">
-				<div class="main_groupe"> Select an image
-					<input type="file" id="blueprint" value="A" class="inputfile">
-					<label for="blueprint" class="main_button"
-						style="display: flex; margin: 15px 0px; align-items: center;">Choose a file</label>
-					<label id="choose_file_text" class="choose_file"></label>
-				</div>
-				<input type="button" id="editbp" value="Set scale" class="main_button">
-			</div>
-			<!---->
-
-			<!--Block2-->
-			<div id="block_2" style="margin: 0px 25px;">
-				<button class="main_button rset2" id="radio-wall" value="1">Wall <img src="Icons\TheWall.svg"
-						class="bar-icon"></button>
-				<button class="main_button rset2" id="radio-floor" value="4">Floor <img src="Icons\Floor.svg"
-						class="bar-icon"></button>
-				<button class="main_button rset2" id="radio-columnS" value="2">Column Round <img src="Icons\Cround.svg"
-						class="bar-icon"></button>
-				<button class="main_button rset2" id="radio-columnR" value="3" style="display: none;">Column Rectangular
-					<img src="Icons\Crect.svg" class="bar-icon"></button>
-			</div>
-			<!---->
-
-			<!--Block5-->
-			<div id="block_5" style="margin: 0px 25px;">
-				<div style="display: none;">
-					<button class="main_button rset3" id="radio-door" value="1">Place door</button>
-					<button class="main_button rset3" id="radio-window" value="2">Place window</button>
-					<div class="main_groupe">
-						Offset on a wall
-						<input type="range" id="Obj_location" style="margin: 10px;" min="1" max="100" step="1"
-							value="1">
-					</div>
-					<div class="main_groupe">
-						<label>Raise from floor</label>
-						<input id="" type="number" class="xyz_input" value="0">
-					</div>
-					<div class="main_groupe">
-						<label>Object width</label>
-						<input id="" type="number" class="xyz_input" value="0">
-					</div>
-					<div class="main_groupe">
-						<label>Object height</label>
-						<input id="" type="number" class="xyz_input" value="0">
-					</div>
-				</div>
-			</div>
-			<!---->
-
-			<!--Block3-->
-			<div id="block_3" style="margin: 0px 25px;">
-				<button class="main_button" id="exporter" value="exporter"
-					style="width: 212px; position: relative; right: 10px; height: 60px;">Export <img
-						src="Icons\Upload.svg" class="bar-icon"></button>
-				<div style="
-				width: 212px; 
-				position: relative; 
-				right: 10px; 
-				height: 60px; 
-				outline: none;
-				margin-top: 50px;
-				border: solid 1px black;
-				background-color: #EDEDED;
-				display: flex;
-				text-align: center;
-				justify-content: space-evenly;
-				font-size: 15px;
-				color: #000;
-				align-items: center;">Get price</div>
-				<div class="send-noodles contact-form">
-					<form id="contact-form">
-						<input type="text" name="contact_number" style="display: none;">
-						<p><input type="text" name="user_name" class="xyz_input" placeholder="Name"
-								style="width: 200px; height: 30px;"></p>
-						<p><input type="text" name="user_company" class="xyz_input" placeholder="Company"
-								style="width: 200px; height: 30px;"></p>
-						<p><input type="email" name="user_email" class="xyz_input" placeholder="E-mail"
-								style="width: 200px; height: 30px;"></p>
-						<p><input type="tel" name="user_phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" class="xyz_input"
-								placeholder="Phone" style="width: 200px; height: 30px;"></p>
-						<textarea name="message" class="xyz_input" placeholder="Comment"
-							style="width: 200px; height: 60px;"></textarea>
-						<input type="button" class="main_button" id="plsw" value="Send request"
-							style="width: 212px; height: 45px; margin-top:10px;">
-					</form>
-				</div>
-			</div>
-			<!---->
-
-			<!--Block4-->
-			<div id="block_4" style="margin: 0px 25px;">
-				<!--	
-				<input type="text" id="form1"  class="search_bar" placeholder="Search">
-				<button class="main_button" id="search_selector" style="margin-top: 3px;">Category</button>		
-				-->
-				<ul id="listnav" style="list-style-type:none; margin: 0px; margin-bottom: 100px; padding: 0px;"></ul>
-			</div>
-			<!---->
-
+		<div id="Sidenav" class="sidenav">		
 		</div>
-		<!---->
-
-
-
-		<!--Main Area-->
 		<div id="canvas" style="position: fixed; top: 0; bottom: 0; width: 100%"></div>
-		<!---->
-
 	</div>
-	<!---->
+	<div id="feedback"></div>
+	<script src="./pixi.min.js"></script>
+	<script src="./pixi-filters.js"></script>
+	<script src="./xlsx.full.min.js"></script>
+	<script src="./filesaver.min.js"></script>
+	<script type="module" src="AdditionalScripts/mainScript.js"></script>
 </body>
 
 </html>

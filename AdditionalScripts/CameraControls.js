@@ -2,28 +2,20 @@ var CameraControls = function(app, _domElement, grid)
 {
     var lastPos = null;
     var ongoingTouches = [];
-
+    var scaling =false, carrentScale;
     function zoom(s,x,y)
     {
         s = s > 0 ? 0.9 : 1.1;
+        if(app.stage.scale.x > 4 && s == 1.1) s = 1;
+        if(app.stage.scale.x < 0.25 && s == 0.9) s = 1;
         var worldPos = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
         var newScale = {x: app.stage.scale.x * s, y: app.stage.scale.y * s};
         var newScreenPos = {x: (worldPos.x ) * newScale.x + app.stage.x, y: (worldPos.y) * newScale.y + app.stage.y};
         app.stage.x -= (newScreenPos.x-x) ;
         app.stage.y -= (newScreenPos.y-y) ;
-        document.getElementById('scale2D').value= newScale.x;
+        
         app.stage.scale.x = newScale.x;
         app.stage.scale.y = newScale.y;
-
-        if(app.stage.scale.x>10)
-        {
-          app.stage.scale.x = 10; app.stage.scale.y = 10;
-        }
-        if(app.stage.scale.x<0.3)
-        {
-          app.stage.scale.x = 0.3; app.stage.scale.y = 0.3;
-        }
-        //scaleGrid();
     }
 
     function zoom2(s,x,y)
@@ -33,6 +25,7 @@ var CameraControls = function(app, _domElement, grid)
         var newScreenPos = {x: (worldPos.x ) * newScale.x + app.stage.x, y: (worldPos.y) * newScale.y + app.stage.y};
         app.stage.x -= (newScreenPos.x-x) ;
         app.stage.y -= (newScreenPos.y-y) ;
+        
         app.stage.scale.x = newScale.x;
         app.stage.scale.y = newScale.y;
     }
@@ -41,14 +34,12 @@ var CameraControls = function(app, _domElement, grid)
     function scaleGrid()
     {
       var appscale = Math.floor(app.stage.scale.x);
-      console.log(appscale);
       if(appscale!=0)
       {
         if(appscale>5)
         {
           grid.scale.x = 0.1;
           grid.scale.y = 0.1;
-          console.log(grid.scale);
         }
         if(appscale<=5 && appscale>=1)
         {
@@ -60,27 +51,20 @@ var CameraControls = function(app, _domElement, grid)
       {
         grid.scale.x = 10;
         grid.scale.y = 10;
-        console.log(app.stage.scale.x);
       }
     }
 
 
     function activate()
     {
-		_domElement.addEventListener( 'pointermove', onPointerMove );
-	
+		_domElement.addEventListener( 'mousemove', onPointerMove );
     _domElement.addEventListener( 'touchend', onTouchEnd );
     _domElement.addEventListener( 'touchstart', onTouchStart );
     _domElement.addEventListener( 'touchmove', onTouchMove );
-
-		_domElement.addEventListener( 'pointerdown', onPointerDown );
-     
-
+		_domElement.addEventListener( 'mousedown', onPointerDown );
 		_domElement.addEventListener( 'pointerup', onPointerCancel );
-		
-
 		_domElement.addEventListener( 'pointerleave', onPointerCancel );
-        _domElement.addEventListener( 'mousewheel', onMouseWheel );
+    _domElement.addEventListener( 'wheel', onMouseWheel );
     }
 
    
@@ -88,17 +72,24 @@ var CameraControls = function(app, _domElement, grid)
 
     function deactivate()
     {
-		_domElement.removeEventListener( 'pointermove', onPointerMove );
+		_domElement.removeEventListener( 'mousemove', onPointerMove );
+    _domElement.removeEventListener( 'touchend', onTouchEnd );
+    _domElement.removeEventListener( 'touchstart', onTouchStart );
+    _domElement.removeEventListener( 'touchmove', onTouchMove );
 		_domElement.removeEventListener( 'pointerdown', onPointerDown );
 		_domElement.removeEventListener( 'pointerup', onPointerCancel );
 		_domElement.removeEventListener( 'pointerleave', onPointerCancel );
-        _domElement.removeEventListener( 'mousewheel', onMouseWheel );
-        _domElement.style.cursor = ''; 
+    _domElement.removeEventListener( 'wheel', onMouseWheel );
+    _domElement.style.cursor = ''; 
     }
+
+
+
 
     function onPointerDown(e)
     { 
-		if(e.button == 0 && document.getElementById("rulet").value == 1)
+      //console.log(app.canMove);
+		if(e.button == 0 && app.canMove == 1 && ![1,2,3,4,5].includes(app.userData.mod))
         { 
 		e.preventDefault();
         lastPos = {x:e.offsetX,y:e.offsetY};
@@ -107,7 +98,12 @@ var CameraControls = function(app, _domElement, grid)
 
     function onTouchStart(e)
     {   
-        if (document.getElementById("rulet").value == 1)
+      if (e.touches.length === 2) {
+        scaling = true;
+        app.userData.canTranslate = false;
+        pinchStart(e);
+      }
+        if (app.canMove == 1 && ![1,2,3,4,5].includes(app.userData.mod) && e.touches.length === 1)
         { 
         var touches = e.changedTouches;
         ongoingTouches.push(touches[0]);
@@ -118,7 +114,7 @@ var CameraControls = function(app, _domElement, grid)
 
     function onPointerMove(e)
     {
-        if(lastPos && document.getElementById("rulet").value == 1){
+        if(lastPos && app.canMove == 1 && !e.touches){
             app.stage.x += (e.offsetX-lastPos.x);
             app.stage.y += (e.offsetY-lastPos.y);  
             lastPos = {x:e.offsetX,y:e.offsetY};
@@ -127,7 +123,10 @@ var CameraControls = function(app, _domElement, grid)
 
     function onTouchMove(e)
     {   
-        if(lastPos  && document.getElementById("rulet").value == 1){
+      if (scaling  && e.touches.length === 2) {
+        pinch(e);
+    }
+        if(lastPos  && app.canMove == 1 && e.touches.length === 1){
             var touches = e.changedTouches;
             app.stage.x += (touches[0].pageX-lastPos.x);
             app.stage.y += (touches[0].pageY-lastPos.y);  
@@ -137,15 +136,30 @@ var CameraControls = function(app, _domElement, grid)
 
     function onTouchEnd(e)
     {   
-        if (document.getElementById("rulet").value == 1)
+      app.userData.canTranslate = true;
+      if (scaling  && e.touches.length === 2) {
+        pinch(e);
+        scaling = false;
+    }
+        if (app.canMove == 1  && e.touches.length === 1)
         {
         lastPos = null;
         }
     }
 
+    function pinchStart(e){
+      carrentScale=app.stage.scale.x/Math.hypot(e.touches[0].pageX - e.touches[1].pageX,e.touches[0].pageY - e.touches[1].pageY);
+    }
+    function pinch(e){
+      let zoomfactor=carrentScale*Math.hypot(e.touches[0].pageX - e.touches[1].pageX,e.touches[0].pageY - e.touches[1].pageY);
+      zoomfactor = zoomfactor<0.3 ? 0.3 : zoomfactor;
+      zoomfactor = zoomfactor>3 ? 3 : zoomfactor;
+      zoom2(zoomfactor, _domElement.getBoundingClientRect().width/2, _domElement.getBoundingClientRect().height/2);
+    }
+
     function onPointerCancel(e)
     { 
-      if (document.getElementById("rulet").value == 1)
+      if (app.canMove == 1)
         {
         e.preventDefault();
         lastPos = null;
@@ -157,9 +171,7 @@ var CameraControls = function(app, _domElement, grid)
         zoom(e.deltaY, e.offsetX, e.offsetY);
     }
 
-    document.getElementById('scale2D').addEventListener ('input', ()=>{
-      zoom2(document.getElementById('scale2D').value, _domElement.getBoundingClientRect().width/2, _domElement.getBoundingClientRect().height/2);
-    });
+  
 
     activate();
     this.activate = activate;

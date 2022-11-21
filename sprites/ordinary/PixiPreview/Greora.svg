@@ -1,0 +1,35 @@
+<svg width="64" height="48.3" xmlns="http://www.w3.org/2000/svg">
+
+ <g>
+  <title>Layer 1</title>
+  <rect stroke-width="1.5" stroke="#000" id="svg_1" height="25.65479" width="63.85762" y="0.02747" x="0.14519" fill="none"/>
+  <rect stroke-width="1.5" stroke="#000" id="svg_2" height="22.32603" width="63.79509" y="25.70155" x="0.14519" fill="none"/>
+  <line id="svg_5" y2="47.93079" x2="45.64018" y1="0.6081" x1="45.64018" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_7" y2="47.91682" x2="52.46369" y1="0.8434" x1="52.46369" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_9" y2="47.85524" x2="59.05191" y1="0.49046" x1="59.05191" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_21" y2="47.6913" x2="38.96995" y1="0.32652" x1="38.96995" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_32" y2="47.60292" x2="5.51476" y1="0.28024" x1="5.51476" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_34" y2="47.58895" x2="12.33827" y1="0.51553" x1="12.33827" stroke-width="0.5" stroke="#000" fill="none"/>
+  <path id="svg_35" d="m17.18804,47.70366" opacity="undefined" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_36" y2="47.52737" x2="18.80601" y1="0.16259" x1="18.80601" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_38" y2="47.76685" x2="25.55821" y1="0.44417" x1="25.55821" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line id="svg_40" y2="47.75289" x2="32.38173" y1="0.67946" x1="32.38173" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_43" y2="45.52213" x2="63.49371" y1="45.52213" x1="0.13115" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_44" y2="42.65328" x2="63.73961" y1="42.65328" x1="0.37705" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_45" y2="39.94836" x2="63.57568" y1="39.94836" x1="0.21312" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_46" y2="36.99754" x2="63.57568" y1="36.99754" x1="0.21312" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_47" y2="34.29262" x2="63.41175" y1="34.29262" x1="0.04918" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_48" y2="31.42377" x2="63.65765" y1="31.42377" x1="0.29508" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_49" y2="28.71885" x2="63.49371" y1="28.71885" x1="0.13115" stroke="#000" fill="none"/>
+  <path id="svg_50" d="m0.54098,22.40738l63.36257,0" opacity="undefined" stroke-width="0.5" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_51" y2="19.70246" x2="63.73961" y1="19.70246" x1="0.37705" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_52" y2="16.83361" x2="63.98552" y1="16.83361" x1="0.62295" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_53" y2="14.12869" x2="63.82158" y1="14.12869" x1="0.45902" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_54" y2="11.17787" x2="63.82158" y1="11.17787" x1="0.45902" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_55" y2="8.47295" x2="63.65765" y1="8.47295" x1="0.29508" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_56" y2="5.6041" x2="63.90355" y1="5.6041" x1="0.54098" stroke="#000" fill="none"/>
+  <line stroke-width="0.5" id="svg_57" y2="2.89918" x2="63.73962" y1="2.89918" x1="0.37705" stroke="#000" fill="none"/>
+  <rect stroke="#000" id="svg_58" height="6.14456" width="22.77103" y="0.47536" x="40.97588" stroke-width="0.5" fill="#000000"/>
+  <rect stroke="#000" id="svg_60" height="6.14456" width="22.77103" y="-1.57283" x="14.83137" stroke-width="0.5" fill="#000000"/>
+ </g>
+</svg>
