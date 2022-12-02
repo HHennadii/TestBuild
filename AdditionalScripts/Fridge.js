@@ -314,7 +314,7 @@ var Fridge = function(container2d, app)
             </div>
         `
         div.innerHTML=added;
-        fridgeWidthSet(false,StackControl);
+        fridgeWidthSet(listBorders.fresh.includes(ObjType)?true:false,StackControl);
     
         if (arr_build.length != 0)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
@@ -554,63 +554,7 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
             addMultipleToArray(arr, SlimDeck, key, itemSet[key]);
         }
 
-        /*var itemSet = {};
-        var ext = this.userData.extCooling==true?'Ext':'Int';
-        this.configuration.forEach(function(a){
-            var name = a.ObjType+ext+a.width;
-            itemSet[name] = itemSet[name] + 1 || 1;
-        });
-        console.log(itemSet);
-        for(var key in itemSet){
-            arr.push([SlimDeck[key].art,SlimDeck[key].name,itemSet[key],SlimDeck[key].price,SlimDeck[key].price*itemSet[key]]);
-        }
-        var shelvesObj = {};
-        this.configuration.forEach(function(a){
-            var realWidth=+a.width, realAmount=+a.shAmount;
-            if(a.width == 2500) {
-                realWidth = 1250;
-                realAmount = +a.shAmount*2;
-            } 
-            if(a.width == 1875) {
-                realWidth = 937;
-                realAmount = +a.shAmount*2;
-            }
-            var name = "shelf"+realWidth+'x'+a.shDepth;
-            shelvesObj[name] = shelvesObj[name] ? +shelvesObj[name]+realAmount : +realAmount;
-        });
-        for(var key in shelvesObj) {
-            console.log(key);
-            console.log(SlimDeck[key]);
-            arr.push([SlimDeck[key].art,SlimDeck[key].name,shelvesObj[key],SlimDeck[key].price,SlimDeck[key].price*shelvesObj[key]]);
-        }
-
-
-        var doorObj = {}
-        this.configuration.forEach(function(a){
-            var name = a.ObjType+a.doorType+a.width;
-            doorObj[name] = doorObj[name] + 1 || 1;
-        });
-        for(var key in doorObj){
-            console.log(key);
-            arr.push([SlimDeck[key].art,SlimDeck[key].name,doorObj[key],SlimDeck[key].price,SlimDeck[key].price*doorObj[key]]);
-        }
-
-
-        if(this.userData.editionalBordersEm) arr.push([SlimDeck["akrile"].art,SlimDeck["akrile"].name,this.userData.editionalBordersEm,SlimDeck["akrile"].price,SlimDeck["akrile"].price*+this.userData.editionalBordersEm]);
-        arr.push([SlimDeck[renderedsprite.userData.faceborderR].art,SlimDeck[renderedsprite.userData.faceborderR].name,1,SlimDeck[renderedsprite.userData.faceborderR].price,SlimDeck[renderedsprite.userData.faceborderR].price]);
-        arr.push([SlimDeck[renderedsprite.userData.faceborderL].art,SlimDeck[renderedsprite.userData.faceborderL].name,1,SlimDeck[renderedsprite.userData.faceborderL].price,SlimDeck[renderedsprite.userData.faceborderL].price]);
-
-        var diffs=0;
-        for(var i = 0; i<this.configuration.length; i++)
-        {
-            var currentStack = this.configuration[i];
-            var nextStack = this.configuration[i+1];
-            if(getDifference(currentStack,nextStack)) {
-                diffs++;
-            }
-        }
-        if(diffs) arr.push([SlimDeck["innerDifTypeWillBe"].art,SlimDeck["innerDifTypeWillBe"].name,diffs,SlimDeck["innerDifTypeWillBe"].price,SlimDeck["innerDifTypeWillBe"].price*diffs]);
-        console.log(arr);*/
+        
         var fullPrice=0;
         for(var i = 1; i<arr.length; i++) {
             fullPrice+=+arr[i][4]*100;

@@ -755,7 +755,15 @@ export const wallMenu =`
                 <button class="wall_button wallCF" id="radio-columnS" value="2"><img src="Media/SVG/Cround.svg" class="wall-icon"></button>
                 <button class="wall_button wallCF" id="radio-columnR" value="3"><img src="Media/SVG/Crect.svg" class="wall-icon"></button>
                 </div>
-                
+
+                <div id="WallControlsDisplay" class="hide">
+                    <div class="wall-param">Set walls <br> height to:
+                        <input id="WallsHeight" class="numder-input" style="margin-left:2em" type="number" value="3.5">
+                    </div>
+                    <div class="wall-param">Next wall <br> height is:
+                        <input id="NextWallHeight" class="numder-input" style="margin-left:2em" type="number" value="3.5">
+                    </div>
+                </div>
 	            
             </div>   
 			</li>

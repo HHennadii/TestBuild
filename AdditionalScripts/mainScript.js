@@ -813,8 +813,7 @@ ActivateMode(0);
 }
 
 function disabalEdit(){
-	$(".wallCF").removeClass('wall_buttons');
-	$(".doorCF").removeClass('door_buttons');
+	OffSelectedWallControl();
 	ActivateMode(0);
 }
 
@@ -888,19 +887,34 @@ function rullerControl(item){
 	$(".wallCF").addClass('wall_button');
 }
 
-function wallControl(item){
-	if ($(item.currentTarget).hasClass('wall_buttons')){
+function SelectedWallControl(item){
 		$(".wallCF").removeClass('wall_buttons');
 		$(".wallCF").addClass('wall_button');
-		$(item.currentTarget).removeClass('wall_buttons');
-		$(item.currentTarget).addClass('wall_button');
+		$(item).removeClass('wall_button');
+		$(item).addClass('wall_buttons');
+		if(item.id=="radio-wall")
+			$("#WallControlsDisplay").removeClass('hide');
+		else
+			$("#WallControlsDisplay").addClass('hide');
+
+}
+
+function OffSelectedWallControl(){
+		$(".wallCF").removeClass('wall_buttons');
+		$(".wallCF").addClass('wall_button');
+		$("#WallControlsDisplay").addClass('hide');
+
+
+}
+
+function wallControl(item){
+	if ($(item.currentTarget).hasClass('wall_buttons')){
+		OffSelectedWallControl(item.currentTarget);
 		ActivateMode(0);
 	}
 	else{
-		$(".wallCF").removeClass('wall_buttons');
-		$(".wallCF").addClass('wall_button');
-		$(item.currentTarget).removeClass('wall_button');
-		$(item.currentTarget).addClass('wall_buttons');
+		SelectedWallControl(item.currentTarget)
+		console.log(item.currentTarget.id);
 		ActivateMode(item.currentTarget.id);
 	}
 	$(".rullerCF").removeClass('close-main-menus');
@@ -908,8 +922,7 @@ function wallControl(item){
 
 function doorControl(item){
 	ActivateMode(item.currentTarget.id);
-	$(".wallCF").removeClass('wall_buttons');
-	$(".wallCF").addClass('wall_button');
+	OffSelectedWallControl()
 	$(".rullerCF").removeClass('close-main-menus');
 	
 }

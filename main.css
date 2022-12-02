@@ -1069,10 +1069,36 @@ background-color: rgb(209, 209, 209);
   background-color: #ededed;
   }
   
+.numder-input{
+  width: 80px;
+  height: 30px;
+  transition: 0.3s;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid black;
+  background-color: #fff;
+  font-size: 15px;
+  color: #000;
+  transition: 0.3s;
+  text-align: center;
+}  
+
 .Background_button:hover {
   background-color: rgb(209, 209, 209);
   }
 
+.hide{
+  display:none;
+}
+.wall-param{
+  font-size:13px; 
+  margin-top: 15px; 
+  font-family: Oxygen;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+
+}
 .wall_button {
   margin: 15px 0px;
   outline: none;

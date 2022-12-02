@@ -2079,6 +2079,10 @@ function decimalAdjust(value, exp) {
             <img class="wall-icon" src="./Media/SVG/height.svg">        
             <input class="xyz_input" type="number" id="heightSet" value="0.15">
         </div>
+        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+            <img class="wall-icon" src="./Media/SVG/width.svg">        
+            <input class="xyz_input" type="number" id="lengthSet" value="0.15">
+        </div>
     </div>    
 `
 }
