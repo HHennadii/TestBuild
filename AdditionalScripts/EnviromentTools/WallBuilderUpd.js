@@ -18,6 +18,7 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
     var currentMod = 0;
     var wallType = 0;
+    var wallHeight = 3.5;
 
     function setMod(id) {
         currentMod = id;
@@ -27,6 +28,24 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
     function setWallType(id) {
         wallType = id;   
+    }
+
+    function setGlobalWallHeightTo(height) {
+        _edgegroup.children.forEach(wall => {
+            wall.userData.height = height;
+        })
+        _blockgroup.children.forEach(wall => {
+            wall.userData.height = height;
+        })
+        _columngroup.children.forEach(wall => {
+            wall.userData.height = height;
+        })
+
+        
+    }
+
+    function setWallHeightTo(height) {
+        wallHeight = height;
     }
 
     function activate() {
@@ -337,7 +356,7 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
             vertex: [],
             width: 15,
             offset: 0,
-            height: 3.5,
+            height: wallHeight,
         };
 
         wall.scale.y = 0.15;
@@ -352,6 +371,20 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
         createhelper(wall,{x:-32,y:0}); //left
         createhelper(wall,{x:32,y:0}); //right
+
+        wall.clone = function () {
+            const pos1 = {
+                x:wall.userData.vertex[0].position.x+20,
+                y:wall.userData.vertex[0].position.y+20,
+            }
+            const pos2 = {
+                x:wall.userData.vertex[1].position.x+20,
+                y:wall.userData.vertex[1].position.y+20,
+            }
+            const a1 = createCorner(pos1);
+            const a2 = createCorner(pos2);
+            createWallBetweenWidth(a1,a2,wall.userData.width, wall.userData.height,0);
+        }
 
         wall.interactive = false;
         wall
@@ -414,7 +447,8 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         menuDiv.innerHTML =wallMenu(x,y);
         document.body.appendChild(menuDiv);
         $("#closeMenu").click(()=>hideContextMenu()); 
-		$("#deleteobject").click(()=>removeActiveEdge()); 
+		$("#deleteobject").click(()=>removeActiveEdge());
+        $("#copyObject").click(()=>_activeEdge.clone()); 
         $("#sizeSet").prop("value",decimalAdjust(_activeEdge.scale.y, -2));
         $("#offset").prop("value",_activeEdge.userData.offset); 
         $("#sizeSet").on("input",e=> {
@@ -442,7 +476,37 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         $("#heightSet").on("input",e => {
             _activeEdge.userData.height = $("#heightSet").val();
         });
+        $("#lengthSet").prop("value", getWallLength(_activeEdge));
+        $("#lengthSet").on("input",e => {
+            const scaleCoef = $("#lengthSet").val()/getWallLength(_activeEdge);
+            setWallLength(2);
+        });
+
 	}
+
+    function setWallLength(scaleCoef) {
+        const a1 = _activeEdge.userData.vertex[0];
+        const a2 = _activeEdge.userData.vertex[1];
+
+        const initialPosition = {
+            x: a1.
+        }
+
+        a1.position.x = a1.position.x*scaleCoef;
+        a1.position.y = a1.position.y*scaleCoef;
+        a2.position.x = a2.position.x*scaleCoef;
+        a2.position.y = a2.position.y*scaleCoef;
+
+        const deltax = (a2.position.x - a1.position.x)/scaleCoef;
+        const deltay = (a2.position.y - a1.position.y)/scaleCoef;
+
+         a1.position.x -= deltax;
+         a1.position.y -= deltay;
+         a2.position.x -= deltax;
+         a2.position.y -= deltay;
+
+        adjust(_activeEdge, _activeEdge.userData.vertex[0], _activeEdge.userData.vertex[1]);
+    }
 
     function showContextMenuRound(x,y) {
 		if(menuDiv!=null) menuDiv.remove();
@@ -452,7 +516,11 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         menuDiv.innerHTML =columnMenu(x,y);
         document.body.appendChild(menuDiv);
         $("#closeMenu").click(()=>hideContextMenu()); 
-		$("#deleteobject").click(()=>removeActiveEdge());
+		$("#deleteobject").click(()=>removeColumnBlock());
+        $("#copyObject").click(()=> {
+            _activeEdge.clone();
+            hideContextMenu();
+        });
         $("#sizeSet").prop("value",decimalAdjust(_activeEdge.scale.y, -2)); 
         $("#sizeSet").on("input",e=>{ _activeEdge.scale.y=$("#sizeSet").val();_activeEdge.scale.x=$("#sizeSet").val();});
         $("#cover").click(function(e){ if(e.currentTarget==e.target)$("#cover").remove();});
@@ -466,7 +534,11 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         menuDiv.innerHTML = squareMenu(x,y);
         document.body.appendChild(menuDiv);
         $("#closeMenu").click(()=>hideContextMenu()); 
-		$("#deleteobject").click(()=>removeActiveEdge());
+		$("#deleteobject").click(()=>removeColumnBlock());
+        $("#copyObject").click(()=> {
+            _activeEdge.clone();
+            hideContextMenu();
+        });
         $("#sizeSety").prop("value",decimalAdjust(_activeEdge.scale.y, -2)); 
         $("#sizeSety").on("input",e=> _activeEdge.scale.y=$("#sizeSety").val());
         $("#sizeSetx").prop("value",decimalAdjust(_activeEdge.scale.x, -2)); 
@@ -548,6 +620,12 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 	}
     
 
+    function removeColumnBlock() {
+        _activeEdge.parent.removeChild(_activeEdge);
+        _activeEdge = null;
+        hideContextMenu();
+    }
+
 	function removeActiveEdge() {
         if(_activeEdge && !_activeEdge.userData) {
             _activeEdge.parent.removeChild(_activeEdge);
@@ -578,8 +656,9 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
             });
 	}
 
+    
 
-    function createColumn(x,y,s=0.5) {
+    function createColumn(x,y,s=0.5, height = wallHeight) {
         function onDragStart(event) {
             if(currentMod == 1  && app.userData.canTranslate ) {
             this.data = event.data;
@@ -619,6 +698,13 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         
         column.scale.x = s;
         column.scale.y = s;
+        column.userData = {
+            height: height,
+        }
+
+        column.clone = function () {
+            createColumn(this.x+20, this.y+20, this.scale.x, this.userData.height).interactive = true;
+        }
 
         column.interactive = false;
         column.buttonMode = true;
@@ -658,7 +744,7 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         showContextMenuRound(event.data.global.x, event.data.global.y);
     };
 
-    function createBlock(x,y, sx=1,sy=1) {
+    function createBlock(x,y, sx=1,sy=1, height=wallHeight) {
         function onDragStart(event) {
             if(currentMod == 1  && app.userData.canTranslate ) {
             //document.getElementById("rulet").value = 0;
@@ -702,6 +788,13 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
         column.scale.x = sx;
         column.scale.y = sy;
+        column.userData = {
+            height: height,
+        }
+
+        column.clone = function () {
+            createBlock(this.x+20, this.y+20, this.scale.x, this.scale.y, this.userData.height).interactive = true;
+        }
 
         column.interactive = false;
         column.buttonMode = true;
@@ -1639,13 +1732,13 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
             let columns = decoded.columns;
             columns.forEach(column => {
-                var col = createColumn(column.position.x, column.position.y, column.scale.x);
+                var col = createColumn(column.position.x, column.position.y, column.scale.x, column.height);
                 col.interactive = true;
             })
 
             let blocks = decoded.blocks;
             blocks.forEach(block => {
-                var col = createBlock(block.position.x, block.position.y, block.scale.x);
+                var col = createBlock(block.position.x, block.position.y, block.scale.x, block.scale.y, block.height);
                 col.interactive = true;
             })
         }
@@ -1968,6 +2061,8 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
     this.deactivate = deactivate;
     this.setMod = setMod;
     this.setWallType = setWallType;
+    this.setGlobalWallHeightTo = setGlobalWallHeightTo;
+    this.setWallHeightTo = setWallHeightTo;
     this.spawnDoor = spawnDoor;
     this.spawnWindow = spawnWindow;
     this.testLoadFromJson = testLoadFromJson;
