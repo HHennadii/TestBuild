@@ -4,7 +4,7 @@ import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Furniture} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
-import {MainWindow, colorSelect, addStackButtons, depthSelector, RBMmenuConf} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, colorSelect, addStackButtons, depthSelector, RBMmenuConf, CopyButton} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -30,12 +30,12 @@ var LokoAccessories = function(container2d, app)
             configurateItem();
         })
         $(".add-right").click(function() {
-            add_Conf_stack("right");
+            add_Conf_stack("right",...CopyThisConfigeration);
             configurateItem();
             
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left");
+            add_Conf_stack("left",...CopyThisConfigeration);
             configurateItem();
         });
 
@@ -220,7 +220,6 @@ var LokoAccessories = function(container2d, app)
             <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">
             <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>
             ${CloseButton}
-            
         `
         div.innerHTML=added;
     
@@ -231,7 +230,6 @@ var LokoAccessories = function(container2d, app)
         document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
         }
         AddToArray(arr_build,{id:StackControl, value: itemToInsert}, side =="right" ? "right" : "left");
-        
     }
 
 

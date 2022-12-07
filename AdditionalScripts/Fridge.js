@@ -1,16 +1,16 @@
 import * as THREE from '../jsm/three.module.js';
-import {OrbitControls } from '../jsm/controls/OrbitControls.js';
+import {OrbitControls} from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {SlimDeck} from './DataSet.js';
-import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet, CopyButton} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.FRIDGE.Elements;
 const listBorders = ConfigurableList.FRIDGE.ElementsBorders;
 const needToFixIt = "FRIDGE";
-let arr_build=[];
+let arr_build=[],CopyThisConfigeration=[];
 let timer;
 var Fridge = function(container2d, app) 
 {
@@ -31,12 +31,12 @@ var Fridge = function(container2d, app)
 
 
         $(".add-right").click(function() {
-            add_Conf_stack("right");
+            add_Conf_stack("right",...CopyThisConfigeration);
             configurateItem();
             
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left");
+            add_Conf_stack("left",...CopyThisConfigeration);
             configurateItem();
         });
 
@@ -81,6 +81,7 @@ var Fridge = function(container2d, app)
 		showConfigurator();
     }
 
+    
 
     function reloadConfigurator(item){
         clean_conf_stack();
@@ -117,6 +118,27 @@ var Fridge = function(container2d, app)
         document.getElementById("akrile").innerHTML=item.userData.editionalBordersEm;
         showConfigurator();
         configurateItem();
+    }
+
+    function CopyStack(item){
+        if($(item.currentTarget).hasClass('active-copy')){
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            CopyThisConfigeration =[];
+        }
+        else{
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            $(item.currentTarget).addClass('active-copy');
+            $(item.currentTarget).removeClass('deactive-copy');
+            let itemToCopy=arr_build[arr_build.findIndex(e => e.id == +item.currentTarget.id.replace(/[^0-9]/g,''))];
+            CopyThisConfigeration =[itemToCopy.ObjType, itemToCopy.width,itemToCopy.shAmount,itemToCopy.shDepth, itemToCopy.isDoor, itemToCopy.doorType];
+        }    
+    }
+
+    function ClearCopyBuffer(){
+        $(".active-copy").removeClass('active-copy');
+        CopyThisConfigeration =[];
     }
 
 
@@ -199,7 +221,6 @@ var Fridge = function(container2d, app)
         UpDateValueInArray(arr_build,id,-1,-1,-1,-1,-1,value);
 
         configurateItem(); 
-        //console.log(arr_build);
     }
 
     function NextObj(e){
@@ -222,6 +243,7 @@ var Fridge = function(container2d, app)
             UpDateValueInArray(arr_build,id,value,937);
             $(".bottomCt").click((e)=>ExtendedBottom(e));
         }
+        ClearCopyBuffer();
         SetInterface(id, value); 
         configurateItem(); 
     }
@@ -246,16 +268,12 @@ var Fridge = function(container2d, app)
             UpDateValueInArray(arr_build,id,value,937);
             $(".bottomCt").click((e)=>ExtendedBottom(e));
         }
+        ClearCopyBuffer();
         SetInterface(id, value); 
         configurateItem();  
     }
 
     function UpdateInterface(id,width,shAmount,shDepth, isDoor, doorType){
-        /*const shDepthS = document.querySelectorAll('input[name="depthshelf'+id+'"]');
-        shDepthS.forEach(i=> {if(shDepth == i.value) 
-                                        i.checked = true;
-                            });
-        */
         const shAmountS = document.querySelectorAll('input[name="amountshelf'+id+'"]');
         shAmountS.forEach(i=> {if(shAmount == i.value) 
                                         i.checked = true;
@@ -279,6 +297,8 @@ var Fridge = function(container2d, app)
 
     function add_Conf_stack (side="right", ObjType="standart", width="937",shAmount="4",shDepth="360", isDoor=false, doorType="FrontOpen")
     {
+
+        console.log(ObjType, width,shAmount,shDepth, isDoor, doorType);
         StackControl=StackControl+1;       
         let buttonType, CloseButton = ``;
         
@@ -305,6 +325,7 @@ var Fridge = function(container2d, app)
             <div class="shelf-but-selection">
             ${FridgesConfiguration(StackControl)}
     </div>
+            ${CopyButton(StackControl)}
             ${CloseButton}
             <div class="remove_post right-side-bt">
                 <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
@@ -325,9 +346,10 @@ var Fridge = function(container2d, app)
         SetInterface(StackControl, ObjType);
         UpdateInterface(StackControl,width,shAmount,shDepth, isDoor, doorType);
         $(".bottomCt").click((e)=>ExtendedBottom(e));
+        $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
     }
 
-
+//
 var confreqv;
 
 function onWindowResize()

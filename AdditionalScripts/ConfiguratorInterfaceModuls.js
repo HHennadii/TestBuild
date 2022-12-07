@@ -224,7 +224,10 @@ export const feedback =`
 
 export const RBMmenuConf =`
 <div id="menu" class="objct_settings" style="position: absolute; top: 526px; left: 914px;">
-    <div style="width: 242px; align-items: center; display: flex; justify-content: space-between;">
+    <div style="width: 222px; align-items: center; display: flex; justify-content: space-between;">
+        <button class="button_float" id="copyObject">
+            <img class="wall-icon" src="./Media/SVG/Copy.svg">
+        </button>
         <button id="ORremove" class="button_float" >
             <img class="wall-icon" src="./Media/SVG/Bin.svg">
         </button>
@@ -278,7 +281,7 @@ export const shelfconf = `
 green
         </label>
         <label class="colorRow">
-            <input class="radio" type="radio" name="color" value="14 14 16">
+            <input class="radio" type="radio" name="color" value="14 1xyz_input4 16">
             <img src="../Media/SVG/C6.svg" class="dots"> Ultima black
         </label>
         </div>
@@ -459,7 +462,9 @@ export function fridgeWidthSet(freeze,StackControl){
 }
 
 
-
+export function CopyButton(StackControl){
+    return `<button id="Copy${StackControl}" class="copy-menu deactive-copy"> <img  class="bar-iconC" src="./Media/SVG/Copy.svg"> </button>`
+}
 
 export function ShelfsConfiguration(StackControl){
     return `<div class="dropdown-main-btn">

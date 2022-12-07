@@ -3,7 +3,7 @@ import {OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {shelf} from './DataSet.js';
-import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -11,7 +11,7 @@ import {getColorCode} from './Coefs.js';
 const list = ConfigurableList.SHELF.Elements;
 const listBorders = ConfigurableList.SHELF.ElementsBorders;
 const needToFixIt = "SHELF";
-let arr_build=[];
+let arr_build=[],CopyThisConfigeration=[];
 let timer;
 var Shelf = function(container2d, app) 
 {
@@ -32,12 +32,12 @@ var Shelf = function(container2d, app)
 
 
         $(".add-right").click(function() {
-            add_Conf_stack("right");
+            add_Conf_stack("right",...CopyThisConfigeration);
             configurateItem();
             
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left");
+            add_Conf_stack("left",...CopyThisConfigeration);
             configurateItem();
         });
 
@@ -100,6 +100,27 @@ var Shelf = function(container2d, app)
             bottom.checked = true;
         showConfigurator();
         configurateItem();
+    }
+
+    function CopyStack(item){
+        if($(item.currentTarget).hasClass('active-copy')){
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            CopyThisConfigeration =[];
+        }
+        else{
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            $(item.currentTarget).addClass('active-copy');
+            $(item.currentTarget).removeClass('deactive-copy');
+            let itemToCopy=arr_build[arr_build.findIndex(e => e.id == +item.currentTarget.id.replace(/[^0-9]/g,''))];
+            CopyThisConfigeration =[itemToCopy.ObjType,itemToCopy.width,itemToCopy.amount, itemToCopy.gridtype, itemToCopy.gridheight, itemToCopy.borderamount, itemToCopy.IsBorders, itemToCopy.IsInner, itemToCopy.hooksA];
+        }    
+    }
+
+    function ClearCopyBuffer(){
+        $(".active-copy").removeClass('active-copy');
+        CopyThisConfigeration =[];
     }
 
 
@@ -230,7 +251,7 @@ var Shelf = function(container2d, app)
         configurateItem(); 
     }
 
-    function stupidlateinformation(type,depth){
+    function depthDependents(type,depth){
         switch(type){
             case "Type4":
                 if (depth<400) return true;
@@ -261,8 +282,9 @@ var Shelf = function(container2d, app)
         document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
         UpDateValueInArray(arr_build,id,-1,-1,value);
         SetInterface(id, value); 
-        configurateItem(); 
-        if(stupidlateinformation(value,depth)){return NextObj(e)}
+        configurateItem();
+        ClearCopyBuffer(); 
+        if(depthDependents(value,depth)){return NextObj(e)}
     }
 
     function PrevObj(e){
@@ -279,7 +301,8 @@ var Shelf = function(container2d, app)
         UpDateValueInArray(arr_build,id,-1,-1,value);
         SetInterface(id, value); 
         configurateItem();  
-        if(stupidlateinformation(value,depth)){return PrevObj(e)}
+        ClearCopyBuffer(); 
+        if(depthDependents(value,depth)){return PrevObj(e)}
     }
 
     function UpdateInterface(id,width,gridtype,amount, gridheight,borderamount,mianborder,innerborder, hooksA){
@@ -344,6 +367,7 @@ var Shelf = function(container2d, app)
             ${ShelfsConfiguration(StackControl)}
             </div>
             ${CloseButton}
+            ${CopyButton(StackControl)}
             <div class="remove_post right-side-bt">
                 <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
             </div>
@@ -362,6 +386,7 @@ var Shelf = function(container2d, app)
         SetInterface(StackControl, ObjType);
         UpdateInterface(StackControl,width,gridtype,amount, gridheight,borderamount,IsBorders,IsInner, amount)
         $(".bottomCt").click((e)=>ExtendedBottom(e));
+        $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
     }
 
 

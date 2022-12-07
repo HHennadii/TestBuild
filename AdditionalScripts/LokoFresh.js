@@ -4,7 +4,7 @@ import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
-import {MainWindow, colorSelect, addStackButtons, isRoof, RBMmenuConf} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, colorSelect, addStackButtons, isRoof, RBMmenuConf, CopyButton} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -15,7 +15,7 @@ const needToFixIt = "LOKOFRESH";
 var LokoFresh = function(container2d, app) 
 {
     var prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, StackControl= 0;
-    let arr_build=[];
+    let arr_build=[],CopyThisConfigeration=[];
     let timer;
 	var hdrCubeRenderTarget;
 
@@ -30,12 +30,12 @@ var LokoFresh = function(container2d, app)
             configurateItem();
         })
         $(".add-right").click(function() {
-            add_Conf_stack("right");
+            add_Conf_stack("right",...CopyThisConfigeration);
             configurateItem();
             
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left");
+            add_Conf_stack("left",...CopyThisConfigeration);
             configurateItem();
         });
 
@@ -90,6 +90,28 @@ var LokoFresh = function(container2d, app)
 
         showConfigurator();
         configurateItem();
+    }
+
+
+    function CopyStack(item){
+        if($(item.currentTarget).hasClass('active-copy')){
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            CopyThisConfigeration =[];
+        }
+        else{
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            $(item.currentTarget).addClass('active-copy');
+            $(item.currentTarget).removeClass('deactive-copy');
+            let itemToCopy=arr_build[arr_build.findIndex(e => e.id == +item.currentTarget.id.replace(/[^0-9]/g,''))];
+            CopyThisConfigeration =[itemToCopy];
+        }    
+    }
+    
+    function ClearCopyBuffer(){
+        $(".active-copy").removeClass('active-copy');
+        CopyThisConfigeration =[];
     }
 
 
@@ -174,6 +196,7 @@ var LokoFresh = function(container2d, app)
         document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
         UpDateValueInArray(arr_build,id,value);
         IsRoof(arr_build);
+        ClearCopyBuffer();
         configurateItem(); 
          
     }
@@ -190,6 +213,7 @@ var LokoFresh = function(container2d, app)
         document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
         UpDateValueInArray(arr_build,id,value);
         IsRoof(arr_build);
+        ClearCopyBuffer();
         configurateItem();  
     }
 
@@ -199,7 +223,7 @@ var LokoFresh = function(container2d, app)
         let buttonType, CloseButton = ``;
 
         if (!listBorders.terminal.includes(itemToInsert))
-            CloseButton = `<button class="remove_post"> <img id="Close${StackControl}" class="bar-iconC" src="./Media/SVG/Cross.svg"> </button>`;
+            CloseButton = `<button class="remove_post"> <img id="Close${StackControl}" class="bar-iconC" src="./Media/SVG/Cross.svg"> </button>${CopyButton(StackControl)}`;
         AddToArray(arr_build,{id:StackControl, value: itemToInsert}, side =="right" ? "right" : "left");
         CreateButtonControl();
         for (let key in listBorders){   
@@ -220,6 +244,7 @@ var LokoFresh = function(container2d, app)
             <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">
             <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>
             ${CloseButton}
+            
             <div class="remove_post right-side-bt">
                 <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
             </div>
@@ -234,6 +259,7 @@ var LokoFresh = function(container2d, app)
         document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
         document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
         IsRoof(arr_build);
+        $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
     }
 
 

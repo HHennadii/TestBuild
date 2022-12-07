@@ -5,14 +5,14 @@ import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {shelf} from './DataSet.js';
-import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.DOUBLESHELF.Elements;
 const listBorders = ConfigurableList.DOUBLESHELF.ElementsBorders;
 const needToFixIt = "SHELF";
-let arr_build=[];
+let arr_build=[],CopyThisConfigeration=[];
 let timer;
 var DoubleShelf = function(container2d, app) 
 {
@@ -33,12 +33,12 @@ var DoubleShelf = function(container2d, app)
 
 
         $(".add-right").click(function() {
-            add_Conf_stack("right");
+            add_Conf_stack("right",...CopyThisConfigeration);
             configurateItem();
             
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left");
+            add_Conf_stack("left",...CopyThisConfigeration);
             configurateItem();
         });
 
@@ -46,6 +46,7 @@ var DoubleShelf = function(container2d, app)
         $("#spawnconfigurated").click(function(){
             spawnConfigurated();
             hideConfigurator();
+            console.log(arr_build);
             arr_build = ClearArray ();
             $("#confarea").remove();
           });
@@ -113,7 +114,27 @@ var DoubleShelf = function(container2d, app)
         configurateItem();
     }
 
+    function CopyStack(item){
+        if($(item.currentTarget).hasClass('active-copy')){
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            CopyThisConfigeration =[];
+        }
+        else{
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            $(item.currentTarget).addClass('active-copy');
+            $(item.currentTarget).removeClass('deactive-copy');
+            const itemToCopy=arr_build[arr_build.findIndex(e => e.id == +item.currentTarget.id.replace(/[^0-9]/g,''))];
+            const flipedSide = arr_build[arr_build.findIndex(e => e.id == -item.currentTarget.id.replace(/[^0-9]/g,''))];
+            CopyThisConfigeration = [itemToCopy,flipedSide];
+        }    
+    }
 
+    function ClearCopyBuffer(){
+        $(".active-copy").removeClass('active-copy');
+        CopyThisConfigeration =[];
+    }
 
 
     function AddToArray (arr, Push, place="right"){
@@ -291,6 +312,7 @@ var DoubleShelf = function(container2d, app)
         document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
         UpDateValueInArray(arr_build,+(side+id),-1,-1,value);
         SetInterface(id, value); 
+        ClearCopyBuffer();
         configurateItem();
         if(stupidlateinformation(value,depth)){return NextObj(e)} 
     }
@@ -312,6 +334,7 @@ var DoubleShelf = function(container2d, app)
             document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
         UpDateValueInArray(arr_build,+(side+id),-1,-1,value);
         SetInterface(id, value); 
+        ClearCopyBuffer();
         configurateItem();  
         if(stupidlateinformation(value,depth)){return PrevObj(e)}
     }
@@ -365,6 +388,7 @@ var DoubleShelf = function(container2d, app)
             ${ShelfsConfiguration(StackControl)}
     </div>
             ${CloseButton}
+            ${CopyButton(StackControl)}
             <div class="remove_post right-side-bt">
                 <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
             </div>
@@ -376,7 +400,7 @@ var DoubleShelf = function(container2d, app)
     
         if (arr_build.length != 0)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
-        AddToArray(arr_build,{id:StackControl, width: width, amount: amount, ObjType: ObjType, gridtype:gridtype, gridheight:gridheight, borderamount:borderamount, IsBorders: IsBorders, IsInner: IsInner,hooksA:hooksA}, side =="right" ? "right" : "left");
+        AddToArray(arr_build,{id:side =="right" ? StackControl : -StackControl, width: width, amount: amount, ObjType: ObjType, gridtype:gridtype, gridheight:gridheight, borderamount:borderamount, IsBorders: IsBorders, IsInner: IsInner,hooksA:hooksA}, side =="right" ? "right" : "left");
         if(itemMIrror){
             ObjType=itemMIrror.ObjType; 
             width=itemMIrror.width;
@@ -388,13 +412,14 @@ var DoubleShelf = function(container2d, app)
             IsInner=itemMIrror.IsInner;
             hooksA=itemMIrror.hooksA;
         }
-        AddToArray(arr_build,{id:-StackControl, width: width, amount: amount, ObjType: ObjType, gridtype:gridtype, gridheight:gridheight, borderamount:borderamount, IsBorders: IsBorders, IsInner: IsInner,hooksA:hooksA}, side =="right" ? "right" : "left");
+        AddToArray(arr_build,{id:side =="right" ? -StackControl : StackControl, width: width, amount: amount, ObjType: ObjType, gridtype:gridtype, gridheight:gridheight, borderamount:borderamount, IsBorders: IsBorders, IsInner: IsInner,hooksA:hooksA}, side =="right" ? "right" : "left");
         document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
         document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
 
         SetInterface(StackControl, ObjType);
         UpdateInterface(StackControl,width,gridtype,amount, gridheight,borderamount,IsBorders,IsInner, amount)
         $(".bottomCt").click((e)=>ExtendedBottom(e));
+        $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
         $("#arrow"+StackControl).click((e)=>{
             if (e.target.src.includes("right")){
             e.target.src= e.target.src.replace(/right/, 'left');

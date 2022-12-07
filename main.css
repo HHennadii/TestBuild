@@ -229,7 +229,7 @@ z-index: 10;
 position: absolute;
 top: 480px;
 left: 200px;
-width: 240px;
+width: 220px;
 height: 180px;
 z-index: 10;
 }
@@ -254,15 +254,25 @@ background-color: rgb(209, 209, 209);
 
 }
 
+.box-param{
+  width: 163px; 
+  height: 40px; 
+  align-items: center; 
+  display: flex; 
+  justify-content: space-around;   
+  background-color: #fDfDfD;  
+  border: 0.5px solid  black;
+}
+
 .button_float{
 background-color: #ededed; 
 display: flex;
 outline: none;
 align-items: center;   
 justify-content: center;
-width: 80px;
+width: 55px;
 padding: 5px;
-height: 60px;
+height: 40px;
 border: none;
 border: 1px solid  black;
 }
@@ -627,6 +637,19 @@ font-size: 14px;
 color: #858585;
 }
 
+.param-input-feild{
+  width: 80px;
+  height: 30px;
+  transition: 0.3s;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid black;
+  background-color: #fff;
+  font-size: 15px;
+  color: #000;
+  transition: 0.3s;
+  text-align: center;
+}
 
 
 .xyz_input {
@@ -771,6 +794,27 @@ font-size: 15px;
   border: none;
   top:5px;
   right:5px;
+}
+
+.active-copy{
+  background-color: #72c2fb;
+}
+
+.deactive-copy{
+  background-color: transparent;
+}
+
+.copy-menu{
+  position: absolute;
+  outline: none;
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  top:5px;
+  left:5px;
 }
 
 

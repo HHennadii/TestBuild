@@ -2060,28 +2060,32 @@ function decimalAdjust(value, exp) {
     return `
     <div id="menu" class="objct_settings" style="position: absolute; top: ${y+"px"}; left: ${x+"px"};">
         <div style="width: 100%; align-items: center; display: flex; justify-content: start;">
+            <button class="button_float" id="copyObject">
+                <img class="wall-icon" src="./Media/SVG/Copy.svg">
+            </button>
             <button class="button_float" id="deleteobject">
                 <img class="wall-icon" src="./Media/SVG/Bin.svg">
             </button>
             <button class="button_float" id="closeMenu">
                 <img class="wall-icon" src="./Media/SVG/Cross.svg">
             </button>
+            
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/width.svg">        
-            <input class="xyz_input" type="number" id="sizeSet" value="0.15">
+            <input class="param-input-feild" type="number" id="sizeSet" value="0.15">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/offset.svg">        
-            <input class="xyz_input" type="number" id="offset" value="0">
+            <input class="param-input-feild" type="number" id="offset" value="0">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/height.svg">        
-            <input class="xyz_input" type="number" id="heightSet" value="0.15">
+            <input class="param-input-feild" type="number" id="heightSet" value="0.15">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
-            <img class="wall-icon" src="./Media/SVG/width.svg">        
-            <input class="xyz_input" type="number" id="lengthSet" value="0.15">
+        <div class="box-param">
+            <img class="wall-icon" src="./Media/SVG/length.svg">        
+            <input class="param-input-feild" type="number" id="lengthSet" value="0.15">
         </div>
     </div>    
 `
@@ -2092,6 +2096,9 @@ function columnMenu(x,y){
     return `
     <div id="menu" class="objct_settings" style="position: absolute; top: ${y+"px"}; left: ${x+"px"};">
         <div style="width: 100%; align-items: center; display: flex; justify-content: start;">
+            <button class="button_float" id="copyObject">
+                <img class="wall-icon" src="./Media/SVG/Copy.svg">
+            </button>
             <button class="button_float" id="deleteobject">
                 <img class="wall-icon" src="./Media/SVG/Bin.svg">
             </button>
@@ -2099,9 +2106,9 @@ function columnMenu(x,y){
                 <img class="wall-icon" src="./Media/SVG/Cross.svg">
             </button>
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/width.svg">        
-            <input class="xyz_input" type="number" id="sizeSet" value="0.15">
+            <input class="param-input-feild" type="number" id="sizeSet" value="0.15">
         </div>
     </div>    
 `
@@ -2111,6 +2118,9 @@ function squareMenu(x,y){
     return `
     <div id="menu" class="objct_settings" style="position: absolute; top: ${y+"px"}; left: ${x+"px"};">
         <div style="width: 100%; align-items: center; display: flex; justify-content: start;">
+            <button class="button_float" id="copyObject">
+                <img class="wall-icon" src="./Media/SVG/Copy.svg">
+            </button>
             <button class="button_float" id="deleteobject">
                 <img class="wall-icon" src="./Media/SVG/Bin.svg">
             </button>
@@ -2118,13 +2128,13 @@ function squareMenu(x,y){
                 <img class="wall-icon" src="./Media/SVG/Cross.svg">
             </button>
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/width.svg">        
-            <input class="xyz_input" type="number" id="sizeSetx" value="0.15">
+            <input class="param-input-feild" type="number" id="sizeSetx" value="0.15">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/height.svg">        
-            <input class="xyz_input" type="number" id="sizeSety" value="0.15">
+            <input class="param-input-feild" type="number" id="sizeSety" value="0.15">
         </div>
     </div>    
 `
@@ -2142,13 +2152,13 @@ function doorMenu(x,y){
                 <img class="wall-icon" src="./Media/SVG/Cross.svg">
             </button>
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/width.svg">        
-            <input class="xyz_input" type="number" id="doorSize" value="0.15">
+            <input class="param-input-feild" type="number" id="doorSize" value="0.15">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/height.svg">        
-            <input class="xyz_input" type="number" id="doorheight" value="0.15">
+            <input class="param-input-feild" type="number" id="doorheight" value="0.15">
         </div>
         <div style="width: 100%; align-items: center; display: flex; justify-content: start;">
         <button class="button_float" id="doorSide">
@@ -2174,17 +2184,17 @@ function windowMenu(x,y){
                 <img class="wall-icon" src="./Media/SVG/Cross.svg">
             </button>
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/width.svg">        
-            <input class="xyz_input" type="number" id="doorSize" value="0.15">
+            <input class="param-input-feild" type="number" id="doorSize" value="0.15">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/height.svg">        
-            <input class="xyz_input" type="number" id="doorheight" value="0.15">
+            <input class="param-input-feild" type="number" id="doorheight" value="0.15">
         </div>
-        <div style="width: 158px; height: 50px; align-items: center; display: flex; justify-content: space-around;   background-color: #fDfDfD;  border: 0.5px solid  black;">
+        <div class="box-param">
             <img class="wall-icon" src="./Media/SVG/windHeight.svg">        
-            <input class="xyz_input" type="number" id="doorground" value="0.15">
+            <input class="param-input-feild" type="number" id="doorground" value="0.15">
         </div>
     </div>    
 `
