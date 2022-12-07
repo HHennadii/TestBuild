@@ -4,7 +4,7 @@ import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Furniture} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
-import {MainWindow, colorSelect, addStackButtons, depthSelector, RBMmenuConf, CopyButton} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, colorSelect, addStackButtons, depthSelector, RBMmenuConf, ItemCatalogAcces} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -30,12 +30,12 @@ var LokoAccessories = function(container2d, app)
             configurateItem();
         })
         $(".add-right").click(function() {
-            add_Conf_stack("right",...CopyThisConfigeration);
+            add_Conf_stack("right");
             configurateItem();
             
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left",...CopyThisConfigeration);
+            add_Conf_stack("left");
             configurateItem();
         });
 
@@ -145,42 +145,7 @@ var LokoAccessories = function(container2d, app)
         configurateItem();
     }
 
-
-    function NextObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex+1])
-            value=listBorders[type][itemIndex+1];
-        else
-            value=listBorders[type][0];
-        for(let i=0;i<arr_build.length;i++)
-        {
-            $("#Img"+arr_build[i].id).attr("src", list[value].imageName);
-            document.getElementById("alt"+arr_build[i].id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-            UpDateValueInArray(arr_build,arr_build[i].id,value);
-        }
-        configurateItem(); 
-         
-    }
-
-    function PrevObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex-1])
-            value=listBorders[type][itemIndex-1];
-        else
-            value=listBorders[type][listBorders[type].length-1];
-        for(let i=0;i<arr_build.length;i++)
-        {
-            $("#Img"+arr_build[i].id).attr("src", list[value].imageName);
-            document.getElementById("alt"+arr_build[i].id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-            UpDateValueInArray(arr_build,arr_build[i].id,value);
-        }
-        
-        configurateItem();  
-    }
+    
 
     function add_Conf_stack (side="right", itemToInsert="SetB")
     {
@@ -195,17 +160,18 @@ var LokoAccessories = function(container2d, app)
         }
 
         if (arr_build.length > 0){
-            CloseButton = `<button class="remove_post"> <img id="Close${StackControl}" class="bar-iconC" src="./Media/SVG/Cross.svg"> </button>`;
+            CloseButton = `<button class="remove_post"> <img id="Close${StackControl}" class="bar-iconC" src="./Media/SVG/Cross.svg"> </button>
+                           <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>`;
             itemToInsert=arr_build[0].value;
             }
         else
             CloseButton =`
-                            <div class="remove_post right-side-bt">
-                                <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
-                            </div>
-                            <div class="remove_post left-side-bt">
-                                <img id="Left${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg"></div>
-                            </div>
+            <div id="alt${StackControl}" class="dropdown-objSelect-btn">
+                <div class="name-tag"> ${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount} </div>
+                <div class="dropdown-content-objSelect-btn direction-colomn" style="border-bottom:0px solid black">
+                    ${ItemCatalogAcces("LOKOACCESSORIES",StackControl,listBorders.All)}
+                </div>
+            </div>    
             `
         CreateButtonControl();
         
@@ -218,23 +184,27 @@ var LokoAccessories = function(container2d, app)
         side =="right" ? last_in.before(div) : first_in.after(div);
         let added=`
             <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">
-            <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>
             ${CloseButton}
         `
         div.innerHTML=added;
     
         if (arr_build.length > 0)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
-        else{
-        document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
-        document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
-        }
         AddToArray(arr_build,{id:StackControl, value: itemToInsert}, side =="right" ? "right" : "left");
+        $(".obj-item").click((e)=>SelectStack(e));
     }
 
 
-
-
+    function SelectStack(e){
+        const id = e.target.id.split("_");
+        for(let i=0;i<arr_build.length;i++)
+        {
+        $("#Img"+arr_build[i].id[0]).attr("src", list[id[1]].imageName);
+        $("#alt"+arr_build[i].id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
+        }
+        UpDateValueInArray(arr_build,...id);
+        configurateItem();
+    }
 
 
 
@@ -446,6 +416,13 @@ function spriteItem(seq, colors, depth, x=0, y=0, rot=0) {
 
         return(arr);
     }
+
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spriteItem(this.configuration, this.colors, this.depth, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
+
     renderedsprite.saveIt = function() {
         var thisObject = {
             name:this.name,
@@ -582,6 +559,8 @@ function spriteItem(seq, colors, depth, x=0, y=0, rot=0) {
         renderedsprite.children[2].y = 2;
         renderedsprite.children[3].y = 2;
     }
+
+    return renderedsprite;
 }
 
 
@@ -607,7 +586,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();

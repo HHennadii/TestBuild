@@ -3,7 +3,7 @@ import {OrbitControls} from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {SlimDeck} from './DataSet.js';
-import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet, CopyButton} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -223,56 +223,6 @@ var Fridge = function(container2d, app)
         configurateItem(); 
     }
 
-    function NextObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex+1])
-            value=listBorders[type][itemIndex+1];
-        else
-            value=listBorders[type][0];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
-        if (listBorders.fresh.includes(value)){
-            fridgeWidthSet(true,id);
-            UpDateValueInArray(arr_build,id,value,797);
-            $(".bottomCt").click((e)=>ExtendedBottom(e));
-        }
-        else {
-            fridgeWidthSet(false,id);
-            UpDateValueInArray(arr_build,id,value,937);
-            $(".bottomCt").click((e)=>ExtendedBottom(e));
-        }
-        ClearCopyBuffer();
-        SetInterface(id, value); 
-        configurateItem(); 
-    }
-
-    function PrevObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex-1])
-            value=listBorders[type][itemIndex-1];
-        else
-            value=listBorders[type][listBorders[type].length-1];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
-        if (listBorders.fresh.includes(value)){
-            fridgeWidthSet(true,id);
-            UpDateValueInArray(arr_build,id,value,797);
-            $(".bottomCt").click((e)=>ExtendedBottom(e));
-        }
-        else {
-            fridgeWidthSet(false,id);
-            UpDateValueInArray(arr_build,id,value,937);
-            $(".bottomCt").click((e)=>ExtendedBottom(e));
-        }
-        ClearCopyBuffer();
-        SetInterface(id, value); 
-        configurateItem();  
-    }
-
     function UpdateInterface(id,width,shAmount,shDepth, isDoor, doorType){
         const shAmountS = document.querySelectorAll('input[name="amountshelf'+id+'"]');
         shAmountS.forEach(i=> {if(shAmount == i.value) 
@@ -321,18 +271,17 @@ var Fridge = function(container2d, app)
         side =="right" ? last_in.before(div) : first_in.after(div);
         let added=`
             <img class="img_selector-shelf"  id="Img${StackControl}" alt="${ObjType}" src="${list[ObjType].imageName}">
-            <div id="alt${StackControl}" style="text-align: center; padding-top:5px;">${list[ObjType].itname}<br>&#8203</div>
+            <div id="alt${StackControl}" class="dropdown-objSelect-btn">
+               <div class="name-tag"> ${list[ObjType].itname}<br>${list[ObjType].cellemount} </div>
+                <div class="dropdown-content-objSelect-btn direction-colomn" style="border-bottom:0px solid black">
+                ${ItemCatalog("FRIDGE",StackControl,listBorders.All)}
+                </div>
+            </div>
             <div class="shelf-but-selection">
             ${FridgesConfiguration(StackControl)}
     </div>
             ${CopyButton(StackControl)}
             ${CloseButton}
-            <div class="remove_post right-side-bt">
-                <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
-            </div>
-            <div class="remove_post left-side-bt">
-                <img id="Left${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg"></div>
-            </div>
         `
         div.innerHTML=added;
         fridgeWidthSet(listBorders.fresh.includes(ObjType)?true:false,StackControl);
@@ -340,13 +289,20 @@ var Fridge = function(container2d, app)
         if (arr_build.length != 0)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
         AddToArray(arr_build,{id:StackControl, ObjType: ObjType, width: width, shAmount: shAmount, shDepth:shDepth, isDoor:isDoor, doorType:doorType}, side =="right" ? "right" : "left");
-        document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
-        document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
-
         SetInterface(StackControl, ObjType);
         UpdateInterface(StackControl,width,shAmount,shDepth, isDoor, doorType);
         $(".bottomCt").click((e)=>ExtendedBottom(e));
         $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
+        $(".obj-item").click((e)=>SelectStack(e));
+    }
+
+    function SelectStack(e){
+        const id = e.target.id.split("_");
+        $("#Img"+id[0]).attr("src", list[id[1]].imageName);
+        $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
+        UpDateValueInArray(arr_build,...id);
+        ClearCopyBuffer();
+        configurateItem();
     }
 
 //
@@ -585,7 +541,11 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
         arr[0].push('','',fullPrice/100,fullPrice/100);
         return(arr);
     }
-
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.faceborderR, this.faceborderL, this.userData.extCooling, this.userData.editionalBordersEm, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
     renderedsprite.saveIt = function() {
         var thisObject = {
             name:this.name,
@@ -636,6 +596,8 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
     renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -21.6;
     renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 21.6;
     renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 21.6;
+
+    return renderedsprite;
 }
 
 
@@ -650,7 +612,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45; console.log(item.target.value);});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();

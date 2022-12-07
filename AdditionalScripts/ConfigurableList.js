@@ -231,44 +231,44 @@ export const ConfigurableList = {
         },
         "Elements": {
             'Type1': {
-                'itname': 'Standart<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'Standart',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type1.png'
             },
             'Type2': {
-                'itname': 'Hooks<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'Hooks',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type2.png'
             },
             'Type3': {
-                'itname': 'Tree<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'Tree',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type3.png'
             },
             'Type4': {
-                'itname': 'Streng.<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'Streng.',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type4.png'
             },
             'Type5': {
-                'itname': 'Bread<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'Bread',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type5.png'
             },
             'Type6': {
-                'itname': 'Cereals<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'Cereals',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type6.png'
             },
             'Type7': {
-                'itname': 'For boxes<br>Shelf',
-                'cellemount':'Shelves',
+                'itname': 'For boxes',
+                'cellemount':'Shelf<br>Shelves',
                 'name': 'Shelf Stack',
                 'imageName':'../sprites/configurator/SHELF/Preview/Type7.png'
             },

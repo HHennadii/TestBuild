@@ -3,7 +3,7 @@ import {OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {shelf} from './DataSet.js';
-import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -269,42 +269,6 @@ var Shelf = function(container2d, app)
         return false;
     }
 
-    function NextObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        const depth =document.querySelector('input[name="depth"]:checked').value;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex+1])
-            value=listBorders[type][itemIndex+1];
-        else
-            value=listBorders[type][0];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
-        UpDateValueInArray(arr_build,id,-1,-1,value);
-        SetInterface(id, value); 
-        configurateItem();
-        ClearCopyBuffer(); 
-        if(depthDependents(value,depth)){return NextObj(e)}
-    }
-
-    function PrevObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        const depth =document.querySelector('input[name="depth"]:checked').value;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex-1])
-            value=listBorders[type][itemIndex-1];
-        else
-            value=listBorders[type][listBorders[type].length-1];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + `&#8203`;
-        UpDateValueInArray(arr_build,id,-1,-1,value);
-        SetInterface(id, value); 
-        configurateItem();  
-        ClearCopyBuffer(); 
-        if(depthDependents(value,depth)){return PrevObj(e)}
-    }
-
     function UpdateInterface(id,width,gridtype,amount, gridheight,borderamount,mianborder,innerborder, hooksA){
         const borderamountS = document.querySelectorAll('input[name="borderamount'+id+'"]');
         borderamountS.forEach(i=> {if(borderamount == i.value) 
@@ -362,31 +326,39 @@ var Shelf = function(container2d, app)
         side =="right" ? last_in.before(div) : first_in.after(div);
         let added=`
             <img class="img_selector-shelf"  id="Img${StackControl}" alt="${ObjType}" src="${list[ObjType].imageName}">
-            <div id="alt${StackControl}" style="text-align: center; padding-top:5px;">${list[ObjType].itname}<br>&#8203</div>
+            <div id="alt${StackControl}" class="dropdown-objSelect-btn">
+               <div class="name-tag"> ${list[ObjType].itname}<br>${list[ObjType].cellemount} </div>
+                <div class="dropdown-content-objSelect-btn direction-colomn" style="border-bottom:0px solid black">
+                ${ItemCatalog("SHELF",StackControl,listBorders.All)}
+                </div>
+            </div>
             <div class="shelf-but-selection">
             ${ShelfsConfiguration(StackControl)}
             </div>
             ${CloseButton}
             ${CopyButton(StackControl)}
-            <div class="remove_post right-side-bt">
-                <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
-            </div>
-            <div class="remove_post left-side-bt">
-                <img id="Left${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg"></div>
-            </div>
+            
         `
         div.innerHTML=added;
     
         if (arr_build.length != 0)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
         AddToArray(arr_build,{id:StackControl, width: width, amount: amount, ObjType: ObjType, gridtype:gridtype, gridheight:gridheight, borderamount:borderamount, IsBorders: IsBorders, IsInner: IsInner,hooksA:hooksA}, side =="right" ? "right" : "left");
-        document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
-        document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
 
         SetInterface(StackControl, ObjType);
         UpdateInterface(StackControl,width,gridtype,amount, gridheight,borderamount,IsBorders,IsInner, amount)
         $(".bottomCt").click((e)=>ExtendedBottom(e));
         $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
+        $(".obj-item").click((e)=>SelectStack(e));
+    }
+
+    function SelectStack(e){
+        const id = e.target.id.split("_");
+        $("#Img"+id[0]).attr("src", list[id[1]].imageName);
+        $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
+        UpDateValueInArray(arr_build,id[0],-1,-1,id[1]);
+        ClearCopyBuffer();
+        configurateItem();
     }
 
 
@@ -818,6 +790,7 @@ baseShelfSet[baseShelf] = baseShelfSet[baseShelf] + 1 || 1;
 */
 
 
+
 function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
     renderedsprite = new PIXI.Container();
     renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
@@ -828,6 +801,13 @@ function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
     renderedsprite.userData.height = height;
     renderedsprite.userData.depth = depth;
     renderedsprite.userData.extBot = extBot;
+
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.height, this.userData.depth, this.userData.extBot, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
+
 
     renderedsprite.sayHi = function() {
         var color = getColorCode(this.userData.colors)
@@ -911,6 +891,7 @@ function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
         renderedsprite.children[2].y = 32*(+depth)/1000;
         renderedsprite.children[3].y = 32*(+depth)/1000;
     }
+    return renderedsprite;
 }
 
 
@@ -926,7 +907,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();
@@ -941,7 +923,6 @@ function hideContextMenu()
 {
     document.getElementById("ORClick").remove();
 }
-
     
 function configurateItem()
 {

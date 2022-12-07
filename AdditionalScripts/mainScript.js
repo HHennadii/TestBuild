@@ -560,7 +560,9 @@ $('#save').click(function() {
 		columngroup.children.forEach(column => {
 			let columnobject = {
 				position: {x:column.x, y:column.y},
-				scale: {x:column.scale.x, y: column.scale.y},
+				scale: {x:column.scale.x,
+				},
+				height: column.userData.height,
 			}
 			projectData.columns.push(columnobject);
 		})
@@ -569,6 +571,7 @@ $('#save').click(function() {
 			let blockobject = {
 				position: {x:block.x, y:block.y},
 				scale: {x:block.scale.x, y: block.scale.y},
+				height: block.userData.height,
 			}
 			projectData.blocks.push(blockobject);
 		})
@@ -799,6 +802,13 @@ switch (item.id){
 			//console.log(e.target.value);
 			builder.setStructureAlpha(e.target.value);
 		});
+		$('#WallsHeight').change(e => {
+			builder.setGlobalWallHeightTo(e.target.value);
+		});
+		$('#NextWallHeight').change(e => {
+			builder.setWallHeightTo(e.target.value);
+		});
+
 		$('.rullerCF').click(e=>rullerControl(e));
 		$('.snapCF').click(e=>snapControl(e));
 		if(backdrop.getBD()) {

@@ -4,7 +4,7 @@ import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
-import {MainWindow, colorSelect, addStackButtons, isRoof, depthSelector, RBMmenuConf, CopyButton} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, colorSelect, addStackButtons, isRoof, depthSelector, RBMmenuConf, CopyButton, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from '../AdditionalScripts/ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -189,8 +189,8 @@ var LokoLogis = function(container2d, app)
 
 
     function SwitchMode (item_id, value) {
-        document.getElementById("Right"+arr_build[item_id].id).dataset.type = value;
-        document.getElementById("Left"+arr_build[item_id].id).dataset.type = value;
+        $("#alt"+item_id).children('.dropdown-content-objSelect-btn').html(ItemCatalogPostBox("LOKOLOGIS",item_id,listBorders[value]));
+        $(".obj-item").click((e)=>SelectStack(e));
     }
 
 
@@ -198,15 +198,15 @@ var LokoLogis = function(container2d, app)
     {
             const itemIndex = arr_build.findIndex(obj => obj.id ==id);
             if(!arr_build[itemIndex+1] && arr_build[itemIndex-1] && listBorders.fresh.includes(arr_build[itemIndex-1].value) && !listBorders.terminal.includes(arr_build[itemIndex].value)){
-                SwitchMode(itemIndex,"fresh");		
+                SwitchMode(id,"fresh");		
                 $("#Img"+id).attr("src", list.Fridge.imageName);
-                document.getElementById("alt"+id).innerHTML= list.Fridge.itname + "<br />" + list.Fridge.cellemount;
+                $("#alt"+id).children('.name-tag').html(list.Fridge.itname + "<br />" + list.Fridge.cellemount);
                UpDateValueInArray(arr_build,id,"Fridge");
             }
             if(!arr_build[itemIndex-1] && arr_build[itemIndex+1] && listBorders.fresh.includes(arr_build[itemIndex+1].value) && !listBorders.terminal.includes(arr_build[itemIndex].value)){
-                SwitchMode(itemIndex,"fresh");		
+                SwitchMode(id,"fresh");		
                 $("#Img"+id).attr("src", list.Fridge.imageName);
-                document.getElementById("alt"+id).innerHTML= list.Fridge.itname + "<br />" + list.Fridge.cellemount;
+                $("#alt"+id).children('.name-tag').html(list.Fridge.itname + "<br />" + list.Fridge.cellemount);
                 UpDateValueInArray(arr_build,id,"Fridge");
              }   
     }
@@ -218,7 +218,7 @@ var LokoLogis = function(container2d, app)
             const itemIndex = arr_build.findIndex(obj => obj.id ==searchFor);
             const limitB = itemIndex>centerIndex ? 1 : -1;
             if (arr_build[itemIndex+limitB]){
-                SwitchMode(itemIndex+limitB,"usual");	
+                SwitchMode(arr_build[itemIndex+limitB].id,"usual");	
             }
     }
     
@@ -232,9 +232,9 @@ var LokoLogis = function(container2d, app)
                 if(!listBorders.fresh.includes(arr_build[i].value)){
                     arr_build[i].value="Fridge";
                     $("#Img"+arr_build[i].id).attr("src", list.Fridge.imageName);
-                    document.getElementById("alt"+arr_build[i].id).innerHTML= list.Fridge.itname + "<br />" + list.Fridge.cellemount; 
+                    $("#alt"+arr_build[i].id).children('.name-tag').html(list.Fridge.itname + "<br />" + list.Fridge.cellemount);
                 }
-                SwitchMode(i,"fresh");
+                SwitchMode(arr_build[i].id,"fresh");
             }		
     }
 
@@ -252,46 +252,7 @@ var LokoLogis = function(container2d, app)
     }
 
 
-    function NextObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex+1])
-            value=listBorders[type][itemIndex+1];
-        else
-            value=listBorders[type][0];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-        if (listBorders.fresh.includes(value)) 
-            RowToFrige(id);	
-        else 
-            ActiveNext(id);
-        UpDateValueInArray(arr_build,id,value);
-        IsRoof(arr_build);
-        ClearCopyBuffer();
-        configurateItem(); 
-         
-    }
 
-    function PrevObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex-1])
-            value=listBorders[type][itemIndex-1];
-        else
-            value=listBorders[type][listBorders[type].length-1];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-        if (listBorders.fresh.includes(value)) 
-            RowToFrige(id);	
-        else 
-            ActiveNext(id);
-        UpDateValueInArray(arr_build,id,value);
-        IsRoof(arr_build);
-        ClearCopyBuffer();
-        configurateItem();  
-    }
 
     function add_Conf_stack (side="right", itemToInsert="Type1",reconfiguration=false)
     {
@@ -315,31 +276,42 @@ var LokoLogis = function(container2d, app)
         div.setAttribute('id', "Collecton"+StackControl);
         div.setAttribute('class', 'caru-box');
         side =="right" ? last_in.before(div) : first_in.after(div);
+        const selector=itemToInsert=="Type1"?"usual":"terminal";
         let added=`
             <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">
-            <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>
+            <div id="alt${StackControl}" class="dropdown-objSelect-btn">
+               <div class="name-tag"> ${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount} </div>
+                <div class="dropdown-content-objSelect-btn direction-colomn" style="border-bottom:0px solid black">
+                ${ItemCatalogPostBox("LOKOLOGIS",StackControl,listBorders[selector])}
+                </div>
+            </div> 
             ${CloseButton}
-            
-            <div class="remove_post right-side-bt">
-                <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
-            </div>
-            <div class="remove_post left-side-bt">
-                <img id="Left${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg"></div>
-            </div>
         `
         div.innerHTML=added;
     
         if (!listBorders.terminal.includes(itemToInsert))
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
-        document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
-        document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
         if(!reconfiguration) IsPrevFridge(StackControl);
         IsRoof(arr_build);
         $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
+        $(".obj-item").click((e)=>SelectStack(e));
     }
 
 
 
+    function SelectStack(e){
+        const id = e.target.id.split("_");
+        $("#Img"+id[0]).attr("src", list[id[1]].imageName);
+        $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
+        if (listBorders.fresh.includes(id[1])) 
+            RowToFrige(id[0]);	
+        else 
+            ActiveNext(id[0]);
+        UpDateValueInArray(arr_build,...id);
+        IsRoof(arr_build);
+        ClearCopyBuffer();
+        configurateItem();
+    }
 
 
 
@@ -431,10 +403,8 @@ function pranimate()
 
 
 var preloadedMeshes = {};
-var sprites=[];
 var renderedsprite = null;
-var menuDiv;
-var clickTimer = null;
+
 
 function localWorld(item)
 {
@@ -964,6 +934,13 @@ function spritePostBox(seq, colors, kazyrek, depth, x=0, y=0, rot=0) {
         arr[0].push('','',fullPrice/100,fullPrice/100);
         return(arr);
     }
+
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spritePostBox(this.configuration, this.colors, this.kazyrek, this.depth, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
+
     renderedsprite.saveIt = function() {
         var thisObject = {
             name:this.name,
@@ -1062,6 +1039,8 @@ function spritePostBox(seq, colors, kazyrek, depth, x=0, y=0, rot=0) {
             renderedsprite.children[1].y = -22;
         }
     }
+
+    return renderedsprite;
 }
 
 function showContextMenu(x,y)
@@ -1075,7 +1054,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();

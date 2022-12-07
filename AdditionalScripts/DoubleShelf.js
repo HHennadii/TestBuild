@@ -5,7 +5,7 @@ import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {shelf} from './DataSet.js';
-import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -870,7 +870,11 @@ function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
         arr[0].push('','',fullPrice/100,fullPrice/100);
         return(arr);
     }
-
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.height, this.userData.depth, this.userData.extBot, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
     renderedsprite.saveIt = function() {
         var thisObject = {
             name:this.name,
@@ -937,6 +941,7 @@ function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
         renderedsprite.children[2].y = 64*(+depth)/1000;
         renderedsprite.children[3].y = 64*(+depth)/1000;
     }
+    return renderedsprite;
 }
 
 
@@ -952,7 +957,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();

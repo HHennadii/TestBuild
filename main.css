@@ -1425,10 +1425,13 @@ z-index: 40;
 }
 
 .caru-box{
+  margin-bottom: 40px;
   width: 120px;
+  height: 260px;
   position: relative;
   display: inline-block; 
   font-family: Oxygen;
+  font-size: 16px;
 }
 
 .postbox_control{
@@ -1955,6 +1958,36 @@ input[type="radio"]{
     display: flex;
   }
 
+
+  .dropdown-objSelect-btn {
+    text-align: center; 
+    padding-top:5px;
+    border: none;
+    color:#000;
+    font-family: Oxygen;
+    font-size: 15px;
+    grid-row: 1;
+  }
+  
+  .dropdown-content-objSelect-btn {
+    display: none;
+    position: absolute;
+    bottom: 60px;
+    background-color: #f9f9f9;
+    width: 120px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+    align-items: center;
+  }
+  .dropdown-objSelect-btn:hover .dropdown-content-objSelect-btn {
+    display: flex;
+  }
+
+  .obj-item{
+    display: flex;
+    height: 30px;
+    justify-content: center;
+    border-bottom: 1px solid black;
+  }
 
   .dropdown-width {
     position: relative;

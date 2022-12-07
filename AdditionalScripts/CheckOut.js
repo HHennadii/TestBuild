@@ -4,7 +4,7 @@ import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Checkout} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
-import {MainWindow, colorSelect, addStackButtons, RBMmenuConf, CopyButton} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, colorSelect, addStackButtons, RBMmenuConf, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -157,41 +157,6 @@ var CheckOut = function(container2d, app)
         CreateButtonControl();
         configurateItem();
     }
-
-
-
-
-    function NextObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex+1])
-            value=listBorders[type][itemIndex+1];
-        else
-            value=listBorders[type][0];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-        UpDateValueInArray(arr_build,id,value);
-        ClearCopyBuffer();
-        configurateItem(); 
-         
-    }
-
-    function PrevObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex-1])
-            value=listBorders[type][itemIndex-1];
-        else
-            value=listBorders[type][listBorders[type].length-1];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-        UpDateValueInArray(arr_build,id,value);
-        ClearCopyBuffer();
-        configurateItem();  
-    }
-
     function add_Conf_stack (side="right", itemToInsert="Grid")
     {
         StackControl=StackControl+1;       
@@ -203,12 +168,10 @@ var CheckOut = function(container2d, app)
         CreateButtonControl();
         for (let key in listBorders){   
             if (listBorders[key].includes(itemToInsert)){
-                //console.log(key);
                 buttonType=key;
                 break;
             }
         }
-        //console.log(list[itemToInsert],itemToInsert);
         const first_in = document.getElementsByClassName('add-left')[0];
         const last_in = document.getElementsByClassName('add-right')[0]; 
         var div = document.createElement('div');
@@ -216,30 +179,33 @@ var CheckOut = function(container2d, app)
         div.setAttribute('class', 'caru-box');
         side =="right" ? last_in.before(div) : first_in.after(div);
         let added=`
-            <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">
-            <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>
+            <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">    
+            <div id="alt${StackControl}" class="dropdown-objSelect-btn">
+               <div class="name-tag"> ${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount} </div>
+                <div class="dropdown-content-objSelect-btn direction-colomn" style="border-bottom:0px solid black">
+                ${ItemCatalog("CHECKOUT",StackControl,listBorders.All)}
+                </div>
+            </div>             
             ${CloseButton}
             ${CopyButton(StackControl)}
-            <div class="remove_post right-side-bt">
-                <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
-            </div>
-            <div class="remove_post left-side-bt">
-                <img id="Left${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg"></div>
-            </div>
         `
         div.innerHTML=added;
     
         if (StackControl!=1)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
-        document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
-        document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
-        $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
+        $("#Copy"+StackControl).click((e)=>CopyStack(e));
+        $(".obj-item").click((e)=>SelectStack(e));
     }
 
 
-
-
-
+    function SelectStack(e){
+        const id = e.target.id.split("_");
+        $("#Img"+id[0]).attr("src", list[id[1]].imageName);
+        $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
+        UpDateValueInArray(arr_build,...id);
+        ClearCopyBuffer();
+        configurateItem();
+    }
 
 
 
@@ -295,7 +261,6 @@ function showConfigurator()
 
 
 	preloadMeshesObject(id);
-    //console.log(id);
 	
 	prcontrols =  new OrbitControls(prcamera, prrenderer.domElement);
 	//prcontrols.screenSpacePanning = false;
@@ -352,7 +317,6 @@ function localWorld(item)
 
 function preloadMeshesObject(id)
 {
-    //console.log("Preloading "+id);
     preloadedMeshes = {};
     const loader = new GLTFLoader();
         loader.load(
@@ -427,7 +391,6 @@ function fridgeCannopies(cannopyarray) {
 
 function fridgeSideCannopies(cannopyarray) {
     var volume=0;
-    //console.log(cannopyarray)
     for(var i = 2; i>=0; i--) {
         if(cannopyarray[i]) {
             cannopyarray[i]-=1;
@@ -491,12 +454,10 @@ function layoutRoof(itemsArray,kazyrek) //countedblocks, seq, kazyrek
     }
 
     if(itemsArray.length > 3) {
-        if(kazyrek) {
-            //console.log(fridgeCannopiesRoof(itemsArray)); 
+        if(kazyrek) { 
             return fridgeCannopiesRoof(itemsArray);
         }
         else {
-            //console.log(fridgeCannopies(fillOnes(itemsArray.length)));
             return fridgeCannopies(fillOnes(itemsArray.length));
         }
     }
@@ -591,7 +552,11 @@ function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
         arr[0].push('','',fullPrice/100,fullPrice/100);
         return(arr);
     }
-
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spriteFreshBox(this.configuration, this.colors, 0, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
     renderedsprite.saveIt = function() {
         var thisObject = {
             name:this.name,
@@ -637,6 +602,8 @@ function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
     renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -25;
     renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 25;
     renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 25;
+
+    return renderedsprite;
 }
 
 function showContextMenu(x,y)
@@ -650,7 +617,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();
@@ -731,7 +699,6 @@ renderedsprite
         .on('pointerover',filterOn)
         .on('pointerout',filterOff)
         .on('touchstart',function(event) {
-            //console.log(timer);
             if (!timer) {
                 timer = setTimeout(function() {onlongtouch(event);}, 2000);
             }      

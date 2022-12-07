@@ -4,7 +4,7 @@ import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
-import {MainWindow, colorSelect, isRoof, RBMmenuConf} from './ConfiguratorInterfaceModuls.js';
+import {MainWindow, colorSelect, isRoof, RBMmenuConf, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
@@ -137,34 +137,7 @@ var EcoLogis = function(container2d, app)
     
 
 
-    function NextObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex+1])
-            value=listBorders[type][itemIndex+1];
-        else
-            value=listBorders[type][0];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-        UpDateValueInArray(arr_build,id,value);
-        configurateItem(); 
-         
-    }
 
-    function PrevObj(e){
-        const id = e.target.id.replace(/[^0-9]/g,'');
-        const type = e.target.dataset.type;
-        let value, itemIndex = listBorders[type].indexOf(CarrentValue (arr_build, id));
-        if(listBorders[type][itemIndex-1])
-            value=listBorders[type][itemIndex-1];
-        else
-            value=listBorders[type][listBorders[type].length-1];
-        $("#Img"+id).attr("src", list[value].imageName);
-        document.getElementById("alt"+id).innerHTML= list[value].itname + "<br />" + list[value].cellemount;
-        UpDateValueInArray(arr_build,id,value);
-        configurateItem();  
-    }
 
     function add_Conf_stack (side="right", itemToInsert="Type1")
     {
@@ -187,21 +160,25 @@ var EcoLogis = function(container2d, app)
         document.getElementsByClassName('paramtr_conf')[0].append(div);
         let added=`
             <img class="img_selector" id="Img${StackControl}" alt="${itemToInsert}" src="${list[itemToInsert].imageName}">
-            <div id="alt${StackControl}">${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount}</div>
+            <div id="alt${StackControl}" class="dropdown-objSelect-btn">
+               <div class="name-tag"> ${list[itemToInsert].itname}<br>${list[itemToInsert].cellemount} </div>
+                <div class="dropdown-content-objSelect-btn direction-colomn" style="border-bottom:0px solid black">
+                ${ItemCatalogPostBox("ECOLOGIS",StackControl,listBorders.All)}
+                </div>
+            </div>
             ${CloseButton}
-            <div class="remove_post right-side-bt">
-                <img id="Right${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg">
-            </div>
-            <div class="remove_post left-side-bt">
-                <img id="Left${StackControl}" data-type="${buttonType}" class="bar-iconC" src="./Media/SVG/Close.svg"></div>
-            </div>
         `
         div.innerHTML=added;
-    
-
-        document.getElementById("Right"+StackControl).addEventListener( 'click', (e)=>NextObj(e)); 
-        document.getElementById("Left"+StackControl).addEventListener( 'click', (e)=>PrevObj(e));
         IsRoof(arr_build);
+        $(".obj-item").click((e)=>SelectStack(e));
+    }
+
+    function SelectStack(e){
+        const id = e.target.id.split("_");
+        $("#Img"+id[0]).attr("src", list[id[1]].imageName);
+        $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
+        UpDateValueInArray(arr_build,id[0],id[1]);
+        configurateItem();
     }
 
 var confreqv;
@@ -546,6 +523,12 @@ function spriteEcoLogis(seq, colors, kazyrek, depth, x=0, y=0, rot=0)
         return(arr);
     }
 
+    renderedsprite.clone = function() {
+        selectedItem = null;
+        renderedsprite = spriteEcoLogis(this.configuration, this.colors, this.kazyrek, this.depth, this.x+20, this.y+20, this.rotation);
+        spawnConfigurated();
+    }
+
     renderedsprite.saveIt = function() {
         var thisObject = {
             name:this.name,
@@ -595,6 +578,8 @@ function spriteEcoLogis(seq, colors, kazyrek, depth, x=0, y=0, rot=0)
     renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -14.5;
     renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 14.5;
     renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 14.5;
+
+    return renderedsprite;
 }
 
 
@@ -610,7 +595,8 @@ function showContextMenu(x,y)
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
     $("#ORclose").click(()=>{hideContextMenu()});
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();

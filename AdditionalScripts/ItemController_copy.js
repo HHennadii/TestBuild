@@ -67,7 +67,7 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
 		$("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
 		$("#ORclose").click(()=>{hideContextMenu()});
 		$("#ORremove").click(()=>{container.removeChild(selectedItem); hideContextMenu();});
-		$("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI)*45;});
+		$("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
 		$("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
 
 		$("input[name=test]").change(()=>{
@@ -923,8 +923,8 @@ async function asyncLoadPostBox(item) {
 		column.rotation.x = Math.PI/2;
 		column.scale.x = column2d.scale.x*2;
 		column.scale.z = column2d.scale.y*2;
-		column.scale.y = 3.5;
-		column.position.z = 1.75;
+		column.scale.y = column2d.userData.height;
+		column.position.z = column.scale.y/2;
 		_edgegroup3d.add(column);
 	}
 
@@ -938,8 +938,8 @@ async function asyncLoadPostBox(item) {
 		column.rotation.x = Math.PI/2;
 		column.scale.x = column2d.scale.x;
 		column.scale.z = column2d.scale.y;
-		column.scale.y = 3.5;
-		column.position.z = 1.75;
+		column.scale.y = column2d.userData.height;
+		column.position.z = column.scale.y/2;
 		_edgegroup3d.add(column);
 	}
 

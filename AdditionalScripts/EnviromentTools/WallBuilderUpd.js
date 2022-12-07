@@ -479,7 +479,7 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         $("#lengthSet").prop("value", getWallLength(_activeEdge));
         $("#lengthSet").on("input",e => {
             const scaleCoef = $("#lengthSet").val()/getWallLength(_activeEdge);
-            setWallLength(2);
+            setWallLength(scaleCoef);
         });
 
 	}
@@ -487,25 +487,16 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
     function setWallLength(scaleCoef) {
         const a1 = _activeEdge.userData.vertex[0];
         const a2 = _activeEdge.userData.vertex[1];
-
-        const initialPosition = {
-            x: a1.
-        }
-
-        a1.position.x = a1.position.x*scaleCoef;
-        a1.position.y = a1.position.y*scaleCoef;
-        a2.position.x = a2.position.x*scaleCoef;
-        a2.position.y = a2.position.y*scaleCoef;
-
-        const deltax = (a2.position.x - a1.position.x)/scaleCoef;
-        const deltay = (a2.position.y - a1.position.y)/scaleCoef;
-
-         a1.position.x -= deltax;
-         a1.position.y -= deltay;
-         a2.position.x -= deltax;
-         a2.position.y -= deltay;
-
-        adjust(_activeEdge, _activeEdge.userData.vertex[0], _activeEdge.userData.vertex[1]);
+        a1.position.x = a1.position.x*scaleCoef-(a1.x+a2.x)/2*(scaleCoef-1);
+        a1.position.y = a1.position.y*scaleCoef-(a1.y+a2.y)/2*(scaleCoef-1);
+        a2.position.x = a2.position.x*scaleCoef-(a1.x+a2.x)/2*(scaleCoef-1);
+        a2.position.y = a2.position.y*scaleCoef-(a1.y+a2.y)/2*(scaleCoef-1);
+        _activeEdge.userData.vertex[0].userData.edges.forEach(edge => {
+            adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);
+        })
+        _activeEdge.userData.vertex[1].userData.edges.forEach(edge => {
+            adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);
+        })
     }
 
     function showContextMenuRound(x,y) {

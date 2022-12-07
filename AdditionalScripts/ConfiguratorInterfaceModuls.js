@@ -1,3 +1,7 @@
+import {ConfigurableList} from './ConfigurableList.js';
+const list = ConfigurableList;
+
+
 export const MainWindow = `
 <div id="confarea">
 		<div class="conf_background"></div>
@@ -35,6 +39,24 @@ export const MainWindow = `
 	</div>
     
 `;
+
+export function ItemCatalog(name,originId,items){
+    let readyDiv=``;
+    items.forEach(e=> readyDiv+=`<div id="${originId+"_"+e}" class="box stronger obj-item">${list[name].Elements[e].itname}</div>`)
+    return readyDiv;
+}
+
+export function ItemCatalogPostBox(name,originId,items){
+    let readyDiv=``;
+    items.forEach(e=> readyDiv+=`<div id="${originId+"_"+e}" class="box stronger obj-item">${list[name].Elements[e].itname} ${list[name].Elements[e].cellemount}</div>`)
+    return readyDiv;
+}
+
+export function ItemCatalogAcces(name,originId,items){
+    let readyDiv=``;
+    items.forEach(e=> readyDiv+=`<div id="${originId+"_"+e}" class="box stronger obj-item">${list[name].Elements[e].cellemount}</div>`)
+    return readyDiv;
+}
 
 export const colorSelect = `
 <div class="dropdown-shelf">
@@ -74,13 +96,15 @@ export const RMBmenu =`
 
 <div id="menu" class="objct_settings" style="position: absolute; top: 534px; left: 406px;">
 <div style="width: 242px; align-items: center; display: flex; justify-content: end;">
+    <button class="button_float" id="copyObject"><img class="wall-icon" src="./Media/SVG/Copy.svg">
+    </button>
     <button id="ORremove" class="button_float" id="remove"><img class="wall-icon" src="./Media/SVG/Bin.svg">
     </button>
     <button id="ORclose" class="button_float"><img class="wall-icon" src="./Media/SVG/Cross.svg">
     </button>
 </div>
 <div style="width: 100%; height: 50px; display: flex; justify-content: center;   background-color: #ededed; align-items: center;  border: 1px solid  black;">
-    <input id="ORrotate" class="rotation custom-range" type="range" min="0" max="8" step="1" value="0" style="width:80%; top:66%;">
+    <input id="ORrotate" class="rotation custom-range" type="range" min="0" max="360" step="1" value="0" style="width:80%; top:66%;">
 </div>
 <div style="width: 100%; height:50px; display: flex; justify-content: center;   background-color: #ededed;  border: 1px solid  black;">
     <div class="color_select" style="top:66%">
@@ -239,7 +263,7 @@ export const RBMmenuConf =`
         </button>
     </div>
     <div style="width: 100%; height: 60px; align-items: flex-start; display: flex; justify-content: center; align-items: center;  background-color: #EDEDED;  border: 0.5px solid  black;">
-        <input  id="ORrotate" class="rotation custom-range" style="width:80%; top:66%;" type="range" min="0" max="8" step="1" value="0">
+        <input  id="ORrotate" class="rotation custom-range" style="width:80%; top:66%;" type="range" min="0" max="360" step="1" value="0">
     </div>
     <div class="oxygen" style="width: 100%; text-align: center; height: 40px; align-items: center; display: flex; justify-content: space-around;   background-color: #EDEDED;  border: 0.5px solid  black;">
         <div id="depthST" class="size-param">
