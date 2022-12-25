@@ -89,8 +89,11 @@ var CameraControls = function(app, _domElement, grid)
     function onPointerDown(e)
     { 
       //console.log(app.canMove);
-		if(e.button == 0 && app.canMove == 1 && ![1,2,3,4,5].includes(app.userData.mod))
-        { 
+//		if(e.button == 1 && app.canMove == 1 && ![1,2,3,4,5].includes(app.userData.mod))
+    if(e.button == 1 && app.canMove == 1 && ![1].includes(app.userData.mod))
+
+        {
+          document.getElementById('canvas').style.cursor = 'move';
 		e.preventDefault();
         lastPos = {x:e.offsetX,y:e.offsetY};
         }
@@ -161,7 +164,8 @@ var CameraControls = function(app, _domElement, grid)
     { 
       if (app.canMove == 1)
         {
-        e.preventDefault();
+          document.getElementById('canvas').style.cursor = 'default';
+          e.preventDefault();
         lastPos = null;
         }
     }

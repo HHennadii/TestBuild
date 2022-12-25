@@ -2,6 +2,7 @@ import * as THREE from '../jsm/three.module.js';
 import {OrbitControls} from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
+import {Functions} from './FunctionsForConf.js';
 import {SlimDeck} from './DataSet.js';
 import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
@@ -450,18 +451,19 @@ function addMultipleToArray(arr, from, name, qnt) {
     } 
 }
 
-function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, editionalBordersEm, x=0, y=0, rot=0) {
+function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, editionalBordersEm, nameTag="", x=0, y=0, rot=0) {
 
     renderedsprite = new PIXI.Container();
     renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
     renderedsprite.name = "FRIDGE";
     renderedsprite.configuration = arr_build;
     renderedsprite.userData = {};
-    renderedsprite.userData.colors = colors;
+    renderedsprite.colors = colors;
     renderedsprite.userData.faceborderL = faceborderL;
     renderedsprite.userData.faceborderR = faceborderR;
     renderedsprite.userData.extCooling = extCooling;
     renderedsprite.userData.editionalBordersEm = editionalBordersEm;
+    renderedsprite.userData.nameTag = nameTag;
 
     renderedsprite.sayHi = function() {
         var color = getColorCode(this.userData.colors)
@@ -543,7 +545,7 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
     }
     renderedsprite.clone = function() {
         selectedItem = null;
-        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.faceborderR, this.faceborderL, this.userData.extCooling, this.userData.editionalBordersEm, this.x+20, this.y+20, this.rotation);
+        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.faceborderR, this.faceborderL, this.userData.extCooling, this.userData.editionalBordersEm, this.userData.nameTag, this.x+20, this.y+20, this.rotation);
         spawnConfigurated();
     }
     renderedsprite.saveIt = function() {
@@ -558,6 +560,7 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
                 extCooling: this.userData.extCooling,
                 faceborderL: this.faceborderL,
                 faceborderR: this.faceborderR,
+                nameTag: this.userData.nameTag,
             }
         }
         return thisObject;
@@ -606,7 +609,6 @@ function showContextMenu(x,y)
     let menuDiv = document.createElement("div");
     menuDiv.id = "ORClick";
     menuDiv.className = "OR-cover";
-
     menuDiv.innerHTML = RBMmenuConf;
     document.body.appendChild(menuDiv);
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
@@ -614,6 +616,8 @@ function showContextMenu(x,y)
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
     $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
     $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
+    $("#nameTag").val(selectedItem.userData.nameTag);
+    $("#nameTag").on("input change",(item)=>{selectedItem.userData.nameTag=item.target.value});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();
@@ -666,45 +670,27 @@ function spawnConfigurated() {
     renderedsprite.interactive = true;
     renderedsprite.buttonMode = true;
 
-    function onDragStart(event) {
-        if([0,1,6].includes(app.userData.mod) && app.userData.canTranslate)
-        {
-        selectedItem = this;  
-        this.data = event.data;
-        this.alpha = 0.5;
-        this.dragging = true;
-        app.canMove = 0;
-        }
-    }
-
-    function onDragEnd() {   
-        this.alpha = 1;
-        this.dragging = false;
-        this.data = null;
-        app.canMove = 1;
-    }
-
-    function onDragMove() {
-        if (this.dragging && app.userData.canTranslate) {
-            const newPosition = this.data.getLocalPosition(this.parent);
-            this.x = newPosition.x;
-            this.y = newPosition.y;
-            if (app.userData.snapvert)
-            {
-            var closestpoint = findClosestPoint(selectedItem,findObjectsInRange());
-            stickToItem(closestpoint);
-            }
-        }
-        else
-				this.alpha = 1;
-    }
+    
 renderedsprite
-        .on('pointerdown', onDragStart)
-        .on('pointerup', onDragEnd)
-        .on('pointerupoutside', onDragEnd)
-        .on('pointermove', onDragMove)
-        .on('pointerover',filterOn)
-        .on('pointerout',filterOff)
+        .on('pointerdown', function(event) {
+            Functions.onDragStart(event,this,app)
+            selectedItem = this; //прибрати, коли увесь загальний функціонал перейде у Functions
+        })
+        .on('pointerup', function() {
+            Functions.onDragEnd(this)
+        })
+        .on('pointerupoutside', function() {
+            Functions.onDragEnd(this)
+        })
+        .on('pointermove', function(event) {
+            Functions.onDragMove(event,this,container2d);
+        })
+        .on('pointerover', function() {
+            Functions.filterOn(this);
+        })
+        .on('pointerout', function() {
+            Functions.filterOff(this)
+        })
         .on('touchstart',function(event) {
             //console.log(timer);
             if (!timer) {
@@ -730,63 +716,6 @@ function onlongtouch(event) {
 	showContextMenu(event.data.global.x, event.data.global.y);
 };
     
-
-    function findObjectsInRange()
-    {
-        var objectsInRange = [];
-        if(selectedItem)
-        {
-            container2d.children.forEach(element => {
-                if(element!=selectedItem)
-                {
-                    if(distanceTo(selectedItem, element)<11) objectsInRange.push(element);
-                }
-            });
-        }
-        return objectsInRange;
-    }
-
-
-    function findClosestPoint(selecteditem, rangeitemsarray)
-    {
-        var selectedpoints = selecteditem.children;
-        var _distance = 5000;
-        var selectedpoint, closestpoint;
-        for(var i = 0; i<rangeitemsarray.length; i++)
-        {
-            for(var j = 0; j<4; j++)
-            {
-                for(var k = 0; k<4; k++)
-                {
-                    var firstpos = localWorld(selectedpoints[j]);
-                    var secpos = localWorld(rangeitemsarray[i].children[k]);
-                    var distance = distanceTo(firstpos,secpos)*64;
-                    if(distance<_distance)
-                    {
-                        _distance = distance;
-                        selectedpoint = selectedpoints[j];
-                        closestpoint = localWorld(rangeitemsarray[i].children[k]);
-                    }
-                }
-            }
-        }
-        return [selectedpoint, closestpoint, _distance];
-    }
-
-    function stickToItem(closestpointsarr)
-    {
-        if(closestpointsarr[2]<1)
-        {
-            var clp = localWorld(closestpointsarr[0]);
-            var clp2 = realPosition(selectedItem);
-            var offset = {x: (clp.x-clp2.x)*64,y: (clp.y-clp2.y)*64};
-            var newItemPosition = {x: closestpointsarr[1].x*64, y: closestpointsarr[1].y*64};
-            selectedItem.x = newItemPosition.x; selectedItem.y = newItemPosition.y;
-            selectedItem.x-=offset.x; selectedItem.y-=offset.y;
-        }
-
-    }
-
 
     function setMeshColor(mesh,colors) {
         mesh.children[0].material.color.r = colors[0]/255;
@@ -1018,15 +947,9 @@ export {Fridge}
 var selectedItem = null;
 
 const outlineFilterBlue = new PIXI.filters.OutlineFilter(10, 0x99ff99);
-const outlineFilterRed = new PIXI.filters.OutlineFilter(10, 0xff0099);
 
-function filterOn() {
-    this.filters = [outlineFilterBlue];
-}
 
-function filterOff() {
-    this.filters = [];
-}
+
 
 var x_pos = document.getElementById("x_pos");
 var y_pos = document.getElementById("y_pos");

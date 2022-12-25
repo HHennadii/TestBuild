@@ -95,19 +95,25 @@ green
 export const RMBmenu =`
 
 <div id="menu" class="objct_settings" style="position: absolute; top: 534px; left: 406px;">
-<div style="width: 242px; align-items: center; display: flex; justify-content: end;">
-    <button class="button_float" id="copyObject"><img class="wall-icon" src="./Media/SVG/Copy.svg">
+<div style="width: 222px; align-items: center; display: flex; justify-content: flex-start;">
+    <button class="button_float" id="copyObject">
+        <img class="wall-icon" src="./Media/SVG/Copy.svg">
     </button>
-    <button id="ORremove" class="button_float" id="remove"><img class="wall-icon" src="./Media/SVG/Bin.svg">
+    <button id="ORremove" class="button_float" id="remove">
+        <img class="wall-icon" src="./Media/SVG/Bin.svg">
     </button>
-    <button id="ORclose" class="button_float"><img class="wall-icon" src="./Media/SVG/Cross.svg">
+    <button id="ORclose" class="button_float">
+        <img class="wall-icon" src="./Media/SVG/Cross.svg">
     </button>
 </div>
-<div style="width: 100%; height: 50px; display: flex; justify-content: center;   background-color: #ededed; align-items: center;  border: 1px solid  black;">
+<div style="width: 100%; height: 50px; align-items: center; display: flex; justify-content: center;  background-color: #EDEDED;  border: 0.5px solid  black;">
+        <input  id="nameTag" class="param-input-feild item-nametag" style="width:80%; top:66%;" type="text" min="0" max="360" step="1" placeholder="Item NameTag">
+</div>
+<div style="width: 100%; height: 60px; align-items: center; display: flex; justify-content: center;   background-color: #ededed;   border: 0.5px solid  black;">
     <input id="ORrotate" class="rotation custom-range" type="range" min="0" max="360" step="1" value="0" style="width:80%; top:66%;">
 </div>
 <div style="width: 100%; height:50px; display: flex; justify-content: center;   background-color: #ededed;  border: 1px solid  black;">
-    <div class="color_select" style="top:66%">
+    <div class="color_select">
     <label >
         <input class="radio" type="radio" name="test" value="236 236 231">
         <img src="../Media/SVG/C1.svg" class="dots">
@@ -133,7 +139,8 @@ export const RMBmenu =`
         <img src="../Media/SVG/C6.svg" class="dots">
     </label>
 </div>
-</div></div>
+</div>
+</div>
 
 `
 
@@ -262,7 +269,10 @@ export const RBMmenuConf =`
             <img class="wall-icon" src="./Media/SVG/Cross.svg">
         </button>
     </div>
-    <div style="width: 100%; height: 60px; align-items: flex-start; display: flex; justify-content: center; align-items: center;  background-color: #EDEDED;  border: 0.5px solid  black;">
+    <div style="width: 100%; height: 60px; display: flex; justify-content: center; align-items: center;  background-color: #EDEDED;  border: 0.5px solid  black;">
+        <input  id="nameTag" class="param-input-feild item-nametag" style="width:80%; top:66%;" type="text" min="0" max="360" step="1" placeholder="Item NameTag">
+    </div>
+    <div style="width: 100%; height: 60px; display: flex; justify-content: center; align-items: center;  background-color: #EDEDED;  border: 0.5px solid  black;">
         <input  id="ORrotate" class="rotation custom-range" style="width:80%; top:66%;" type="range" min="0" max="360" step="1" value="0">
     </div>
     <div class="oxygen" style="width: 100%; text-align: center; height: 40px; align-items: center; display: flex; justify-content: space-around;   background-color: #EDEDED;  border: 0.5px solid  black;">
@@ -321,6 +331,10 @@ green
             <label class="shelf-height">
                 <input class="radio-height" type="radio" name="height" value="1473">
                 <span>1473mm</span>
+            </label>
+            <label class="shelf-height">
+                <input class="radio-height" type="radio" name="height" value="1625">
+                <span>1625mm</span>
             </label>
             <label class="shelf-height">
                 <input class="radio-height" type="radio" name="height" value="1778">

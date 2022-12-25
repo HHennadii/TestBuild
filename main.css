@@ -745,9 +745,9 @@ font-size: 15px;
 .ruller {
  position: absolute;
  background-color: #ededed;
- font-size: 40px;
+ font-size: 15px;
  padding: 5px;
- border-radius: 10px;
+ border-radius: 5px;
 
 }
 
@@ -1620,19 +1620,21 @@ font-size: 14px;
   
 }
 .dots{
-width: 30px; 
-height: 30px;
+width: 25px; 
+height: 25px;
 
 }
 
 .color_select{
-  position: absolute;
-  top: 48%;
-  left: calc(50% - 113.5px);
   z-index: 10; 
   display: flex;
   width: auto;
   height: auto;
+}
+
+.color_select label{
+  display: flex;
+  align-items: center;
 }
 
 
@@ -2135,6 +2137,11 @@ input[type="radio"]{
   }
   .dropdown-borders:hover .dropdown-content-borders {
     display: flex;
+  }
+
+  .item-nametag{
+    text-align: left;
+    padding-left: 5px;
   }
 
   .dropdown-borders-grid {

@@ -2,6 +2,7 @@ import * as THREE from '../jsm/three.module.js';
 import {OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
+import {Functions} from './FunctionsForConf.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {MainWindow, colorSelect, addStackButtons, isRoof, depthSelector, RBMmenuConf, CopyButton, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
@@ -828,6 +829,8 @@ function spritePostBox(seq, colors, kazyrek, depth, x=0, y=0, rot=0) {
     renderedsprite.name = needToFixIt;
     renderedsprite.depth = depth;
     renderedsprite.kazyrek = kazyrek;
+    renderedsprite.userData = {};
+    renderedsprite.userData.nameTag = "";
 
     renderedsprite.sayHi = function() {
         var arr = [];
@@ -1056,6 +1059,8 @@ function showContextMenu(x,y)
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
     $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
     $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
+    $("#nameTag").val(selectedItem.userData.nameTag);
+    $("#nameTag").on("input change",(item)=>{selectedItem.userData.nameTag=item.target.value});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();
@@ -1097,45 +1102,27 @@ function spawnConfigurated() {
     renderedsprite.interactive = true;
     renderedsprite.buttonMode = true;
 
-    function onDragStart(event) {
-        if([0,1,6].includes(app.userData.mod)  && app.userData.canTranslate)
-        {
-        selectedItem = this;  
-        this.data = event.data;
-        this.alpha = 0.5;
-        this.dragging = true;
-        app.canMove = 0;
-        }
-    }
-
-    function onDragEnd() {   
-        this.alpha = 1;
-        this.dragging = false;
-        this.data = null;
-        app.canMove = 1;
-    }
-
-    function onDragMove() {
-        if (this.dragging && app.userData.canTranslate ) {
-            const newPosition = this.data.getLocalPosition(this.parent);
-            this.x = newPosition.x;
-            this.y = newPosition.y;
-            if (app.userData.snapvert)
-            {
-            var closestpoint = findClosestPoint(selectedItem,findObjectsInRange());
-            stickToItem(closestpoint);
-            }
-        }
-        else
-				this.alpha = 1;
-    }
+    
 renderedsprite
-        .on('pointerdown', onDragStart)
-        .on('pointerup', onDragEnd)
-        .on('pointerupoutside', onDragEnd)
-        .on('pointermove', onDragMove)
-        .on('pointerover',filterOn)
-        .on('pointerout',filterOff)
+        .on('pointerdown', function(event) {
+            Functions.onDragStart(event,this,app)
+            selectedItem = this; //прибрати, коли увесь загальний функціонал перейде у Functions
+        })
+        .on('pointerup', function() {
+            Functions.onDragEnd(this)
+        })
+        .on('pointerupoutside', function() {
+            Functions.onDragEnd(this)
+        })
+        .on('pointermove', function(event) {
+            Functions.onDragMove(event,this,container2d);
+        })
+        .on('pointerover', function() {
+            Functions.filterOn(this);
+        })
+        .on('pointerout', function() {
+            Functions.filterOff(this)
+        })
         .on('touchstart',function(event) {
             //console.log(timer);
             if (!timer) {
@@ -1361,16 +1348,6 @@ export {LokoLogis}
 
 var selectedItem = null;
 
-const outlineFilterBlue = new PIXI.filters.OutlineFilter(10, 0x99ff99);
-const outlineFilterRed = new PIXI.filters.OutlineFilter(10, 0xff0099);
-
-function filterOn() {
-    this.filters = [outlineFilterBlue];
-}
-
-function filterOff() {
-    this.filters = [];
-}
 
 var x_pos = document.getElementById("x_pos");
 var y_pos = document.getElementById("y_pos");

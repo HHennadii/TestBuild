@@ -70,6 +70,7 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
                 var x = event.offsetX, y = event.offsetY;
                 startPosition = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
                 endPosition = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
+                showLengthDiv(x, y);
 
                 var pnt = new PIXI.Point(x,y);
                 var startcorner, startwall;
@@ -128,7 +129,7 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
         if(wallType == 1) {
             if(_object) {
-            //moveLengthDiv(x+500,y,getWallLength(_object));
+            moveLengthDiv(x+75,y-75,getWallLength(_object));
             endPosition = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
 
                 if(app.userData.snapvert && startPosition) {
@@ -478,25 +479,43 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         });
         $("#lengthSet").prop("value", getWallLength(_activeEdge));
         $("#lengthSet").on("input",e => {
-            const scaleCoef = $("#lengthSet").val()/getWallLength(_activeEdge);
-            setWallLength(scaleCoef);
+            const meters = $("#lengthSet").val();
+            setWallLength(meters);
         });
 
 	}
 
-    function setWallLength(scaleCoef) {
+    function setWallLength(meters) {
+        if(meters<0.1) {
+            meters = 0.1;
+            $("#lengthSet").prop("value",0.1); 
+        }
+        var scaleCoef = meters/getWallLength(_activeEdge);
+
         const a1 = _activeEdge.userData.vertex[0];
         const a2 = _activeEdge.userData.vertex[1];
-        a1.position.x = a1.position.x*scaleCoef-(a1.x+a2.x)/2*(scaleCoef-1);
-        a1.position.y = a1.position.y*scaleCoef-(a1.y+a2.y)/2*(scaleCoef-1);
-        a2.position.x = a2.position.x*scaleCoef-(a1.x+a2.x)/2*(scaleCoef-1);
-        a2.position.y = a2.position.y*scaleCoef-(a1.y+a2.y)/2*(scaleCoef-1);
-        _activeEdge.userData.vertex[0].userData.edges.forEach(edge => {
-            adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);
-        })
-        _activeEdge.userData.vertex[1].userData.edges.forEach(edge => {
-            adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);
-        })
+
+        const center = {x: (a1.x+a2.x)/2, y: (a1.y+a2.y)/2};
+
+        a1.x = (a1.x-center.x)*scaleCoef+center.x;
+        a1.y = (a1.y-center.y)*scaleCoef+center.y;
+        a2.x = (a2.x-center.x)*scaleCoef+center.x;
+        a2.y = (a2.y-center.y)*scaleCoef+center.y;
+
+        // _activeEdge.userData.vertex[0].userData.edges.forEach(edge => {
+        //     adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);
+        // })
+        // _activeEdge.userData.vertex[1].userData.edges.forEach(edge => {
+        //     adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);
+        // })
+
+        _edgegroup.children.forEach(edge=>{adjust(edge, edge.userData.vertex[0], edge.userData.vertex[1]);})
+        delay(20).then( () => {
+            _vertexgroup.children.forEach( item => {
+            sortAdgesByAngle(item);
+            alignToNext(item);
+            _vertexgroup.alpha = 0;
+        })});
     }
 
     function showContextMenuRound(x,y) {
@@ -1442,6 +1461,23 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         return project(p,a,b).point;
     }
 
+
+    function doorProject(event, wall)
+    {
+        var x = event.offsetX, y = event.offsetY;
+        var p = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
+		var a ={
+			x: wall.userData.vertex[0].position.x,
+			y: wall.userData.vertex[0].position.y,
+		}
+		var b={
+			x: wall.userData.vertex[1].position.x,
+			y: wall.userData.vertex[1].position.y,
+		}
+        return project(p,a,b);
+    }
+
+
     function myLookAt(object, target) {
         var dx = target.x - object.x;
         var dy = target.y - object.y;
@@ -1741,10 +1777,6 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
 
     function spawnDoor(loadedwall, loadeddoor) {
-
-       
-
-
         function onDragStart(event) {
             if(currentMod == 1  && app.userData.canTranslate ) {
             this.data = event.data;
@@ -1752,7 +1784,6 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
             app.canMove = 0;
             }
         }
-        
         function onDragEnd() {
             if(currentMod == 1) {
             this.dragging = false;
@@ -1760,76 +1791,37 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
             app.canMove = 1;
             }
         }
-        
         function onDragMove(event) {
             if (this.dragging && currentMod == 1  && app.userData.canTranslate ) {
-                if(this.parent==app.stage) {
                     const newPosition = this.data.getLocalPosition(this.parent);
-                    this.x = newPosition.x;
-                    if(this.parent == app.stage) this.y = newPosition.y;
-    
-                    var x = event.data.global.x, y = event.data.global.y; //screen
-                    var screenCoords = new PIXI.Point(x,y);
-                    var intr = app.renderer.plugins.interaction.hitTest(screenCoords, _edgegroup);
-                    if(intr && intr!=this.parrent && intr!=this) {
-                        this.scale.x = this.userData.scalex/intr.scale.x;
-                        this.scale.y = this.userData.scaley/intr.scale.y;
-
-                        this.setParent(intr);    
-                        var pixiglobal = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y}; //pixistage
-                        var edgelocal = new PIXI.Point();
-                        intr.localTransform.applyInverse(pixiglobal, edgelocal);
-                        this.x = edgelocal.x;
+                    var e = {offsetX: event.data.global.x, offsetY: event.data.global.y};
+                    var wall = getClosestWall(event);
+                    if(wall) {
+                        this.scale.x = this.userData.scalex/wall.wall.scale.x;
+                        this.scale.y = this.userData.scaley/wall.wall.scale.y;
+                        this.setParent(wall.wall);
                         this.y = 0;
-
+                        var pixiglobal = {x: (e.offsetX - app.stage.x) / app.stage.scale.x, y: (e.offsetY - app.stage.y)/app.stage.scale.y}; //pixistage
+                         var edgelocal = new PIXI.Point();
+                         wall.wall.localTransform.applyInverse(pixiglobal, edgelocal);
+                         if(wall.point.t == 1) this.x = 32;
+                         else{
+                            if(wall.point.t == 0) this.x = -32;
+                            else {
+                                this.x = edgelocal.x;
+                            }
+                         }
                     }
-                }
-                else {
-                    const newPosition = this.data.getLocalPosition(this.parent);
-                    var x = event.data.global.x, y = event.data.global.y; //screen
-                    var screenCoords = new PIXI.Point(x,y);
-                    var intr = app.renderer.plugins.interaction.hitTest(screenCoords, _edgegroup);
-                    if(!intr) {
-                        this.scale.x = this.userData.scalex;
-                        this.scale.y = this.userData.scaley;
-
-                        this.setParent(app.stage);
+                    else {
                         this.x = newPosition.x;
                         this.y = newPosition.y;
                     }
-                    else {
-                        if(intr==this.parent || intr==this) {
-                            var e = {offsetX: event.data.global.x, offsetY: event.data.global.y};
-                            var pixiglobal = consoleProject(e, this.parent);
-                            var edgelocal = new PIXI.Point();
-                            this.parent.localTransform.applyInverse(pixiglobal, edgelocal);
-                            this.position.x = edgelocal.x;
-                            this.y = 0;
-                        }
-                        else {
-                            this.scale.x = this.userData.scalex/intr.scale.x;
-                            this.scale.y = this.userData.scaley/intr.scale.y;
-
-                            this.setParent(intr);    
-                            var pixiglobal = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y}; //pixistage
-                            var edgelocal = new PIXI.Point();
-                            intr.localTransform.applyInverse(pixiglobal, edgelocal);
-                            this.x = edgelocal.x;
-                            this.y = 0;
-                        }
-                    }
                 }
-            }
-            else
-                this.alpha = 1;
         }
-        //const door = new PIXI.Graphics();
         const door = PIXI.Sprite.from('./Media/SVG/Door.svg');
         door.name = 'door';
-        //door.anchor.set(0.5);
         door.pivot.x = 32;
         door.pivot.y = 0;
-        //door.beginFill(0xFFFF00);
         door
             .on('pointerdown', onDragStart)
             .on('pointermove', onDragMove)
@@ -1841,7 +1833,6 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
                     timer = setTimeout(function() {onlongtouchD(event);}, 2000);
                 }      
              })
-            
              .on('touchend',function() {
                 if (timer) {
                     clearTimeout(timer);
@@ -1855,11 +1846,9 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
                 e.stopPropagation();
                 _activeEdge = door;
                 showContextMenuDoor(e.data.global.x, e.data.global.y);
-            });
-            
-        //door.drawRect(-32,-32,64,64);
+            });  
         door.interactive = true;
-        if(loadedwall){
+        if(loadedwall) {
             loadedwall.addChild(door);
             door.userData = {
                 scalex: loadeddoor.scalex,
@@ -1869,7 +1858,6 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
             door.position.x = loadeddoor.x;
             door.scale.x = loadeddoor.scalex/loadedwall.scale.x;
             door.scale.y = loadeddoor.scaley/loadedwall.scale.y;
-
         }
         else {
             app.stage.addChild(door);
@@ -1891,8 +1879,6 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
 
     function spawnWindow(loadedwall, loadedwindow) {
 
-        
-
         function onDragStart(event) {
             if(currentMod == 1  && app.userData.canTranslate ) {
             this.data = event.data;
@@ -1910,68 +1896,32 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         }
         
         function onDragMove(event) {
-        if (this.dragging && currentMod == 1  && app.userData.canTranslate ) {
-            if(this.parent==app.stage) {
-                const newPosition = this.data.getLocalPosition(this.parent);
-                this.x = newPosition.x;
-                if(this.parent == app.stage) this.y = newPosition.y;
-
-                var x = event.data.global.x, y = event.data.global.y; //screen
-                var screenCoords = new PIXI.Point(x,y);
-                var intr = app.renderer.plugins.interaction.hitTest(screenCoords, _edgegroup);
-                if(intr && intr!=this.parrent && intr!=this) {
-                    this.scale.x = this.userData.scale/intr.scale.x;
-                    this.scale.y = 1;
-
-                    this.setParent(intr);    
-                    var pixiglobal = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y}; //pixistage
-                    var edgelocal = new PIXI.Point();
-                    intr.localTransform.applyInverse(pixiglobal, edgelocal);
-                    //console.log(edgelocal);
-                    this.x = edgelocal.x;
-                    this.y = 0;
-
-                }
-            }
-            else {
-                const newPosition = this.data.getLocalPosition(this.parent);
-                var x = event.data.global.x, y = event.data.global.y; //screen
-                var screenCoords = new PIXI.Point(x,y);
-                var intr = app.renderer.plugins.interaction.hitTest(screenCoords, _edgegroup);
-                if(!intr) {
-                    this.scale.x = this.userData.scale;
-                    this.scale.y = 0.15;
-
-                    this.setParent(app.stage);
-                    this.x = newPosition.x;
-                    this.y = newPosition.y;
-                }
-                else {
-                    if(intr==this.parent || intr==this) {
-                        var e = {offsetX: event.data.global.x, offsetY: event.data.global.y};
-                        var pixiglobal = consoleProject(e, this.parent);
-                        var edgelocal = new PIXI.Point();
-                        this.parent.localTransform.applyInverse(pixiglobal, edgelocal);
-                        this.position.x = edgelocal.x;
+            if (this.dragging && currentMod == 1  && app.userData.canTranslate ) {
+                    const newPosition = this.data.getLocalPosition(this.parent);
+                    var e = {offsetX: event.data.global.x, offsetY: event.data.global.y};
+                    var wall = getClosestWall(event);
+                    if(wall) {
+                        this.scale.x = this.userData.scale/wall.wall.scale.x;
+                        this.scale.y = 1;
+                        this.setParent(wall.wall);
                         this.y = 0;
+                        var pixiglobal = {x: (e.offsetX - app.stage.x) / app.stage.scale.x, y: (e.offsetY - app.stage.y)/app.stage.scale.y}; //pixistage
+                         var edgelocal = new PIXI.Point();
+                         wall.wall.localTransform.applyInverse(pixiglobal, edgelocal);
+                         if(wall.point.t == 1) this.x = 32;
+                         else{
+                            if(wall.point.t == 0) this.x = -32;
+                            else {
+                                this.x = edgelocal.x;
+                            }
+                         }
                     }
                     else {
-                        this.scale.x = this.userData.scale/intr.scale.x;
-                        this.scale.y = 1;
-
-                        this.setParent(intr);    
-                        var pixiglobal = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y}; //pixistage
-                        var edgelocal = new PIXI.Point();
-                        intr.localTransform.applyInverse(pixiglobal, edgelocal);
-                        this.x = edgelocal.x;
-                        this.y = 0;
+                        this.x = newPosition.x;
+                        this.y = newPosition.y;
                     }
                 }
-            }
         }
-        else
-        this.alpha =1;
-    }
         const door = new PIXI.Graphics();
         door.name = 'window';
 
@@ -2047,6 +1997,44 @@ var WallBuilder = function(app, _edgegroup, _vertexgroup, _floorgroup, _columngr
         _blockgroup.alpha = +value/10;
     }
 
+
+
+    function getClosestWall(event) {
+
+        if( _edgegroup.children.length===0 ) return null;
+
+        event = {
+            offsetX: event.data.global.x,
+            offsetY: event.data.global.y,
+        };
+
+        var closestWall = {
+            "wall": _edgegroup.children[0],
+            "point": doorProject(event, _edgegroup.children[0]),
+        };
+    
+        var x = event.offsetX, y = event.offsetY;
+        var p = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
+        var distance = Math.sqrt((closestWall.point.point.x-p.x)*(closestWall.point.point.x-p.x)+(closestWall.point.point.y-p.y)*(closestWall.point.point.y-p.y));
+
+        for(var i = 1; i<_edgegroup.children.length; i++) {
+    
+            var intwall = _edgegroup.children[i];
+            var point = doorProject(event, _edgegroup.children[i]);
+            var intdistance = Math.sqrt((point.point.x-p.x)*(point.point.x-p.x)+(point.point.y-p.y)*(point.point.y-p.y));
+    
+            if(intdistance < distance) {
+                distance = intdistance;
+                closestWall.wall = intwall;
+                closestWall.point = point;
+
+            }
+        }
+        return closestWall;
+    }
+
+
+
     activate();
     this.activate = activate;
     this.deactivate = deactivate;
@@ -2110,24 +2098,26 @@ function drawDash(target, x1, y1, x2, y2, dashLength = 5, spaceLength = 5)
     target.moveTo(x2, y2);
 }
 
-function project( p, a, b )
-{
-var atob = { x: b.x - a.x, y: b.y - a.y };
-var atop = { x: p.x - a.x, y: p.y - a.y };
-var len = atob.x * atob.x + atob.y * atob.y;
-var dot = atop.x * atob.x + atop.y * atob.y;
-var t = Math.min( 1, Math.max( 0, dot / len ) );
-dot = ( b.x - a.x ) * ( p.y - a.y ) - ( b.y - a.y ) * ( p.x - a.x );
-return{
-    point:
-    {
-        x: a.x + atob.x * t,
-        y: a.y + atob.y * t
-    },
-    left: dot < 1,
-    dot: dot,
-    t: t
-};
+
+
+function project( p, a, b ) {
+
+    var atob = { x: b.x - a.x, y: b.y - a.y };
+    var atop = { x: p.x - a.x, y: p.y - a.y };
+    var len = atob.x * atob.x + atob.y * atob.y;
+    var dot = atop.x * atob.x + atop.y * atob.y;
+    var t = Math.min( 1, Math.max( 0, dot / len ) );
+    dot = ( b.x - a.x ) * ( p.y - a.y ) - ( b.y - a.y ) * ( p.x - a.x );
+
+    return {
+        point: {
+            x: a.x + atob.x * t,
+            y: a.y + atob.y * t
+        },
+        left: dot < 1,
+        dot: dot,
+        t: t
+    };
 }
 
 export { WallBuilder };

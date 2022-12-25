@@ -1139,7 +1139,7 @@ $('#loadPJ').change(function() {
 				}
 				if(item.name=="FRIDGE") {
 					configuratorview = new Fridge(container2d, app);
-					configuratorview.loadPostBox(item.configuration, item.userData.colors, item.userData.faceborderR,item.userData.faceborderL, item.userData.extCooling, item.userData.editionalBordersEm, item.userData.x, item.userData.y, item.userData.rotation);
+					configuratorview.loadPostBox(item.configuration, item.userData.colors, item.userData.faceborderR,item.userData.faceborderL, item.userData.extCooling, item.userData.editionalBordersEm, item.userData.nameTag, item.userData.x, item.userData.y, item.userData.rotation);
 					configuratorview.spawnConfigurated();
 				}
 				if(item.name=="CHECKOUT") {

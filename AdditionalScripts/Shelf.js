@@ -2,6 +2,7 @@ import * as THREE from '../jsm/three.module.js';
 import {OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
+import {Functions} from './FunctionsForConf.js';
 import {shelf} from './DataSet.js';
 import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList} from './ConfigurableList.js';
@@ -797,6 +798,7 @@ function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
     renderedsprite.name = "SHELF";
     renderedsprite.configuration = arr_build;
     renderedsprite.userData = {};
+    renderedsprite.userData.nameTag = "";
     renderedsprite.userData.colors = colors;
     renderedsprite.userData.height = height;
     renderedsprite.userData.depth = depth;
@@ -909,6 +911,8 @@ function showContextMenu(x,y)
     $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
     $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
     $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
+    $("#nameTag").val(selectedItem.userData.nameTag);
+    $("#nameTag").on("input change",(item)=>{selectedItem.userData.nameTag=item.target.value});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
         hideContextMenu();
@@ -951,45 +955,27 @@ function spawnConfigurated() {
     renderedsprite.interactive = true;
     renderedsprite.buttonMode = true;
 
-    function onDragStart(event) {
-        if([0,1,6].includes(app.userData.mod) && app.userData.canTranslate)
-        {
-        selectedItem = this;  
-        this.data = event.data;
-        this.alpha = 0.5;
-        this.dragging = true;
-        app.canMove = 0;
-        }
-    }
-
-    function onDragEnd() {   
-        this.alpha = 1;
-        this.dragging = false;
-        this.data = null;
-        app.canMove = 1;
-    }
-
-    function onDragMove() {
-        if (this.dragging  && app.userData.canTranslate) {
-            const newPosition = this.data.getLocalPosition(this.parent);
-            this.x = newPosition.x;
-            this.y = newPosition.y;
-            if (app.userData.snapvert)
-            {
-            var closestpoint = findClosestPoint(selectedItem,findObjectsInRange());
-            stickToItem(closestpoint);
-            }
-        }
-        else
-				this.alpha = 1;
-    }
+   
 renderedsprite
-        .on('pointerdown', onDragStart)
-        .on('pointerup', onDragEnd)
-        .on('pointerupoutside', onDragEnd)
-        .on('pointermove', onDragMove)
-        .on('pointerover',filterOn)
-        .on('pointerout',filterOff)
+        .on('pointerdown', function(event) {
+            Functions.onDragStart(event,this,app)
+            selectedItem = this; //прибрати, коли увесь загальний функціонал перейде у Functions
+        })
+        .on('pointerup', function() {
+            Functions.onDragEnd(this)
+        })
+        .on('pointerupoutside', function() {
+            Functions.onDragEnd(this)
+        })
+        .on('pointermove', function(event) {
+            Functions.onDragMove(event,this,container2d);
+        })
+        .on('pointerover', function() {
+            Functions.filterOn(this);
+        })
+        .on('pointerout', function() {
+            Functions.filterOff(this)
+        })
         .on('touchstart',function(event) {
             //console.log(timer);
             if (!timer) {
@@ -1095,7 +1081,16 @@ function onlongtouch(event) {
             }
         }
         var _group = new THREE.Group();
+        var helperGroup = new THREE.Group();
         _shopitems3d.add(_group);
+
+        _shopitems3d.add(helperGroup);
+        // const helpergeometry = new THREE.PlaneGeometry( 1, 1 );
+        // const helpermaterial = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+        // const helperplane = new THREE.Mesh( helpergeometry, helpermaterial );
+        //helperGroup.add( helperplane );
+
+
         var dist=0;
         let depth = item.userData.depth;
         let height = item.userData.height;
@@ -1462,6 +1457,17 @@ function onlongtouch(event) {
         if(!preloadedMeshes) _group.rotation.set(Math.PI/2,-item.rotation,0);
         if(item.position) _group.position.set(item.x/64, -item.y/64, 0);
         _group.children.forEach( item => {item.position.x-=dist/2;});
+
+        const aabb = new THREE.Box3();
+        aabb.setFromObject( _group );
+        aabb.translate( new THREE.Vector3(0,(aabb.max.y-aabb.min.y)/2+0.035,0));
+            
+        const helper = new THREE.Box3Helper( aabb, 0xff5555 );
+
+        
+
+        helperGroup.add( helper );
+
         return
     }
 
@@ -1482,16 +1488,6 @@ export {Shelf}
 
 var selectedItem = null;
 
-const outlineFilterBlue = new PIXI.filters.OutlineFilter(10, 0x99ff99);
-const outlineFilterRed = new PIXI.filters.OutlineFilter(10, 0xff0099);
-
-function filterOn() {
-    this.filters = [outlineFilterBlue];
-}
-
-function filterOff() {
-    this.filters = [];
-}
 
 var x_pos = document.getElementById("x_pos");
 var y_pos = document.getElementById("y_pos");
