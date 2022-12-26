@@ -216,7 +216,7 @@ Depth <img class="small-icon" src="Media/SVG/CloseM.svg" alt="">
 
 export const feedback =`
 <div id="fid" class="feedback-cover login-box">
-    <div class="send-noodles contact-form" style="margin-top: -400px; transition: 0.3s;">
+    <div class="send-noodles contact-form" style="transition: 0.3s;">
         <form id="contact-form">
             <div class="row ">
                 <div class="column">
@@ -249,6 +249,45 @@ export const feedback =`
             <input type="button" class="send_button" id="plsw" value="Send request">
             </div>	
         </form>
+    </div>
+</div>
+`
+export const getComOffer =`
+<div id="fid" class="feedback-cover login-box">
+    <div class="commertial-offer contact-form" style=" transition: 0.3s;">
+    <div class="com-loader">
+    <div style="display: flex;">
+                    <span class="span">B</span>
+                    <span class="span" style="--delay: 0.1s">U</span>
+                    <span class="span" style="--delay: 0.3s">I</span>
+                    <span class="span" style="--delay: 0.4s">L</span>
+                    <span class="span" style="--delay: 0.5s">D</span>
+                    <span class="span" style="--delay: 0.6s">I</span>
+                    <span class="span" style="--delay: 0.7s">N</span>
+                    <span class="span" style="--delay: 0.8s">G</span>
+                </div>
+    </div>
+        <div class="currency-select align-center">
+            <label>
+                <input class="radio currency" type="radio" name="test" value="UAH">
+                <img src="../Media/SVG/UAH.svg" class="size-40px dots">
+            </label>
+            <label >
+                <input class="radio currency" type="radio" name="test" value="USD">
+                <img src="../Media/SVG/USD.svg" class="size-40px dots">
+            </label>
+            <label>
+                <input class="radio currency" type="radio" name="test" value="EUR" checked>
+                <img src="../Media/SVG/EURO.svg" class="size-40px dots">
+            </label>
+            <label>
+                <input class="radio currency" type="radio" name="test" value="PLN">
+                <img src="../Media/SVG/ZL.svg" class="size-40px dots">
+            </label>
+        </div>
+        <div class="align-center">  
+            <input type="button" class="commertial-button" id="plsw" value="Get Commertial offer">
+        </div>	
     </div>
 </div>
 `
@@ -390,8 +429,8 @@ green
 `;
 
 export function FridgesConfiguration(StackControl){
-    return `<div class="dropdown-main-btn">
-    <img class="bar-icon par_sit" src="Media/SVG/SetParametr.svg">
+    return `<div class="dropdown-main-btn" >
+    <img id="settingsButton" class="bar-icon par_sit" src="Media/SVG/SetParametr.svg">
 
         <div class="dropdown-content-main-btn direction-colomn" style="border-bottom:0px solid black">
         <div  id="changeMenuDoors${StackControl}"></div>    
@@ -505,7 +544,7 @@ export function CopyButton(StackControl){
 }
 
 export function ShelfsConfiguration(StackControl){
-    return `<div class="dropdown-main-btn">
+    return `<div class="dropdown-main-btn" id="settingsButton">
     <img class="bar-icon par_sit" src="Media/SVG/SetParametr.svg">
 
             <div class="dropdown-content-main-btn direction-colomn" style="border-bottom:0px solid black">

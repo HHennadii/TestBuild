@@ -345,6 +345,18 @@ border: 1px solid  black;
   margin-right: 5px;
 } 
 
+.com-loader{
+  position:inherit;
+  width: 100%;
+  height: 100%;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background-color: #ededed;
+  z-index: 30;
+  top:-5px;
+}
+
 .wall-icon{
   width: 30px;
   height: 30px;
@@ -416,12 +428,15 @@ border: 1px solid  black;
   display: flex;
   outline: none;
   align-items: center;   
-  width: 239px;
+  width: 249px;
   padding: 5px;
   height: 60px;
   border: none;
   padding: auto;
   font-family: KronaOne-Regular;
+}
+.button_save:hover{
+  background-color: rgb(209, 209, 209);
 }
 
 .button_nav:hover{
@@ -464,6 +479,10 @@ border: 1px solid  black;
   display: flex;
   align-items: center; 
   justify-content: center;
+}
+
+.close-main-menu:hover{
+  background-color: rgb(209, 209, 209);
 }
 
 .close-main-menus{
@@ -879,7 +898,7 @@ font-size: 15px;
 }
 
 .sidenav .object.hover {
-  color: #C00;
+  color: #72c2fb;
   margin-left: 10px;
   margin-right: 10px;
 }
@@ -990,11 +1009,11 @@ background-color: #ededed;
 }
 .collapsible:hover {
 
-background-color: #93D2FF;
+background-color: rgb(209, 209, 209);
 }
 
 .collapsible:after {
-content: url(Media/SVG/OpenM.svg); 
+content: url(Media/SVG/CloseM.svg); 
 font-size: 6px; 
 color: #000;
 margin: auto 0px;
@@ -1003,7 +1022,7 @@ transition: 0.3s;
 }
 
 .active:after {
-content: url(Media/SVG/CloseM.svg); 
+content: url(Media/SVG/OpenM.svg); 
 color: #000;
 transition: 0.3s;
 }
@@ -1078,7 +1097,23 @@ flex-direction: column;
   transition: 0.3s;
 }
 
+.right-menu{
+  position: absolute;
+  right: 0px;
+  top: 121px;
+  height: calc(100% - 121px);
+  max-width: 480px;
+  min-width: 240px;
+  width: calc(50% - 400px);
+  background-color: #000;
+}
 
+#confarea{
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: 11;
+}
 .main_button {
 margin: 15px 0px;
 outline: none;
@@ -1243,6 +1278,40 @@ background-color: rgb(209, 209, 209);
     background-color: #72c2fb;
   }
 
+.commertial-offer{
+  position: absolute;
+  top: calc(100px + 30%);
+  width: auto;
+  background-color: #ededed;
+  display: flex;
+  padding: 20px;
+  align-items: center;
+  flex-direction: column;
+  padding: 10px 20px;
+  z-index: 10;
+}
+
+
+.commertial-button {
+  width: 250px; 
+  height: 45px; 
+  outline: none;
+  border: solid 1px black;
+  background-color: #FF9900;
+  display: flex;
+  text-align: center;
+  font-family: KronaOne-Regular;
+  justify-content: space-evenly;
+  font-size: 15px;
+  color: #000;
+  transition: 0.3s;
+  align-items: center;
+}
+  
+.commertial-button:hover {
+  background-color: #72c2fb;
+}
+
 .create_button {
   outline: none;
   border: solid 1px black;
@@ -1268,6 +1337,7 @@ background-color: rgb(209, 209, 209);
     border: none;
     
     }
+
 
 
 .send-noodles{
@@ -1637,6 +1707,19 @@ height: 25px;
   align-items: center;
 }
 
+.currency-select{
+  z-index: 10; 
+  display: flex;
+  width: auto;
+  height: auto;
+}
+
+.currency-select label{
+  display: flex;
+  align-items: center;
+}
+
+
 
 
 .out_list{
@@ -1719,16 +1802,22 @@ input[type="radio"]{
   font-size: 15px;
 }
 
+.lock:hover{
+ background-color: rgb(209, 209, 209);;
+}
+
 
 .dropdown-content {
   display: none;
   position: absolute;
   top: 60px;
-  left: 2px;
   background-color: #f9f9f9;
   min-width: 60px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   
+}
+.dropdown:hover  {
+  background-color: #93D2FF;
 }
 
 .dropdown:hover .dropdown-content {
@@ -2235,7 +2324,7 @@ input[type="radio"]{
 .align-center{
   display: flex;
   justify-content: center;
-  margin-bottom: 20px;
+  margin: 10px 0px;
 }
 
 
@@ -2303,3 +2392,9 @@ input[type="radio"]{
   color: #FF9900;
   font-size: 12px;
 }
+
+
+.size-40px{
+  width: 40px;
+  height: 40px;
+ }

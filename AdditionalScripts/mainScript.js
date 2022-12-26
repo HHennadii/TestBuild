@@ -1,7 +1,7 @@
 import * as THREE from '../jsm/three.module.js';
 import { Mesh, MeshPhongMaterial } from '../jsm/three.module.js';
 import { OBJLoader } from '../jsm/loaders/OBJLoader.js';
-import {feedback} from './ConfiguratorInterfaceModuls.js';
+import {feedback, getComOffer} from './ConfiguratorInterfaceModuls.js';
 import {MapControls, OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {ItemController, Parser3d} from './ItemController_copy.js';
 import { createHtmlFile, createHtmlFileLite } from './HtmlPrice.js'
@@ -280,7 +280,7 @@ const sleep = ms => {
 	})
 }
 
-function getHtmlDataList() {
+function getHtmlDataList(currencyCoef) {
 	var today = new Date();
 	var date = today.getDate()+'-'+(today.getMonth()+1)+'-'+today.getFullYear();
 
@@ -329,8 +329,15 @@ function getHtmlDataList() {
 				//console.log(ordinarySet[i])
 				htmlArray.push(ordinarySet[i]);
 			}
+
+			htmlArray.forEach(raw => {
+				if(raw[3]&&raw[4]) {
+					raw[3]=Math.round(raw[3]*currencyCoef[0]*100)/100;
+					raw[4]=Math.round(raw[4]*currencyCoef[0]*100)/100;
+				}
+			})
 			setTimeout(() => {
-				const markup = createHtmlFile(htmlArray, saveAsImage(),date);
+				const markup = createHtmlFile(htmlArray, saveAsImage(),date,currencyCoef[1]);
 				saveString(markup, 'List.html');
 				scene.children[0].position.y = 0;
 				scene.background = new THREE.Color(0xa7e1fc);
@@ -439,9 +446,29 @@ window.addEventListener('resize', onWindowResize);
 window.onload = init;
 
 
-document.getElementById('export').addEventListener("click",()=> {	
-		//saveAs(new Blob([s2ab(prepareExcelStrings())],{type:"application/octet-stream"}), 'ItemList.xlsx');
-		getHtmlDataList();
+document.getElementById('export').addEventListener("click",()=> {
+	let loading = 0, currency;	
+		document.getElementById("feedback").innerHTML = getComOffer;
+		$("#fid").click(function(e){ if(e.currentTarget==e.target && loading == 0)$("#fid").remove();})
+		$("#plsw").click(()=>{
+			document.getElementsByClassName("currency").forEach(item=>{if(item.checked == true) currency=item.value;})	
+			document.getElementsByClassName("com-loader")[0].style.display="flex";
+			loading = 1;
+			const settings = {
+				"async": true,
+				"crossDomain": true,
+				"url": "https://currency-converter-by-api-ninjas.p.rapidapi.com/v1/convertcurrency?have=EUR&want="+currency+"&amount=1",
+				"method": "GET",
+				"headers": {
+					"X-RapidAPI-Key": "d94f7e170fmsh735117cad7a13d2p1e90c7jsnd8767228dda7",
+					"X-RapidAPI-Host": "currency-converter-by-api-ninjas.p.rapidapi.com"
+				}
+			};
+			$.ajax(settings).done(function (response) {
+				getHtmlDataList([response.new_amount,currency]);
+				setTimeout(function () {$("#fid").remove();},  3000);
+			});
+		});
 });
 
 document.getElementById( 'export3d' ).addEventListener( 'click', function () {
@@ -698,7 +725,7 @@ function CreateMenuObject (){
 function dropDownSetHeight(){
 	var coll = document.getElementsByClassName("collapsible");
 	for (var i = 0; i < coll.length; i++) {
-		coll[i].nextElementSibling.style.maxHeight = coll[i].nextElementSibling.scrollHeight + "px";
+		coll[i].nextElementSibling.style.maxHeight =  null;
 		coll[i].addEventListener("click", function() {
 		this.classList.toggle("active");
 		var content = this.nextElementSibling;
@@ -990,7 +1017,6 @@ function CamAct() {
 
 $("#feedbackRequest").click(function(){
 	document.getElementById("feedback").innerHTML = feedback;
-	$(".send-noodles").css("marginTop","0px");
 	
 	$("#fid").click(function(e){ if(e.currentTarget==e.target)$("#fid").remove();})
 
@@ -1042,7 +1068,7 @@ $("#feedbackRequest").click(function(){
 			//console.log(ordinarySet[i])
 			htmlArray.push(ordinarySet[i]);
 		}
-		const markup = createHtmlFileLite(htmlArray);
+		const markup = createHtmlFileLite(htmlArray,currencyCoof);
 	//html end
 
 

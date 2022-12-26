@@ -257,7 +257,6 @@ function showConfigurator()
 	prrenderer.toneMappingExposure = 3;
     
 	prgroup = new THREE.Group();
-	prgroup.position.y = -0.7;
 	prscene.add(prgroup);
 
 
@@ -273,6 +272,7 @@ function showConfigurator()
 	//prcamera.position.z = 2;
     prcamera.position.set(-2.5, 2.5, 2.5);
 
+    prcontrols.target = new THREE.Vector3(0, 0.7, 0);
     prcontrols.update();
 
 	confreqv = window.requestAnimationFrame(pranimate);
@@ -296,6 +296,24 @@ function pranimate()
 	prcontrols.update();
 	if(prrenderer)
 	{
+        
+    if(prgroup.children[0]){
+        prgroup.children[0].children.forEach(obj => {
+            if(obj.name === "billboardL") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,0);
+            }
+            if(obj.name === "billboardH") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,-Math.PI/2);
+            }
+        })
+    }
+
 	prrenderer.render(prscene, prcamera);
 	window.requestAnimationFrame( pranimate );
 	}
@@ -806,6 +824,9 @@ function onlongtouch(event) {
 		if(!preloadedMeshes) _group.rotation.set(Math.PI/2,-item.rotation,0);
 		if(item.position) _group.position.set(item.x/64, -item.y/64, 0);
 		_group.children.forEach( item => {item.position.x-=dist/2;});
+
+        if(preloadedMeshes) Functions.addDimensions( _group );
+
         return
 	}
 

@@ -8,6 +8,9 @@ import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfigur
 import {ConfigurableList} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
+import { FontLoader } from '../src/loaders/FontLoader.js';
+import { TextGeometry } from '../src/geometries/TextGeometry.js';
+
 
 const list = ConfigurableList.SHELF.Elements;
 const listBorders = ConfigurableList.SHELF.ElementsBorders;
@@ -412,7 +415,6 @@ function showConfigurator()
 	prrenderer.toneMappingExposure = 3;
 	
 	prgroup = new THREE.Group();
-	prgroup.position.y = -0.7;
 	prscene.add(prgroup);
 
 
@@ -421,6 +423,8 @@ function showConfigurator()
 	prcontrols =  new OrbitControls(prcamera, prrenderer.domElement);
 	prcontrols.maxDistance = 20;
     prcamera.position.set(-2.5, 2.5, 2.5);
+
+    prcontrols.target = new THREE.Vector3(0, 0.7, 0);
     prcontrols.update();
 	
 	prcamera.position.z = 2;
@@ -445,6 +449,24 @@ function pranimate()
 	prcontrols.update();
 	if(prrenderer)
 	{
+
+    if(prgroup.children[0]){
+        prgroup.children[0].children.forEach(obj => {
+            if(obj.name === "billboardL") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,0);
+            }
+            if(obj.name === "billboardH") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,-Math.PI/2);
+            }
+        })
+    }
+
 	prrenderer.render(prscene, prcamera);
 	window.requestAnimationFrame( pranimate );
 	}
@@ -1081,15 +1103,7 @@ function onlongtouch(event) {
             }
         }
         var _group = new THREE.Group();
-        var helperGroup = new THREE.Group();
         _shopitems3d.add(_group);
-
-        _shopitems3d.add(helperGroup);
-        // const helpergeometry = new THREE.PlaneGeometry( 1, 1 );
-        // const helpermaterial = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-        // const helperplane = new THREE.Mesh( helpergeometry, helpermaterial );
-        //helperGroup.add( helperplane );
-
 
         var dist=0;
         let depth = item.userData.depth;
@@ -1458,15 +1472,7 @@ function onlongtouch(event) {
         if(item.position) _group.position.set(item.x/64, -item.y/64, 0);
         _group.children.forEach( item => {item.position.x-=dist/2;});
 
-        const aabb = new THREE.Box3();
-        aabb.setFromObject( _group );
-        aabb.translate( new THREE.Vector3(0,(aabb.max.y-aabb.min.y)/2+0.035,0));
-            
-        const helper = new THREE.Box3Helper( aabb, 0xff5555 );
-
-        
-
-        helperGroup.add( helper );
+        if(preloadedMeshes) Functions.addDimensions( _group );
 
         return
     }

@@ -295,7 +295,19 @@ var Fridge = function(container2d, app)
         $(".bottomCt").click((e)=>ExtendedBottom(e));
         $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
         $(".obj-item").click((e)=>SelectStack(e));
+        $("#settingsButton").click((e)=>OpenConfigurationMenu(e));
     }
+
+
+    function OpenConfigurationMenu(){
+        console.log("5634");
+        let MenuBody =`
+            <div class="right-menu">
+            </div>
+        `
+        $("#confarea").prepend(MenuBody);
+
+    } 
 
     function SelectStack(e){
         const id = e.target.id.split("_");
@@ -357,7 +369,6 @@ function showConfigurator()
 	prrenderer.toneMappingExposure = 3;
 	
 	prgroup = new THREE.Group();
-	prgroup.position.y = -0.7;
 	prscene.add(prgroup);
 
 
@@ -366,6 +377,8 @@ function showConfigurator()
 	prcontrols =  new OrbitControls(prcamera, prrenderer.domElement);
 	prcontrols.maxDistance = 20;
     prcamera.position.set(-2.5, 2.5, 2.5);
+
+    prcontrols.target = new THREE.Vector3(0, 0.7, 0);
     prcontrols.update();
 
 	confreqv = window.requestAnimationFrame(pranimate);
@@ -389,6 +402,24 @@ function pranimate()
 	prcontrols.update();
 	if(prrenderer)
 	{
+        
+    if(prgroup.children[0]){
+        prgroup.children[0].children.forEach(obj => {
+            if(obj.name === "billboardL") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,0);
+            }
+            if(obj.name === "billboardH") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,-Math.PI/2);
+            }
+        })
+    }
+
 	prrenderer.render(prscene, prcamera);
 	window.requestAnimationFrame( pranimate );
 	}
@@ -452,13 +483,12 @@ function addMultipleToArray(arr, from, name, qnt) {
 }
 
 function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, editionalBordersEm, nameTag="", x=0, y=0, rot=0) {
-
     renderedsprite = new PIXI.Container();
     renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
     renderedsprite.name = "FRIDGE";
     renderedsprite.configuration = arr_build;
     renderedsprite.userData = {};
-    renderedsprite.colors = colors;
+    renderedsprite.userData.colors = colors;
     renderedsprite.userData.faceborderL = faceborderL;
     renderedsprite.userData.faceborderR = faceborderR;
     renderedsprite.userData.extCooling = extCooling;
@@ -653,7 +683,6 @@ function configurateItem()
             editionalBordersEm: +document.getElementById("akrile").innerHTML,
         }
     }
-
     asyncLoad(item,prgroup,preloadedMeshes);
     spriteItem(item.configuration, item.userData.colors, item.userData.faceborderR, item.userData.faceborderL, item.userData.extCooling, item.userData.editionalBordersEm);
 }
@@ -927,6 +956,9 @@ function onlongtouch(event) {
         //console.log(akrylicBorders);
         if(document.getElementById("akrile"))
             document.getElementById("akrile").dataset.max=akrylicBorders;
+
+            if(preloadedMeshes) Functions.addDimensions( _group );
+
         return
     }
 

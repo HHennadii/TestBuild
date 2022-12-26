@@ -1,6 +1,13 @@
 import {Logis, Fresh} from "./Fotter.js"
-export function createHtmlFile(array, imagedata,date) {
+export function createHtmlFile(array, imagedata,date,currency) {
 let fresh = ``, logis = ``;
+const currencySymbol=
+{
+  "USD":"&#36",
+  "EUR":"&#8364",
+  "UAH":"&#8372",
+  "PLN":" zł",
+}
 let htmlText = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,10 +182,11 @@ height: 40px;
                     <th>Сode
                     <th>Item Name
                     <th>Q-ty
-                    <th>Price &#8364
-                    <th>Total &#8364
+                    <th>Price ${currencySymbol[currency]}
+                    <th>Total ${currencySymbol[currency]}
                 </thead>
                 <tbody>`;
+    console.log(array)
     array.forEach(row => {
       if(row[1]=='') {
         htmlText+=`<tr style="background-color:#caefff">`;

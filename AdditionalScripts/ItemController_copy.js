@@ -25,7 +25,7 @@ import {RMBmenu} from './ConfiguratorInterfaceModuls.js';
 import { GLTFExporter } from '../jsm/exporters/GLTFExporter.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from '../jsm/loaders/OBJLoader.js';
-
+import {Functions} from './FunctionsForConf.js';
 import {BufferGeometryUtils} from '../jsm/utils/BufferGeometryUtils.js';
 import { HDRCubeTextureLoader } from '../jsm/loaders/HDRCubeTextureLoader.js';
 import { getPostCoef } from './Coefs.js';
@@ -37,7 +37,7 @@ import {CSG} from './EnviromentTools/three-csg-ts/lib/esm/CSG.js'
 
 
 
-var ItemController = function(container, _domElement, app, _shopitems3d)
+var ItemController = function(container2d, _domElement, app, _shopitems3d)
 {   
 	var hdrCubeRenderTarget;
 	let timer;
@@ -66,7 +66,9 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
 		document.body.appendChild(menuDiv);
 		$("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
 		$("#ORclose").click(()=>{hideContextMenu()});
-		$("#ORremove").click(()=>{container.removeChild(selectedItem); hideContextMenu();});
+		$("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
+		$("#nameTag").val(selectedItem.userData.nameTag);
+    	$("#nameTag").on("input change",(item)=>{selectedItem.userData.nameTag=item.target.value});
 		$("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
 		$("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
 
@@ -95,48 +97,8 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
 
 
 
-    function addItem(name,x=0,y=0,rot=0,colors=[127,134,138])
+    function addItem(name,nameTag="",x=0,y=0,rot=0,colors=[127,134,138])
     {
-        function onDragStart(event)
-        {
-			if([0,1,6].includes(app.userData.mod) && app.userData.canTranslate)
-			{
-			var initial = new PIXI.Point(this.x, this.y);
-			var point = event.data.getLocalPosition(this.parent);
-			this.delta = {x: point.x-initial.x, y: point.y-initial.y};
-            app.canMove = 0;
-            selectedItem = this;  
-            this.data = event.data;
-            this.alpha = 0.5;
-            this.dragging = true;
-			}
-        }
-        
-        function onDragEnd()
-        {   
-            this.alpha = 1;
-            this.dragging = false;
-            this.data = null;
-			app.canMove = 1;
-        }
-        
-        function onDragMove()
-        {
-            if (this.dragging && app.userData.canTranslate )
-            {
-                const newPosition = this.data.getLocalPosition(this.parent);
-                this.x = newPosition.x - this.delta.x;
-                this.y = newPosition.y - this.delta.y;
-                if (app.userData.snapvert)
-                {
-                var closestpoint = findClosestPoint(selectedItem,findObjectsInRange());
-                stickToItem(closestpoint);
-                }
-            }
-			else
-				this.alpha = 1;
-        }
-
 
         let item = PIXI.Sprite.from(app.loader.resources[name].texture);
 		item.sayHi = function() {
@@ -152,6 +114,8 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
 		item.x = x; item.y = y;
 		item.rotation = rot;
 		item.colors = colors;
+		item.userData={};
+		item.userData.nameTag=nameTag;
 		item.saveIt = function() {
 			var thisObject = {
 				name:this.name,
@@ -197,20 +161,30 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
 			}
 		}
 
-        container.addChild(item);
+        container2d.addChild(item);
         item.interactive = true;
         item.buttonMode = true;
         item.anchor.set(0.5);
         item
-            .on('pointerdown', onDragStart)
-            .on('pointerup', onDragEnd)
-            .on('pointerupoutside', onDragEnd)
-            .on('pointermove', onDragMove)
-			.on('touchstart', onDragStart)
-            .on('touchend', onDragEnd)
-            .on('touchmove', onDragMove)
-            .on('pointerover',filterOn)
-            .on('pointerout',filterOff)
+            .on('pointerdown', function(event) {
+				Functions.onDragStart(event,this,app)
+				selectedItem = this; //прибрати, коли увесь загальний функціонал перейде у Functions
+			})
+			.on('pointerup', function() {
+				Functions.onDragEnd(this)
+			})
+			.on('pointerupoutside', function() {
+				Functions.onDragEnd(this)
+			})
+			.on('pointermove', function(event) {
+				Functions.onDragMove(event,this,container2d);
+			})
+			.on('pointerover', function() {
+				Functions.filterOn(this);
+			})
+			.on('pointerout', function() {
+				Functions.filterOff(this)
+			})
 			.on('touchstart',function(event) {
 				//console.log(timer);
 				//console.log(event)
@@ -267,7 +241,7 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
         var objectsInRange = [];
         if(selectedItem)
         {
-            container.children.forEach(element => {
+            container2d.children.forEach(element => {
                 if(element!=selectedItem)
                 {
                     if(distanceTo(selectedItem, element)<11) objectsInRange.push(element);
@@ -328,16 +302,6 @@ var ItemController = function(container, _domElement, app, _shopitems3d)
 
 var selectedItem = null;
 
-const outlineFilterBlue = new PIXI.filters.OutlineFilter(10, 0x99ff99);
-const outlineFilterRed = new PIXI.filters.OutlineFilter(10, 0xff0099);
-
-function filterOn() {
-    this.filters = [outlineFilterBlue];
-}
-
-function filterOff() {
-    this.filters = [];
-}
 
 
 var x_pos = document.getElementById("x_pos");

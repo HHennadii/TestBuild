@@ -1,8 +1,95 @@
+import * as THREE from '../jsm/three.module.js';
+import { FontLoader } from '../src/loaders/FontLoader.js';
+import { TextGeometry } from '../src/geometries/TextGeometry.js';
 const outlineFilterBlue = new PIXI.filters.OutlineFilter(10, 0x99ff99);
 let selectedItem,container2d,app;
 
 
 export const Functions = {
+
+    addDimensions( _group ) {
+        const aabb = new THREE.Box3();
+        aabb.setFromObject( _group );
+            
+        const helper = new THREE.Box3Helper( aabb, 0xff5555 );
+        helper.name = "boundingbox";
+        _group.add( helper );
+    
+        let bevelEnabled = false,
+        font = undefined,
+        fontName = "optimer",
+        fontWeight = "bold";
+    
+        const heightfont = 0,
+        size = 0.045,
+        curveSegments = 4,
+        bevelThickness = 0.1,
+        bevelSize = 0.25;
+    
+        const loader = new THREE.FontLoader();
+        loader.load( './AdditionalScripts/fonts/' + fontName + '_' + fontWeight + '.typeface.json', function ( response ) {
+            font = response;
+            const width = Math.round((aabb.max.z - aabb.min.z)*1000) + "mm";
+            var textWidth = new THREE.TextGeometry( width, {
+                font: font,
+                size: size,
+                height: heightfont,
+                curveSegments: curveSegments,
+                bevelThickness: bevelThickness,
+                bevelSize: bevelSize,
+                bevelEnabled: bevelEnabled
+            });
+            textWidth.computeBoundingBox();
+    
+            const length = Math.round((aabb.max.x - aabb.min.x)*1000) + "mm";
+            var textLength = new THREE.TextGeometry( length, {
+                font: font,
+                size: size,
+                height: heightfont,
+                curveSegments: curveSegments,
+                bevelThickness: bevelThickness,
+                bevelSize: bevelSize,
+                bevelEnabled: bevelEnabled
+            } );
+            textLength.center();
+    
+            const height = Math.round((aabb.max.y - aabb.min.y)*1000) + "mm";
+            var textHeight = new THREE.TextGeometry( height, {
+                font: font,
+                size: size,
+                height: heightfont,
+                curveSegments: curveSegments,
+                bevelThickness: bevelThickness,
+                bevelSize: bevelSize,
+                bevelEnabled: bevelEnabled
+            } );
+            textHeight.center();
+            textHeight.computeBoundingBox();
+            const centerOffsetH = 0.5 * ( textHeight.boundingBox.max.x - textHeight.boundingBox.min.x );
+    
+            const textMat = new THREE.MeshBasicMaterial( { color: 0x151515 } );
+    
+            var textMeshW = new THREE.Mesh( textWidth, textMat );
+            textMeshW.name = "billboard";
+            var textMeshL = new THREE.Mesh( textLength, textMat );
+            textMeshL.name = "billboardL";
+            var textMeshH = new THREE.Mesh( textHeight, textMat );
+            textMeshH.name = "billboardH";
+
+    
+            textMeshW.position.set(aabb.min.x-0.07,0,aabb.min.z);
+            textMeshW.rotation.set(-Math.PI/2,0,-Math.PI/2);
+    
+            textMeshL.position.set(0,aabb.max.y + 0.03,aabb.min.z);
+    
+            textMeshH.position.set(aabb.min.x - 0.07,aabb.max.y - centerOffsetH,aabb.min.z);
+            textMeshH.rotation.set(0,0,-Math.PI/2);
+    
+            _group.add( textMeshW );
+            _group.add( textMeshL );
+            _group.add( textMeshH );
+        });
+    },
 
     onDragStart(event,otherthis,appimport) {
         app=appimport;
@@ -132,3 +219,10 @@ function realPosition(item)
 {
     return {x: item.x/64, y: item.y/64};
 }
+
+
+
+
+
+
+	
