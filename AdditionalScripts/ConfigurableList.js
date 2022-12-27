@@ -12,66 +12,77 @@ export const ConfigurableList = {
         "Elements": {
             'Fridge': {
                 'itname': 'Freezing',
+                'name2D': 'Freezing<br>-12...18',
                 'cellemount':'-12...18&#8451<br /> &#8203',
                 'name': 'Fridge',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Fridge.png'
             },
             'Cooling': {
                 'itname': 'Cooling',
+                'name2D': 'Cooling<br>+1..7',
                 'cellemount':'+1..7&#8451<br /> &#8203',
                 'name': 'Cooling',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Fridge.png'
             },
             'Ambient': {
                 'itname': 'Ambient',
+                'name2D': 'Ambient',
                 'cellemount':'&#8203 <br /> &#8203',
                 'name': 'Ambient',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Fridge.png'
             },
             'Type1': {
                 'itname': 'Type 1',
+                'name2D': '12 <br> cells',
                 'cellemount':'12 cells <br /> &#8203',
                 'name': 'Column Loko LOGIS D500 for 12 cells',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Type1.png'
             },
             'Type2': {
                 'itname': 'Type 2',
+                'name2D': '12 <br> cells',
                 'cellemount':'12 cells <br /> &#8203',
                 'name': 'Column Loko LOGIS D500 for 12 cells',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Type2.png'
             },
             'Type3': {
                 'itname': 'Type 3',
+                'name2D': '11 <br> cells',
                 'cellemount':'11 cells <br /> &#8203',
                 'name': 'Column Loko LOGIS D500 for 11 cells',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Type3.png'
             },
             'Type4': {
                 'itname': 'Type 4',
+                'name2D': '10 <br> cells',
                 'cellemount':'10 cells <br /> &#8203',
                 'name': 'Column Loko LOGIS D500 for 10 cells',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Type4.png'
             },
             'Type5': {
                 'itname': 'Type 5',
+                'name2D': '7 <br> cells',
                 'cellemount':'7  cells <br /> &#8203',
                 'name': 'Column Loko LOGIS D500 for 7 cells',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Type5.png'
             },
             'Type6': {
                 'itname': 'Type 6',
+                'name2D': '4 <br> cells',
                 'cellemount':'4  cells <br /> &#8203',
                 'name': 'Column Loko LOGIS D500 for 4 cells',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/Type6.png'
             },
             'TerminalPro': {
                 'itname': 'Terminal',
+                'name2D': 'Termin<br>PRO',
                 'cellemount':'PRO <br /> &#8203',
                 'name': 'Terminal column PRO Loko LOGIS D500',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/TerminalPro.png'
             },
             'TerminalST': {
                 'itname': 'Terminal',
+                'name2D': 'Termin<br>Stand',
                 'cellemount':'Standard <br /> &#8203',
                 'name': 'Terminal column Loko LOGIS D500',
                 'imageName':'../sprites/configurator/LOKOLOGIS/Preview/TerminalST.png'
@@ -88,42 +99,49 @@ export const ConfigurableList = {
         "Elements": {
             'SetB': {
                 'itname': 'Accessories',
+                'name2D': 'bench',
                 'cellemount':`bench <br /> &#8203 `,
                 'name': 'Accessories bench',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetB.png'
             },
             'SetR': {
                 'itname': 'Accessories',
+                'name2D': 'roof',
                 'cellemount':`roof <br /> &#8203 `,
                 'name': 'Accessories roof',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetR.png'
             },
             'SetP': {
                 'itname': 'Accessories',
+                'name2D': 'cahpo ',
                 'cellemount':`cahpo <br /> &#8203 `,
                 'name': 'Accessories cahpo',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetP.png'
             },
             'SetBP': {
                 'itname': 'Accessories',
+                'name2D': 'bench<br>cahpo',
                 'cellemount': `bench cahpo <br /> &#8203`,
                 'name': 'Accessories bench cahpo',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetBP.png'
             },
             'SetBR': {
                 'itname': 'Accessories',
+                'name2D': 'bench<br>roof',
                 'cellemount':`bench roof <br /> &#8203`,
                 'name': 'Accessories bench roof',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetBR.png'
             },
             'SetRP': {
                 'itname': 'Accessories',
+                'name2D': 'roof<br>cahpo',
                 'cellemount':`roof cahpo <br /> &#8203`,
                 'name': 'Accessories roof cahpo',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetRP.png'
             },
             'SetBRP': {
                 'itname': 'Accessories',
+                'name2D': 'bench<br>roof<br>cahpo',
                 'cellemount':`bench roof cahpo<br /> &#8203`,
                 'name': 'Accessories bench roof cahpo',
                 'imageName':'../sprites/configurator/LOKOACCESSORIES/Preview/SetBRP.png'
@@ -142,30 +160,35 @@ export const ConfigurableList = {
         "Elements": {
             'TerminalCooling': {
                 'itname': 'Terminal cooling',
+                'name2D': 'Terminal<br>cooling<br>+1..7',
                 'cellemount':'+1..7&#8451<br /> &#8203 ',
                 'name': 'Terminal cooling column Loko FRESH D700 for 4 cells',
                 'imageName':'../sprites/configurator/LOKOFRESH/Preview/TerminalCooling.png'
             },
             'TerminalAmbient': {
                 'itname': 'Terminal ambient',
+                'name2D': 'Terminal<br>ambient',
                 'cellemount': '&#8203<br /> &#8203',
                 'name': 'Terminal ambient column Loko FRESH D700 for 4 cells',
                 'imageName':'../sprites/configurator/LOKOFRESH/Preview/TerminalAmbient.png'
             },
             'Cooling': {
                 'itname': 'Cooling',
+                'name2D': 'Cooling<br>+1..7',
                 'cellemount':'+1..7&#8451<br /> &#8203',
                 'name': 'Cooling column Loko FRESH D700 for 4 cells',
                 'imageName':'../sprites/configurator/LOKOFRESH/Preview/Type1.png'
             },
             'Ambient': {
                 'itname': 'Ambient',
+                'name2D': 'Ambient',
                 'cellemount':'&#8203<br /> &#8203',
                 'name': 'Ambient column Loko FRESH D700 for 4 cells',
                 'imageName':'../sprites/configurator/LOKOFRESH/Preview/Type2.png'
             },
             'Freezing': {
                 'itname': 'Freezing',
+                'name2D': 'Freezing<br>-12...18',
                 'cellemount':'-12...18&#8451<br /> &#8203',
                 'name': 'Freezing column Loko FRESH D700 for 4 cells',
                 'imageName':'../sprites/configurator/LOKOFRESH/Preview/Type3.png'
@@ -184,36 +207,42 @@ export const ConfigurableList = {
         "Elements": {
             'Type1': {
                 'itname': 'Type 1',
+                'name2D': '12<br>cells',
                 'cellemount':'12 cells',
                 'name': 'Column Loko LOGIS D500 for 12 cells',
                 'imageName':'../sprites/configurator/ECOLOGIS/Preview/Type1.png'
             },
             'Type2': {
                 'itname': 'Type 2',
+                'name2D': '12<br>cells',
                 'cellemount':'12 cells',
                 'name': 'Column Loko LOGIS D500 for 12 cells',
                 'imageName':'../sprites/configurator/ECOLOGIS/Preview/Type2.png'
             },
             'Type3': {
                 'itname': 'Type 3',
+                'name2D': '11<br>cells',
                 'cellemount':'11 cells',
                 'name': 'Column Loko LOGIS D500 for 11 cells',
                 'imageName':'../sprites/configurator/ECOLOGIS/Preview/Type3.png'
             },
             'Type4': {
                 'itname': 'Type 4',
+                'name2D': '10<br>cells',
                 'cellemount':'10 cells',
                 'name': 'Column Loko LOGIS D500 for 10 cells',
                 'imageName':'../sprites/configurator/ECOLOGIS/Preview/Type4.png'
             },
             'Type5': {
                 'itname': 'Type 5',
+                'name2D': '7<br>cells',
                 'cellemount':'7  cells',
                 'name': 'Column Loko LOGIS D500 for 7 cells',
                 'imageName':'../sprites/configurator/ECOLOGIS/Preview/Type5.png'
             },
             'Type6': {
                 'itname': 'Type 6',
+                'name2D': '4<br>cells',
                 'cellemount':'4  cells',
                 'name': 'Column Loko LOGIS D500 for 4 cells',
                 'imageName':'../sprites/configurator/ECOLOGIS/Preview/Type6.png'
@@ -224,7 +253,7 @@ export const ConfigurableList = {
     "SHELF": {
         "Name":"Wall shelf",
         "Image":"./sprites/configurator/SHELF/SHELF.png",
-        "Category":"Convinian",
+        "Category":"Shelf",
         "ElementsBorders":{
             "usual": ['Type1','Type2','Type3','Type4','Type5','Type6','Type7'],
             "All":['Type1','Type2','Type3','Type4','Type5','Type6','Type7']
@@ -279,7 +308,7 @@ export const ConfigurableList = {
     "DOUBLESHELF": {
         "Name":"Double shelf",
         "Image":"./sprites/configurator/SHELF/DOUBLESHELF.png",
-        "Category":"Convinian",
+        "Category":"Shelf",
         "ElementsBorders":{
             "usual": ['Type1','Type2','Type3','Type4','Type5','Type6','Type7'],
             "All":['Type1','Type2','Type3','Type4','Type5','Type6','Type7']
@@ -326,7 +355,7 @@ export const ConfigurableList = {
     "CHECKOUT": {
         "Name":"CHECK OUT",
         "Image":"./sprites/configurator/CHECKOUT/CHECKOUT.png",
-        "Category":"Convinian",
+        "Category":"CheckOut",
         "ElementsBorders":{
             "usual": ['Grid','GridSO','Shelf','ShelfSO','ShelfLarge'],
             "All":['Grid','GridSO','Shelf','ShelfSO','ShelfLarge']
@@ -397,21 +426,24 @@ export const ConfigurableList = {
 export const OrdinaryObjects = {
     "LOKOLOCAL": {
         "art":"xxx1-x20-xx1",
-        "Name":"LOKO LOCAL",
+        "Name":"LOKOLOCAL",
+        "Name2D":"Loko<br>local",
         "Image":"./sprites/ordinary/MenuPreview/LokoLocal.png",
         "Category":"ParcelSystems",
         "price":"900",
     },
     "LOKOCOMMON": {
         "art":"xxx2-x20-xx2",
-        "Name":"LOKO COMMON",
+        "Name":"LOKOCOMMON",
+        "Name2D":"Loko common",
         "Image":"./sprites/ordinary/MenuPreview/LokoCommon.png",
         "Category":"ParcelSystems",
         "price":"1280",
     },
     "GREORA": {
         "art":"xxx2-x20-xx3",
-        "Name":"GREORA",
+        "Name":"Greora",
+        "Name2D":"Greora",
         "Image":"./sprites/ordinary/MenuPreview/Greora.png",
         "Category":"Convinian",
         "price":"1280",
@@ -419,6 +451,7 @@ export const OrdinaryObjects = {
     "Coffeemodule": {
         "art":"xxx2-x20-xx3",
         "Name":"Coffee module",
+        "Name2D":"Coffee<br>module",
         "Image":"./sprites/ordinary/MenuPreview/Coffee module.png",
         "Category":"Convinian",
         "price":"2280",
@@ -426,6 +459,7 @@ export const OrdinaryObjects = {
     "Backwall": {
         "art":"xxx2-x20-xx3",
         "Name":"Backwall",
+        "Name2D":"Backwall",
         "Image":"./sprites/ordinary/MenuPreview/Backwall.png",
         "Category":"Convinian",
         "price":"2080",
@@ -433,20 +467,23 @@ export const OrdinaryObjects = {
     "Luna": {
         "art":"xxx2-x20-xx3",
         "Name":"Luna",
+        "Name2D":"Luna",
         "Image":"./sprites/ordinary/MenuPreview/Luna.png",
-        "Category":"Convinian",
+        "Category":"CheckOut",
         "price":"2080",
     },
     "Lyra": {
         "art":"xxx2-x20-xx3",
         "Name":"Lyra",
+        "Name2D":"Lyra",
         "Image":"./sprites/ordinary/MenuPreview/Lyra.png",
-        "Category":"Convinian",
+        "Category":"CheckOut",
         "price":"2080",
     },
     "sunermini": {
         "art":"xxx2-x20-xx3",
         "Name":"Suner mini",
+        "Name2D":"Suner<br>mini",
         "Image":"./sprites/ordinary/MenuPreview/suner mini.png",
         "Category":"Convinian",
         "price":"2080",
@@ -462,10 +499,20 @@ export const OrdinaryObjects = {
 
 
 export const Category = {
+    "Shelf" :{
+        "Name": "Shelf",
+        "Color":"0x00BFFF" 
+    },
+    "CheckOut" :{
+        "Name": "CheckOut", 
+        "Color":"0xFA5537" 
+    },
     "Convinian" :{
-        "Name": "Convenience store" 
+        "Name": "Convenience store", 
+        "Color":"0xCCCCFF" 
     },
     "ParcelSystems" :{
-        "Name": "Parcel Systems" 
+        "Name": "Parcel Systems",
+        "Color":"0xdFFD700" 
     },
 }

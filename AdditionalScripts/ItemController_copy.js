@@ -29,7 +29,7 @@ import {Functions} from './FunctionsForConf.js';
 import {BufferGeometryUtils} from '../jsm/utils/BufferGeometryUtils.js';
 import { HDRCubeTextureLoader } from '../jsm/loaders/HDRCubeTextureLoader.js';
 import { getPostCoef } from './Coefs.js';
-import { ConfigurableList, OrdinaryObjects } from './ConfigurableList.js';
+import { ConfigurableList, OrdinaryObjects,Category } from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 import {CSG} from './EnviromentTools/three-csg-ts/lib/esm/CSG.js'
@@ -101,6 +101,11 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
     {
 
         let item = PIXI.Sprite.from(app.loader.resources[name].texture);
+		var tint = Category[OrdinaryObjects[name].Category].Color;
+        item.tint = tint;
+		
+
+
 		item.sayHi = function() {
 			const ord = OrdinaryObjects[this.name];
 			var color = getColorCode(this.colors);
@@ -224,6 +229,12 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
         helper.x = item.texture.width/2;
         helper.y = -item.texture.height/2;
         item.addChild(helper);
+
+		const text = new PIXI.Text(OrdinaryObjects[name].Name2D.replaceAll('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        text.anchor.set(0.5);
+        text.scale.x = 1/item.scale.x;
+        text.scale.y = 1/item.scale.y;
+        item.addChild(text);
 
         return item;
     }

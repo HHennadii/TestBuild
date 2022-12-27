@@ -6,7 +6,7 @@ import {Functions} from './FunctionsForConf.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {MainWindow, colorSelect, isRoof, RBMmenuConf, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
-import {ConfigurableList} from './ConfigurableList.js';
+import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.ECOLOGIS.Elements;
@@ -589,6 +589,9 @@ function spriteEcoLogis(seq, colors, kazyrek, depth, x=0, y=0, rot=0)
     for(var i = 0; i<2; i++)
     {
         var sprite = new PIXI.Sprite.from("sprites/configurator/ECOLOGIS/PixiPreview/"+seq[i]+offset+".svg");
+        const text = new PIXI.Text(ConfigurableList.ECOLOGIS.Elements[seq[i]].name2D.replaceAll('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        text.anchor.set(0.5);
+        sprite.addChild(text);
         renderedsprite.addChild(sprite);        
         sprite.anchor.set(0.5);
         sprite.x+=(0.49*32+dist*64);
@@ -600,6 +603,10 @@ function spriteEcoLogis(seq, colors, kazyrek, depth, x=0, y=0, rot=0)
     renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 14.5;
     renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 14.5;
 
+    var tint = Category[ConfigurableList.LOKOLOGIS.Category].Color;
+    renderedsprite.children.forEach(ch => {
+        ch.tint = tint;
+    })
     return renderedsprite;
 }
 

@@ -5,7 +5,7 @@ import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import {Functions} from './FunctionsForConf.js';
 import {SlimDeck} from './DataSet.js';
 import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
-import {ConfigurableList} from './ConfigurableList.js';
+import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.FRIDGE.Elements;
@@ -611,16 +611,22 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
     for(var i = 0; i<arr_build.length; i++)
     {
         var sprite = new PIXI.Sprite.from("sprites/configurator/FRIDGE/PixiPreview/Fridge.svg");
-        renderedsprite.addChild(sprite);        
+        var tint = Category[ConfigurableList.FRIDGE.Category].Color;;
+        sprite.tint = tint;
 
-        sprite.x+=(dist*64);
-        sprite.y = -21.6; //тут
+        renderedsprite.addChild(sprite);        
+        sprite.anchor.set(0.5);
+        sprite.x+=(arr_build[i].width/1000*32 + dist*64);
         sprite.scale.x = arr_build[i].width/1000;
         sprite.scale.y = 0.674;
         dist += arr_build[i].width/1000;
+        const text = new PIXI.Text(ConfigurableList.FRIDGE.Elements[arr_build[i].ObjType].itname.replace('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        text.anchor.set(0.5);
+        text.scale.x = 1/sprite.scale.x;
+        text.scale.y = 1/sprite.scale.y;
+        sprite.addChild(text);
     }
-    let text = new PIXI.Text(renderedsprite.name,{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
-    renderedsprite.addChild(text);
+
 
     renderedsprite.breadth = dist;
 

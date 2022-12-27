@@ -6,7 +6,7 @@ import {Functions} from './FunctionsForConf.js';
 import {Checkout} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {MainWindow, colorSelect, addStackButtons, RBMmenuConf, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
-import {ConfigurableList} from './ConfigurableList.js';
+import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.CHECKOUT.Elements;
@@ -551,6 +551,9 @@ function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
     renderedsprite.colors = colors;
     renderedsprite.configuration = seq;
 
+    console.log(seq);
+
+
     renderedsprite.sayHi = function() {
         var arr = [];
         const name = this.name;
@@ -605,16 +608,20 @@ function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
 
     for(var i = 0; i<seq.length; i++) {
         var sprite = new PIXI.Sprite.from("sprites/configurator/CHECKOUT/PixiPreview/CheckOut.svg");
+        var tint = Category[ConfigurableList.CHECKOUT.Category].Color;
+        sprite.tint = tint;
         renderedsprite.addChild(sprite);
         sprite.anchor.set(0.5);
         sprite.x+=(0.7*32+dist*64);
         sprite.scale.x = 0.7;
         sprite.scale.y = 0.794;
         dist += 0.7;
+        const text = new PIXI.Text(seq[i],{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'left'});
+        text.anchor.set(0.5);
+        text.scale.x = 1/sprite.scale.x;
+        text.scale.y = 1/sprite.scale.y;
+        sprite.addChild(text);
     }
-    let text = new PIXI.Text("Check\n out",{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'left'});
-    text.y-=32*0.794;
-    renderedsprite.addChild(text);
 
     renderedsprite.breadth = dist;
 

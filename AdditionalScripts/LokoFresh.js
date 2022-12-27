@@ -6,7 +6,7 @@ import {Functions} from './FunctionsForConf.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {MainWindow, colorSelect, addStackButtons, isRoof, RBMmenuConf, CopyButton, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
-import {ConfigurableList} from './ConfigurableList.js';
+import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.LOKOFRESH.Elements;
@@ -719,6 +719,9 @@ function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
 
     for(var i = 0; i<seq.length; i++) {
         var sprite = new PIXI.Sprite.from("sprites/configurator/LOKOFRESH/PixiPreview/"+seq[i]+".svg");
+        const text = new PIXI.Text(ConfigurableList.LOKOFRESH.Elements[seq[i]].name2D.replaceAll('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        text.anchor.set(0.5);
+        sprite.addChild(text);
         renderedsprite.addChild(sprite);
         sprite.anchor.set(0.5);
         sprite.x+=(0.699*32+dist*64);
@@ -771,6 +774,11 @@ function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
     renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -22;
     renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 22;
     renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 22;
+
+    var tint = Category[ConfigurableList.LOKOLOGIS.Category].Color;
+    renderedsprite.children.forEach(ch => {
+        ch.tint = tint;
+    })
 
     return renderedsprite;
 }

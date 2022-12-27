@@ -7,7 +7,7 @@ import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {shelf} from './DataSet.js';
 import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
-import {ConfigurableList} from './ConfigurableList.js';
+import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.DOUBLESHELF.Elements;
@@ -925,24 +925,36 @@ function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
     renderedsprite.addChild(helper);
 
     var dist=0;
-    for(var i = 0; i<arr_build.length; i+=2)
+    for(var i = 0; i<arr_build.length; i++)
     {
         var sprite = new PIXI.Sprite.from("sprites/configurator/SHELF/PixiPreview/Shelf.svg");
-        renderedsprite.addChild(sprite);        
-        sprite.x+=(dist*64);
+        var tint = Category[ConfigurableList.DOUBLESHELF.Category].Color;;
+        sprite.tint = tint;
+
+        renderedsprite.addChild(sprite);
+        sprite.anchor.set(0.5);
+        sprite.x+=(arr_build[i].width/1000*32 + dist*64);
+
         sprite.scale.x = arr_build[i].width/1000;
         if(extBot) {
-            sprite.scale.y = 2*(+depth+100)/1000;
-            sprite.y = -64*(+depth+100)/1000;
+            sprite.scale.y = (+depth+100)/1000;
+            if(arr_build[i].id<0) sprite.y -= sprite.scale.y/2*64;
+            else sprite.y += sprite.scale.y/2*64;
         } else {
-            sprite.scale.y = 2*depth/1000;
-            sprite.y = -64*depth/1000;
+            sprite.scale.y = depth/1000;
+            if(arr_build[i].id<0) sprite.y -= sprite.scale.y/2*64;
+            else sprite.y += sprite.scale.y/2*64;
         }
-        dist += arr_build[i].width/1000;
+        if(arr_build[i].id<0) dist += arr_build[i].width/1000;
+
+        const text = new PIXI.Text(ConfigurableList.SHELF.Elements[arr_build[i].ObjType].itname,{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        text.anchor.set(0.5);
+        text.scale.x = 1/sprite.scale.x;
+        text.scale.y = 1/sprite.scale.y;
+        sprite.addChild(text);
+
     }
-    let text = new PIXI.Text('Double\nShelf',{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
-    text.y-=32*depth/1000;
-    renderedsprite.addChild(text);
+
 
     renderedsprite.breadth = dist;
 

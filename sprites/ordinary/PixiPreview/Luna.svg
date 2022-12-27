@@ -2,8 +2,8 @@
 
  <g>
   <title>Layer 1</title>
-  <rect stroke="#000" rx="6" id="svg_4" height="27.90625" width="92.20833" y="6.73064" x="0.51366" fill="#000000"/>
-  <rect stroke="#000" rx="6" id="svg_6" height="37.36967" width="54.74489" y="0.48673" x="19.63562" fill="#000000"/>
-  <rect stroke="#000" rx="6" id="svg_7" height="37.36967" width="32.4034" y="6.43795" x="30.4649" fill="#000000"/>
+  <rect stroke="#fff" rx="6" id="svg_4" height="27.90625" width="92.20833" y="6.73064" x="0.51366" fill="#fff"/>
+  <rect stroke="#fff" rx="6" id="svg_6" height="37.36967" width="54.74489" y="0.48673" x="19.63562" fill="#fff"/>
+  <rect stroke="#fff" rx="6" id="svg_7" height="37.36967" width="32.4034" y="6.43795" x="30.4649" fill="#fff"/>
  </g>
 </svg>

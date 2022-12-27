@@ -975,14 +975,14 @@ $(".Nav").click(function() {
 })
 
 $("#cameraswitcher").click(function() {	
-	if ($(this).css("background-color")=="rgb(147, 210, 255)"){	
+	if ($(this).hasClass('active3D')){	
 		CamAct()
-		$(this).css("background-color","#ededed");
+		$(this).removeClass('active3D');
 	}
 		
 	else{	
 		CamDiact()
-		$(this).css("background-color","#93D2FF");
+		$(this).addClass('active3D');
 	}
 })
 

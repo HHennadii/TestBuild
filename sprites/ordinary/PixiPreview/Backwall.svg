@@ -2,9 +2,6 @@
 
  <g>
   <title>Layer 1</title>
-  <rect stroke="#000" id="svg_1" height="5.78702" width="49.78724" y="17.63745" x="0.25319" fill="#000000"/>
-  <rect stroke="#000" id="svg_2" height="5.78702" width="49.78724" y="17.63745" x="0.25319" fill="#000000"/>
-  <rect stroke="null" stroke-width="0" id="svg_3" height="5.00653" width="50.66529" y="12.466" x="-0.13705" fill="#191919"/>
-  <rect stroke="#000" id="svg_4" height="11.83579" width="49.78724" y="0.17407" x="0.35075" fill="#000000"/>
+  <rect stroke="#fff" id="svg_1" height="29.19685" width="49.78724" y="17.63745" x="0.25319" fill="#fff"/>
  </g>
 </svg>

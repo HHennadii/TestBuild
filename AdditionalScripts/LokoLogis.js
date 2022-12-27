@@ -6,7 +6,7 @@ import {Functions} from './FunctionsForConf.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
 import {getPostCoef} from './Coefs.js';
 import {MainWindow, colorSelect, addStackButtons, isRoof, depthSelector, RBMmenuConf, CopyButton, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
-import {ConfigurableList} from '../AdditionalScripts/ConfigurableList.js';
+import {ConfigurableList,Category} from '../AdditionalScripts/ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 import { HDRCubeTextureLoader } from '../jsm/loaders/HDRCubeTextureLoader.js';
@@ -844,6 +844,7 @@ function spritePostBox(seq, colors, kazyrek, depth, x=0, y=0, rot=0) {
     const offset = depth==700?'':'N';
     //const Postbox_parts = depth==700?D700:Postbox_parts;
     renderedsprite = new PIXI.Container();
+
     renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
     renderedsprite.name = needToFixIt;
     renderedsprite.depth = depth;
@@ -1025,6 +1026,9 @@ function spritePostBox(seq, colors, kazyrek, depth, x=0, y=0, rot=0) {
     for(var i = 0; i<seq.length; i++)
     {
         var sprite = new PIXI.Sprite.from("sprites/configurator/LOKOLOGIS/PixiPreview/"+seq[i]+offset+".svg");
+        const text = new PIXI.Text(ConfigurableList.LOKOLOGIS.Elements[seq[i]].name2D.replaceAll('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        text.anchor.set(0.5);
+        sprite.addChild(text);
         if(offset=='N') {
             if(!ConfigurableList.LOKOLOGIS.ElementsBorders.fresh.includes(seq[i])) sprite.y+=7.5;
         }
@@ -1062,6 +1066,10 @@ function spritePostBox(seq, colors, kazyrek, depth, x=0, y=0, rot=0) {
         }
     }
 
+    var tint = Category[ConfigurableList.LOKOLOGIS.Category].Color;
+    renderedsprite.children.forEach(ch => {
+        ch.tint = tint;
+    })
     return renderedsprite;
 }
 
