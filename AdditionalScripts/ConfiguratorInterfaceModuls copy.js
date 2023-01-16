@@ -1,6 +1,284 @@
 import {ConfigurableList} from './ConfigurableList.js';
 const list = ConfigurableList;
 
+let CopyThisConfigeration=[];
+
+export const Configurator = {
+    SetGeneralElements(name,type){
+        $("#setconfigurator").append(InterfaceModule.MainWindow);
+        $("#PostBoxconf").append(InterfaceModule.addStackButtons(name));
+
+        let insertIt=`
+        <div class="general-param-name">
+            Global parameters
+        </div>
+        <div class="general-param-grid">
+            ${InterfaceModule.ColorCell()}
+        </div>
+        ${InterfaceModule.StackListGenerator(type)}
+        `
+        document.getElementsByClassName("container-conf-param")[0].innerHTML=insertIt;
+        dropDownSetHeight();
+
+        document.getElementsByClassName("container-conf-info")[0].innerHTML=InterfaceModule.InfoSection(type);
+
+        $( window ).resize(()=>{
+            if($(".right-menu").css("width")!="0px"){
+                if(window.innerWidth>1150){
+                    $(".right-menu").css("width", 350);
+                    $(".right-menu").css("left", window.innerWidth/2 + 225);
+                    $(".configurator").css("left", window.innerWidth/2 - 575);
+                }
+                else{   
+                    $(".right-menu").css("width", window.innerWidth-800);
+                    $(".right-menu").css("left", 800);
+                    $(".configurator").css("left", 0);
+                }
+            }
+            else{
+                $(".configurator").css("left", window.innerWidth/2 - 400);
+            }
+        });
+    },
+
+    ClearCopyBuffer(){
+        $(".active-copy").removeClass('active-copy');
+        return [];
+    },
+
+    CopyStack(item, arr_build){
+        if($(item.currentTarget).hasClass('active-copy')){
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            CopyThisConfigeration =[];
+        }
+        else{
+            $(".active-copy").addClass('deactive-copy');
+            $(".active-copy").removeClass('active-copy');
+            $(item.currentTarget).addClass('active-copy');
+            $(item.currentTarget).removeClass('deactive-copy');
+            let itemToCopy=arr_build[arr_build.findIndex(e => e.id == +item.currentTarget.id.replace(/[^0-9]/g,''))];
+            CopyThisConfigeration=itemToCopy;
+
+        }
+        return CopyThisConfigeration;    
+    },
+
+    CloseF(e,arr_build){
+        var id =e.target.id.replace(/[^0-9]/g,'');
+        if($("#Img"+id).hasClass("config-item-border-highlight")){
+            $(".right-menu").css("width", 0);
+            $(".configurator").css("left", window.innerWidth/2 - 400);
+            $(".container-conf-param").css("display", "none");
+        }
+        $("#Collecton"+id).remove();
+        arr_build = RemoveFromArray(arr_build, id);
+        return arr_build;
+    },
+
+    
+
+
+    OpenConfigurationMenu(e,innerContent,itemToSelect){
+        if(innerContent=="param"){
+            $(".container-conf-param").css("display", "block");
+            $(".container-conf-info").css("display", "none");
+            $(".active-item-preview").removeClass("active-item-preview");
+            $("#"+itemToSelect).addClass("active-item-preview");
+            const id =e.target.id.replace(/[^0-9]/g,'');
+            if($("#Img"+id).hasClass('config-item-border-highlight')){
+                $(".right-menu").css("width", 0);
+                $(".configurator").css("left", window.innerWidth/2 - 400);
+                $(".config-item-border-highlight").removeClass('config-item-border-highlight');
+            } 
+            else{
+                $(".config-item-border-highlight").removeClass('config-item-border-highlight');
+                $("#Img"+id).addClass('config-item-border-highlight');
+            }
+        } 
+        if(innerContent=="info"){
+            $(".container-conf-param").css("display", "none");
+            $(".container-conf-info").css("display", "block");
+
+        } 
+        if(window.innerWidth>1150){
+            $(".right-menu").css("width", 350);
+            $(".right-menu").css("left", window.innerWidth/2 + 225);
+            $(".configurator").css("left", window.innerWidth/2 - 575);
+        }
+        else{   
+            $(".right-menu").css("width", window.innerWidth-800);
+            $(".right-menu").css("left", 800);
+            $(".configurator").css("left", 0);
+        }
+
+            
+        
+    },
+    
+    SetParamForReconfigurate(arrForReconf){
+        console.log(arrForReconf)
+        const colorSet = document.querySelectorAll('input[name="color"]');
+        colorSet.forEach(i=> {if(arrForReconf.colors.join(' ') == i.value) 
+                                i.checked = true;
+                             }); 
+        
+    },
+
+    UpdateAll(){
+        if(document.querySelector('input[name="color"]:checked'))
+            document.getElementById("ColorSet").innerHTML=getColorCode(document.querySelector('input[name="color"]:checked').value.split(' '));
+    },
+    
+    CreateButtonControl(state=false){
+        document.getElementById("spawnconfigurated").disabled = state;
+    },
+
+   //array manipulation
+    ClearArray (){
+        return	[]; 
+    },
+
+    AddToArray (arr, Push, place="right"){
+        if (place == "right")
+        arr.push(Push);
+        else
+        arr.unshift(Push);
+    },
+
+    CarrentValue (arr, searchFor){
+        return arr[arr.findIndex(e => e.id == searchFor)].ObjType;
+    },
+    
+    RemoveFromArray (arr, itemId){
+        return arr.filter(e => e.id != itemId);
+    }
+}
+
+
+
+function dropDownSetHeight(){
+	var coll = document.getElementsByClassName("right-collapsible");
+	for (var i = 0; i < coll.length; i++) {
+		coll[i].nextElementSibling.style.maxHeight =  null;
+		coll[i].addEventListener("click", function() {
+		this.classList.toggle("active");
+		var content = this.nextElementSibling;
+		if (content.style.maxHeight){
+		content.style.maxHeight = null;
+		} else {
+		content.style.maxHeight = content.scrollHeight + "px";
+		} 
+	});
+	}
+    //document.getElementsByClassName("right-collapsible")[0].click();
+}
+
+
+
+
+
+export const colorSelect = `
+<div class="dropdown-shelf">
+Color <img class="small-icon" src="Media/SVG/CloseM.svg" alt="">
+<div class="dropdown-content-shelf-color direction-colomn">
+<label class="colorRow">
+    <input class="radio" type="radio" name="color" value="236 236 231">
+    <img src="../Media/SVG/C1.svg" class="dots"> Paper white
+</label>
+<label class="colorRow">
+    <input class="radio" type="radio" name="color" value="183 179 168">
+    <img src="../Media/SVG/C2.svg" class="dots"> Organic grey
+</label>
+<label class="colorRow">
+    <input class="radio" type="radio" name="color" value="127 134 138" checked>
+    <img src="../Media/SVG/C3.svg" class="dots"> Meteorite
+</label>
+<label class="colorRow">
+    <input class="radio" type="radio" name="color" value="151 147 146">
+    <img src="../Media/SVG/C4.svg" class="dots"> Greyhound
+</label>
+<label class="colorRow">
+    <input class="radio" type="radio" name="color" value="48 61 58">
+    <img src="../Media/SVG/C5.svg" class="dots"> Grünewald
+green
+</label>
+<label class="colorRow">
+    <input class="radio" type="radio" name="color" value="14 14 16">
+    <img src="../Media/SVG/C6.svg" class="dots"> Ultima black
+</label>
+</div>
+</div>
+`;
+
+
+export function ColorCell(){
+    return `
+        <div class="general-param-cell">
+                Color:
+                <div class="general-param-dropdown">
+                    <div id="ColorSet" class="general-param-nameTag">
+                        Meteorite
+                    </div> 
+                    <div class="general-param-dropdown-content direction-colomn">
+                        <label class="colorRow">
+                            <input class="radio" type="radio" name="color" value="236 236 231">
+                            <img src="../Media/SVG/C1.svg" class="dots-small"> Paper white
+                        </label>
+                        <label class="colorRow">
+                            <input class="radio" type="radio" name="color" value="183 179 168">
+                            <img src="../Media/SVG/C2.svg" class="dots-small"> Organic grey
+                        </label>
+                        <label class="colorRow">
+                            <input class="radio" type="radio" name="color" value="127 134 138" checked>
+                            <img src="../Media/SVG/C3.svg" class="dots-small"> Meteorite
+                        </label>
+                        <label class="colorRow">
+                            <input class="radio" type="radio" name="color" value="151 147 146">
+                            <img src="../Media/SVG/C4.svg" class="dots-small"> Greyhound
+                        </label>
+                        <label class="colorRow">
+                            <input class="radio" type="radio" name="color" value="48 61 58">
+                            <img src="../Media/SVG/C5.svg" class="dots-small"> Grünewald green
+                        </label>
+                        <label class="colorRow">
+                            <input class="radio" type="radio" name="color" value="14 14 16">
+                            <img src="../Media/SVG/C6.svg" class="dots-small"> Ultima black
+                        </label>
+                    </div>
+             </div>
+        </div>
+    `
+}
+
+export function StackListGenerator(name){
+    let exportList=`<ul class="right-category-container">`;
+
+	for(let cat in list[name].InnerCategory){
+        let innerItems=``
+
+        for(let i=0;i<list[name].InnerCategory[cat].Items.length;i++){
+            innerItems = innerItems + `
+                <div class="item-containder-right-menu"> 
+                <img id=${list[name].Elements[list[name].InnerCategory[cat].Items[i]].itname} class="img-item-preview" src="${list[name].Elements[list[name].InnerCategory[cat].Items[i]].imageName}">
+                <div class="objname-right-menu">
+                            ${list[name].Elements[list[name].InnerCategory[cat].Items[i]].itname}
+                </div>
+                </div>
+                
+        `}
+		exportList =exportList + `
+			<li>
+				<button class="right-collapsible">${list[name].InnerCategory[cat].Name}</button>
+				<div class=" grid-layout">${innerItems}</div>
+			</li>
+		`
+    }
+    exportList+=`</ul>`
+    return exportList;
+}
+
+
 
 export const MainWindow = `
 <div id="confarea">
@@ -25,6 +303,7 @@ export const MainWindow = `
 
 		<div class="configurator">
 			<button class="closeconf"><img class="wall-icon" src="./Media/SVG/Cross.svg"></button>
+            <button class="info-conf"><img class="wall-icon" src="./Media/SVG/Info.svg"></button>
 			<input id="spawnconfigurated" type="button" class="create_button" value="Create" disabled>
             <div id="confmenu" class="confmenu">
             <div id="option" class="shelfconf">
@@ -35,10 +314,70 @@ export const MainWindow = `
             <div style="width:100%; height: 60px; backgrond-color: transparent; z-index:1;">
             </div>	
 		</div>
-       
+        <div class="right-menu">
+        <button class="close-right-menu"><img class="wall-icon" src="./Media/SVG/Cross.svg"></button>
+        <div class="container-conf-param">
+        </div>
+        <div class="container-conf-info">
+        </div>
 	</div>
     
 `;
+
+export function InfoSection(activeObj){
+    let cons=``;
+    list[activeObj].Cons.forEach(i=>cons+=`<li class="cons">`+i+`</li>`)
+return `
+    <div class="general-info-top-spacer">
+        <div class="general-info-name">
+            ${list[activeObj].Name}
+        </div>
+        <div class="general-info-description">
+            ${list[activeObj].Description}
+        </div>
+        <div class="general-info-grid">
+            <ul class="general-info-ul">
+                ${cons}
+            </ul>
+            <div>
+            <img src=${list[activeObj].InfoImage}>
+            </div>
+        </div>
+    </div>
+    <div class="general-info-bottom-spacer">
+        <section class="carousel" aria-label="Gallery">
+            <ol class="carousel__viewport">
+            <li id="carousel__slide1" class="carousel__slide">
+            <img class="carousel-img" src=${list[activeObj].CaruImages[0]}>
+                <div class="carousel__snapper">
+                <a href="#carousel__slide4" class="carousel__prev">Go to last slide</a>
+                <a href="#carousel__slide2" class="carousel__next">Go to next slide</a>
+                </div>
+            </li>
+            <li id="carousel__slide2" class="carousel__slide">
+            <img class="carousel-img" src=${list[activeObj].CaruImages[1]}>
+                <div class="carousel__snapper"></div>
+                <a href="#carousel__slide1" class="carousel__prev">Go to previous slide</a>
+                <a href="#carousel__slide3" class="carousel__next">Go to next slide</a>
+            </li>
+            <li id="carousel__slide3" class="carousel__slide">
+            <img class="carousel-img" src=${list[activeObj].CaruImages[2]}>
+                <div class="carousel__snapper"></div>
+                <a href="#carousel__slide2" class="carousel__prev">Go to previous slide</a>
+                <a href="#carousel__slide4" class="carousel__next">Go to next slide</a>
+            </li>
+            <li id="carousel__slide4" class="carousel__slide">
+            <img class="carousel-img" src=${list[activeObj].CaruImages[3]}>
+                <div class="carousel__snapper"></div>
+                <a href="#carousel__slide3" class="carousel__prev">Go to previous slide</a>
+                <a href="#carousel__slide1" class="carousel__next">Go to first slide</a>
+            </li>
+            </ol>
+    
+        </section>
+    </div>
+    `
+}
 
 export function ItemCatalog(name,originId,items){
     let readyDiv=``;
@@ -58,38 +397,7 @@ export function ItemCatalogAcces(name,originId,items){
     return readyDiv;
 }
 
-export const colorSelect = `
-<div class="dropdown-shelf">
-Color <img class="small-icon" src="Media/SVG/CloseM.svg" alt="">
-<div class="dropdown-content-shelf-color direction-colomn">
-<label class="colorRow">
-    <input class="radio" type="radio" name="test" value="236 236 231">
-    <img src="../Media/SVG/C1.svg" class="dots"> Paper white
-</label>
-<label class="colorRow">
-    <input class="radio" type="radio" name="test" value="183 179 168">
-    <img src="../Media/SVG/C2.svg" class="dots"> Organic grey
-</label>
-<label class="colorRow">
-    <input class="radio" type="radio" name="test" value="127 134 138" checked>
-    <img src="../Media/SVG/C3.svg" class="dots"> Meteorite
-</label>
-<label class="colorRow">
-    <input class="radio" type="radio" name="test" value="151 147 146">
-    <img src="../Media/SVG/C4.svg" class="dots"> Greyhound
-</label>
-<label class="colorRow">
-    <input class="radio" type="radio" name="test" value="48 61 58">
-    <img src="../Media/SVG/C5.svg" class="dots"> Grünewald
-green
-</label>
-<label class="colorRow">
-    <input class="radio" type="radio" name="test" value="14 14 16">
-    <img src="../Media/SVG/C6.svg" class="dots"> Ultima black
-</label>
-</div>
-</div>
-`;
+
 
 
 export const RMBmenu =`
@@ -115,39 +423,41 @@ export const RMBmenu =`
 <div style="width: 100%; height:50px; display: flex; justify-content: center;   background-color: #ededed;  border: 1px solid  black;">
     <div class="color_select">
     <label >
-        <input class="radio" type="radio" name="test" value="236 236 231">
+        <input class="radio" type="radio" name="color" value="236 236 231">
         <img src="../Media/SVG/C1.svg" class="dots">
     </label>
     <label>
-        <input class="radio" type="radio" name="test" value="183 179 168">
+        <input class="radio" type="radio" name="color" value="183 179 168">
         <img src="../Media/SVG/C2.svg" class="dots">
     </label>
     <label>
-        <input class="radio" type="radio" name="test" value="127 134 138" checked>
+        <input class="radio" type="radio" name="color" value="127 134 138" checked>
         <img src="../Media/SVG/C3.svg" class="dots">
     </label>
     <label>
-        <input class="radio" type="radio" name="test" value="151 147 146">
+        <input class="radio" type="radio" name="color" value="151 147 146">
         <img src="../Media/SVG/C4.svg" class="dots">
     </label>
     <label>
-        <input class="radio" type="radio" name="test" value="48 61 58">
+        <input class="radio" type="radio" name="color" value="48 61 58">
         <img src="../Media/SVG/C5.svg" class="dots">
     </label>
     <label>
-        <input class="radio" type="radio" name="test" value="14 14 16">
+        <input class="radio" type="radio" name="color" value="14 14 16">
         <img src="../Media/SVG/C6.svg" class="dots">
     </label>
 </div>
 </div>
 </div>
 
-`
+`;
 
-export const addStackButtons =`		
+
+export function addStackButtons(name="column"){ 
+    return `		
     <div class="postbox_control add-left oxygen">
         <img class="add-icon" src="./Media/SVG/Add-icon.svg">
-        Add column
+        Add ${name}
         <br>
         Left
         <br>
@@ -155,13 +465,14 @@ export const addStackButtons =`
     </div>
     <div class="postbox_control add-right oxygen">
         <img class="add-icon" src="./Media/SVG/Add-icon.svg">
-        Add column
+        Add ${name}
         <br>
         Right
         <br>
         &#8203
     </div>      
 `;
+}
 
 export const addStackButtonsShelf =`		
     <div class="postbox_control add-left oxygen">
@@ -199,11 +510,11 @@ export const depthSelector =`
 Depth <img class="small-icon" src="Media/SVG/CloseM.svg" alt="">
 <div class="dropdown-content-shelf direction-colomn">
 <label class="shelf-height">
-    <input class="radio-height" type="radio" name="dept" value="700" id="option-1" checked>
+    <input class="radio-height" type="radio" name="depth" value="700" id="option-1" checked>
     <span>700mm</span>
 </label>
 <label class="shelf-height">
-    <input class="radio-height" type="radio" name="dept" value="500" id="option-2">
+    <input class="radio-height" type="radio" name="depth" value="500" id="option-2">
     <span>500mm</span>
 </label>
 
@@ -769,24 +1080,7 @@ green
 `;
 
 
-export const addStackButtonsFridge =`		
-    <div class="postbox_control add-left oxygen">
-        <img class="add-icon" src="./Media/SVG/Add-icon.svg">
-        Add Fridge
-        <br>
-        Left
-        <br>
-        &#8203
-    </div>
-    <div class="postbox_control add-right oxygen">
-        <img class="add-icon" src="./Media/SVG/Add-icon.svg">
-        Add Fridge
-        <br>
-        Right
-        <br>
-        &#8203
-    </div>      
-`;
+
 
 
 export const catalogMenu =`

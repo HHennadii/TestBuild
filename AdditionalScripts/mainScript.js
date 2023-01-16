@@ -1,25 +1,26 @@
 import * as THREE from '../jsm/three.module.js';
 import { Mesh, MeshPhongMaterial } from '../jsm/three.module.js';
 import { OBJLoader } from '../jsm/loaders/OBJLoader.js';
-import {feedback, getComOffer} from './ConfiguratorInterfaceModuls.js';
+import {feedback, getComOffer} from './InterfaceForConf.js';
 import {MapControls, OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {ItemController, Parser3d} from './ItemController_copy.js';
 import { createHtmlFile, createHtmlFileLite } from './HtmlPrice.js'
 import {ConfigurableList, OrdinaryObjects, Category} from './ConfigurableList.js';
-import {LokoLogis} from './LokoLogis.js'
-import {EcoLogis} from './EcoLogis.js'
-import {LokoFresh} from './LokoFresh.js'
-import {Shelf} from './Shelf.js'
+// import {LokoLogis} from './LokoLogis.js'
+// import {EcoLogis} from './EcoLogis.js'
+// import {LokoFresh} from './LokoFresh.js'
+// import {Shelf} from './Shelf.js'
 import {CheckOut} from './CheckOut.js'
-import {DoubleShelf} from './DoubleShelf.js'
-import {LokoAccessories} from './LokoAccessories.js'
-import {Fridge} from './Fridge.js'
+// import {DoubleShelf} from './DoubleShelf.js'
+// import {LokoAccessories} from './LokoAccessories.js'
+// import {Fridge} from './Fridge.js'
 import {WallBuilder} from './EnviromentTools/WallBuilderUpd.js'
 import {BackDrop} from './EnviromentTools/BackDrop.js'
 import { FloorDrawer } from './EnviromentTools/FloorDrawer.js';
-import {catalogMenu, wallMenu} from './ConfiguratorInterfaceModuls.js';
-import { HDRCubeTextureLoader } from '../jsm/loaders/HDRCubeTextureLoader.js';
+import {catalogMenu, wallMenu} from './InterfaceForConf.js';
 import { CameraControls } from './CameraControls.js';
+
+import { RGBELoader } from '../jsm/loaders/RGBELoader.js';
 
 import * as emailjs from '../emailjs-com/dist/email.min.js';
 import { RulerTool } from './EnviromentTools/Ruler.js';
@@ -43,12 +44,6 @@ var backdrop,builder, ruler, floordrower;
 objloader.load(
 	'./sprites/wall.obj',
 	function ( object ) {
-		object.traverse( function( child ) {
-			if ( child instanceof Mesh ) {
-				const material = new MeshPhongMaterial({color: 0xA5A5A5 , flatShading: true});
-				child.material = material;
-			}mod
-		} );
 		WallGeometry = object.children[0].geometry;
 	},
 	function ( xhr ) {
@@ -59,17 +54,8 @@ objloader.load(
 	}
 );
 
-//sasha
 
-
-var databaseValues = null;
-
-function init()
-{	
-	$.getJSON("https://script.googleusercontent.com/macros/echo?user_content_key=V1du-neQOmeXBlV4b_9CrHvEj2_SRBBXp12DF8Lr7Oac6CxgQR6GlQmayk2Dne0JdXVwsxKyJVl2k02Xwtqsrp8_OzsR6iHym5_BxDlH2jW0nuo2oDemN9CCS2h10ox_1xSncGQajx_ryfhECjZEnF381ipQXur1fp2f_DePTP8gNldDH9Hr9q5m_ViOIaV7s0EdpnZAA80DzICfoSbwbNyuSYUCAeWs&lib=MQFIYDJAuoGGuhpElt6C0h-Xy6O2DOXgk", function(data){
-	databaseValues = data.GoogleSheetData;
-	});
-
+function init() {
 	var cont = document.getElementById('canvas');
 	var	rect = cont.getBoundingClientRect();
     app = new PIXI.Application({ width: rect.width, height: rect.height, antialias: true });
@@ -78,6 +64,7 @@ function init()
 	//app.stickmod = false;
 	app.canMove = 1;
 	app.userData.snapvert = false;
+	app.userData.snapwall = false;
 	app.userData.canTranslate = true;
 
     cont.appendChild(app.view);
@@ -122,14 +109,6 @@ function init()
 	app.stage.addChild(axiscontainer);
 	
 	cameracontrols = new CameraControls(app, app.view, appGrid);
-	//wmesto kamery
-	const aspect = (rect.height-92)/640;
-	if(aspect) {
-		app.stage.scale.x = aspect;
-		app.stage.scale.y = aspect;
-		app.stage.y+=46;
-	}
-	//wmestokamery end
 
 	shopitems3d = new THREE.Group();
 	itemcontroller = new ItemController(container2d, cont, app,shopitems3d);
@@ -144,21 +123,8 @@ function init()
 
 	//endwallbuild
 
-
-	//HDR?
-
-	const hdrUrls = [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ];
-	app.userData.hdrCubeMap = new HDRCubeTextureLoader()
-		.setPath( '../Media/HDR/' )
-		.setDataType( THREE.UnsignedByteType )
-		.load( hdrUrls );
 	init3D();
 }
-
-
-
-const sceneElement = document.getElementById("confmenu");
-
 
 function init3D()
 {
@@ -170,23 +136,17 @@ function init3D()
     scene.background = new THREE.Color(0xa7e1fc);
 	renderer = new THREE.WebGLRenderer({ antialias: true});
 	app.userData.renderer = renderer;
-	//renderer.setSize( 2100,900 );
 	renderer.setSize( rect.width,rect.height );
 	renderer.setPixelRatio(1);
-	// renderer.shadowMap.enabled = true;
-	// renderer.shadowMap.type = THREE.PCFShadowMap ;
-
 
 	container3d.appendChild(renderer.domElement);
 
 	var ground = new THREE.PlaneGeometry(150,150,1,1);
     let material = new THREE.MeshPhongMaterial({color: 0xaaaaaa, shininess: 10});
 	var mesh = new THREE.Mesh(ground, material);
-	//mesh.receiveShadow = true;
 	scene.add(mesh);
 
 	camera = new THREE.PerspectiveCamera( 45, rect.width / rect.height, 0.1, 1000 );
-	//camera = new THREE.PerspectiveCamera( 45, 2100/900, 1, 1000 );
 
 	camera.position.z = 30;		
 
@@ -214,6 +174,18 @@ function init3D()
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 3;
 	
+	const pmremGenerator = new THREE.PMREMGenerator( renderer );
+	pmremGenerator.compileEquirectangularShader();
+	new RGBELoader()
+	.setDataType( THREE.UnsignedByteType )
+	.setPath( '../Media/HDR/' )
+	.load( 'royal_esplanade_1k.hdr', function ( texture ) {
+		const envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+		scene.environment = envMap;
+		texture.dispose();
+		pmremGenerator.dispose();
+		} );
+
 	scene.add( directionalLight );
 	
 	perspcontrols = new OrbitControls(camera, renderer.domElement);
@@ -223,28 +195,14 @@ function init3D()
 	animate();
 }
 
-function animate()
-{
-	if(!dimension){
+function animate() {
+	if(!dimension) {
 		requestAnimationFrame( animate );
 		renderer.render(scene, camera);
-	}
-	else{
+	} else {
 		requestAnimationFrame( animate );
 	}
 };
-
-//requestAnimationFrame( renderer.render(scene, camera) );
-
-function getDataList() {
-	var excelArray = [['art','name','qnt','price','totprice']];
-	container2d.children.forEach(item=> {
-		if(item.configuration) {
-			excelArray.push(...item.sayHi());
-		}
-	})
-	return excelArray;
-}
 
 
 var strDownloadMime = "image/octet-stream";
@@ -254,37 +212,16 @@ function saveAsImage() {
 		var strMime = "image/jpeg";
 		renderer.render(scene, camera);
 		return imgData = renderer.domElement.toDataURL(strMime);
-		//console.log(imgData);
 	} catch (e) {
 		console.log(e);
 		return;
 	}
 }
 
-var saveFile = function (strData, filename) {
-	var link = document.createElement('a');
-	if (typeof link.download === 'string') {
-		document.body.appendChild(link); //Firefox requires the link to be in the body
-		link.download = filename;
-		link.href = strData;
-		link.click();
-		document.body.removeChild(link); //remove the link when done
-	} else {
-		location.replace(uri);
-	}
-}
-
-const sleep = ms => {
-	return new Promise(resolve => {
-		setTimeout(() => resolve(), ms)
-	})
-}
 
 function getHtmlDataList(currencyCoef) {
 	var today = new Date();
 	var date = today.getDate()+'-'+(today.getMonth()+1)+'-'+today.getFullYear();
-
-	//console.log(date);
 
 	if(dimension) {
 		scene.children[0].position.y = -1000;
@@ -300,7 +237,7 @@ function getHtmlDataList(currencyCoef) {
 		shopitems3d.remove(...shopitems3d.children);
 		var promises = [];
 		container2d.children.forEach(item => {
-			if(item.configuration) promises.push(item.create3D(item, shopitems3d));
+			if(item.userData.configuration) promises.push(item.create3D(item, shopitems3d));
 			else if (item.colors) {
 				promises.push(item.create3D(item));
 
@@ -312,21 +249,18 @@ function getHtmlDataList(currencyCoef) {
 			var htmlArray = [];
 			var ordinarySet = {};
 			container2d.children.forEach(item=> {
-				if(item.configuration) {
+				if(item.userData.configuration) {
 					htmlArray.push(...item.sayHi());
 					htmlArray.push(['_']);
 				}
 				else {
-						//console.log(item.name);
 						var info = item.sayHi();
 						if(!ordinarySet[info[1]]) ordinarySet[info[1]] = [...info];
 						ordinarySet[info[1]][2] +=1;
 						ordinarySet[info[1]][4] = ordinarySet[info[1]][3] * ordinarySet[info[1]][2];
 				}
 			})
-			//console.log(ordinarySet);
 			for(var i in ordinarySet) {
-				//console.log(ordinarySet[i])
 				htmlArray.push(ordinarySet[i]);
 			}
 
@@ -357,21 +291,18 @@ function getHtmlDataList(currencyCoef) {
 		var htmlArray = [];
 		var ordinarySet = {};
 		container2d.children.forEach(item=> {
-			if(item.configuration) {
+			if(item.userData.configuration) {
 				htmlArray.push(...item.sayHi());
 				htmlArray.push(['_']);
 			}
 			else {
-					//console.log(item.name);
 					var info = item.sayHi();
 					if(!ordinarySet[info[1]]) ordinarySet[info[1]] = [...info];
 					ordinarySet[info[1]][2] +=1;
 					ordinarySet[info[1]][4] = ordinarySet[info[1]][3] * ordinarySet[info[1]][2];
 			}
 		})
-		//console.log(ordinarySet);
 		for(var i in ordinarySet) {
-			//console.log(ordinarySet[i])
 			htmlArray.push(ordinarySet[i]);
 		}
 		setTimeout(() => {
@@ -384,22 +315,6 @@ function getHtmlDataList(currencyCoef) {
 	}
 }
 
-function prepareExcelStrings() {
-	var wb = XLSX.utils.book_new();
-	wb.Props = {
-		Title: "ModexList",
-		Subject: "List",
-		Author: "Client",
-		CreatedDate: new Date(2017,12,19)
-	};
-	wb.SheetNames.push("Modex");
-	var ws_data = getDataList();
-	var ws = XLSX.utils.aoa_to_sheet(ws_data);
-	wb.Sheets["Modex"] = ws;
-	var wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'binary'});
-	return wbout;
-}
-
 function s2ab(s) {
 	var buf = new ArrayBuffer(s.length);
 	var view = new Uint8Array(buf);
@@ -408,38 +323,17 @@ function s2ab(s) {
 }
 
 
-
-function zoom(s,x,y) {
-	var worldPos = {x: (x - app.stage.x) / app.stage.scale.x, y: (y - app.stage.y)/app.stage.scale.y};
-	var newScale = {x: app.stage.scale.x * s, y: app.stage.scale.y * s};
-	var newScreenPos = {x: (worldPos.x ) * newScale.x + app.stage.x, y: (worldPos.y) * newScale.y + app.stage.y};
-	app.stage.x -= (newScreenPos.x-x) ;
-	app.stage.y -= (newScreenPos.y-y) ;
-	app.stage.scale.x = newScale.x;
-	app.stage.scale.y = newScale.y;
-}
-
 function onWindowResize()
 {	//3dView
 	var cont = document.getElementById('canvas');
 	var	rect = cont.getBoundingClientRect();
-	if(camera)
-	{
-	camera.aspect = rect.width/rect.height;
-	camera.updateProjectionMatrix()
-	renderer.setSize( rect.width, rect.height );
+	if(camera) {
+		camera.aspect = rect.width/rect.height;
+		camera.updateProjectionMatrix()
+		renderer.setSize( rect.width, rect.height );
 	}
 	//2dView
-	const aspect = (rect.height-92)/640;
-	if(aspect) {
-		//app.stage.scale.x = aspect;
-		//app.stage.scale.y = aspect;
-	}
-	//app.stage.x = rect.width/2;
-	//app.stage.y = rect.height/2+46;
 	app.renderer.resize(rect.width, rect.height);
-	//configuratorview
-	//prrect = sceneElement.getBoundingClientRect();
 }
 
 window.addEventListener('resize', onWindowResize);
@@ -464,91 +358,19 @@ document.getElementById('export').addEventListener("click",()=> {
 					"X-RapidAPI-Host": "currency-converter-by-api-ninjas.p.rapidapi.com"
 				}
 			};
-			$.ajax(settings).done(function (response) {
+			/*$.ajax(settings).done(function (response) {
 				getHtmlDataList([response.new_amount,currency]);
 				setTimeout(function () {$("#fid").remove();},  3000);
-			});
+				
+			});*/
+			getHtmlDataList([1,currency]);
+			setTimeout(function () {$("#fid").remove();},  3000);
 		});
 });
 
 document.getElementById( 'export3d' ).addEventListener( 'click', function () {
 	parser3d.exportGLTF(scene);
 } );
-
-
-document.addEventListener('keydown',e=>{
-	let projectData = {
-		objects:[],
-		walls:[],
-		floors:[],
-		columns:[],
-		blocks:[],
-	}
-		if(e.code=='KeyL') {
-		container2d.children.forEach(item => {
-			projectData.objects.push(item.saveIt());
-		});
-		edgegroup.children.forEach(wall => {
-			let wallobject = {
-				p1:{x:wall.userData.vertex[0].x,y:wall.userData.vertex[0].y},
-				p2:{x:wall.userData.vertex[1].x,y:wall.userData.vertex[1].y},
-				width:wall.userData.width,
-				windows:[],
-				doors:[],
-				offset: wall.userData.offset,
-				height: wall.userData.height,
-			};
-			wall.children.forEach(opening => {
-				if(opening.name == 'door') {
-					wallobject.doors.push({x: opening.x, scalex: opening.userData.scalex, scaley: opening.userData.scaley, height: opening.userData.height})
-				}
-				if(opening.name == 'window') {
-					wallobject.windows.push({x: opening.x, scale: opening.userData.scale, height: opening.userData.height,  heightoffset: opening.userData.heightoffset})
-				}
-			})
-			projectData.walls.push(wallobject)
-		})
-
-		columngroup.children.forEach(column => {
-			let columnobject = {
-				position: {x:column.x, y:column.y},
-				scale: {x:column.scale.x, y: column.scale.y},
-			}
-			projectData.columns.push(columnobject);
-		})
-
-		blockgroup.children.forEach(block => {
-			let blockobject = {
-				position: {x:block.x, y:block.y},
-				scale: {x:block.scale.x, y: block.scale.y},
-			}
-			projectData.blocks.push(blockobject);
-		})
-
-		floorgroup.children.forEach(floor => {
-			let floorobject = {
-				position: {x:floor.x, y: floor.y},
-				pointsarray: [],
-			}
-			floor.pointsarray.forEach(point => {
-				floorobject.pointsarray.push({x:point.x, y:point.y});
-			})
-			projectData.floors.push(floorobject);
-		})
-		//console.log(projectData);
-		projectData = JSON.stringify(projectData);
-		//console.log(projectData);
-		saveAs(new Blob([s2ab(projectData)],{type:"application/octet-stream"}), 'Project.modx');
-		}
-		})
-
-
-// document.addEventListener('keydown',e=>{
-// 		if(e.code=='KeyO') {
-// 			console.log(perspcontrols);
-// 		}
-// })
-
 
 
 $('#save').click(function() {
@@ -613,9 +435,7 @@ $('#save').click(function() {
 			})
 			projectData.floors.push(floorobject);
 		})
-		//console.log(projectData);
 		projectData = JSON.stringify(projectData);
-		//console.log(projectData);
 		saveAs(new Blob([s2ab(projectData)],{type:"application/octet-stream"}), 'Project.modx');
 		
 		})
@@ -630,7 +450,7 @@ document.getElementById('cameraswitcher').addEventListener("click", ()=>{
 		shopitems3d.remove(...shopitems3d.children);
 		var promises = [];
 		container2d.children.forEach(item => {
-			if(item.configuration) promises.push(item.create3D(item, shopitems3d));
+			if(item.configuration || item.userData.configuration) promises.push(item.create3D(item, shopitems3d));
 			else if (item.colors) {
 				promises.push(item.create3D(item));
 			}
@@ -642,7 +462,6 @@ document.getElementById('cameraswitcher').addEventListener("click", ()=>{
 	}
 	else
 	{
-		//console.log(dimension);
 		document.getElementById('canvas').firstChild.style.display = '';
 		document.getElementById('canvas').lastChild.style.display = 'none';
 		dimension = true;
@@ -668,12 +487,6 @@ const link = document.createElement( 'a' );
 link.style.display = 'none';
 document.body.appendChild( link ); // Firefox workaround, see #6594
 
-
-//sashaend
-
-//dropdown 
-
-//dropdown
 
 
 function CreateMenuObject (){
@@ -722,8 +535,9 @@ function CreateMenuObject (){
 	activateCatalogFunction();	
 }
 
-function dropDownSetHeight(){
+function dropDownSetHeight() {
 	var coll = document.getElementsByClassName("collapsible");
+	console.log(coll);
 	for (var i = 0; i < coll.length; i++) {
 		coll[i].nextElementSibling.style.maxHeight =  null;
 		coll[i].addEventListener("click", function() {
@@ -738,62 +552,31 @@ function dropDownSetHeight(){
 	}
 }
 
-function activateCatalogFunction(){
+function activateCatalogFunction() {
 
-$(".draggable").hover(function(){ $(this).parent().css( "border", "solid #FF9900 1px" );}, 
-function(){ $(this).parent().css( "border", "solid black 1px" );}
+	$(".draggable").hover(function() { $(this).parent().css( "border", "solid #FF9900 1px" );}, 
+	function(){ $(this).parent().css( "border", "solid black 1px" );}
 
-);
+	);
 
-$(".NC").click(function(){
-	itemcontroller.addItem($(this).attr("id"));
-});
+	$(".NC").click(function() {
+		itemcontroller.addItem($(this).attr("id"));
+	});
 
 
-$(".CF").click(function(){
-	switch($(this).attr("id")) {
-		case 'LOKOLOGIS': {
-			configuratorview = new LokoLogis(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
+	$(".CF").click(function() {
+		switch($(this).attr("id")) {
+			// case 'LOKOLOGIS': configuratorview = new LokoLogis(container2d, app); break;
+			// case 'LOKOFRESH': configuratorview = new LokoFresh(container2d, app); break;
+			// case 'ECOLOGIS': configuratorview = new EcoLogis(container2d, app); break;
+			// case 'LOKOACCESSORIES': configuratorview = new LokoAccessories(container2d, app); break;
+			// case 'SHELF': configuratorview = new Shelf(container2d, app); break;
+			// case 'DOUBLESHELF': configuratorview = new DoubleShelf(container2d, app); break;
+			// case 'FRIDGE': configuratorview = new Fridge(container2d, app); break;
+			case 'CHECKOUT': configuratorview = new CheckOut(container2d, app); break;
 		}
-		case 'LOKOFRESH': {
-			configuratorview = new LokoFresh(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-		case 'ECOLOGIS': {
-			configuratorview = new EcoLogis(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-		case 'LOKOACCESSORIES': {
-			configuratorview = new LokoAccessories(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-		case 'SHELF': {
-			configuratorview = new Shelf(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-		case 'DOUBLESHELF': {
-			configuratorview = new DoubleShelf(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-		case 'FRIDGE': {
-			configuratorview = new Fridge(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-		case 'CHECKOUT': {
-			configuratorview = new CheckOut(container2d, app);
-			configuratorview.startConfigurator();	
-			break;
-		}
-	}			
-});
+		configuratorview.startConfigurator();	
+	});
 }
 
 
@@ -1002,20 +785,10 @@ function CamAct() {
 	$(".Nav").attr('disabled', false);
 	$("#hidescale").css('display', "flex");
 	disabalEdit();
-	/*
-	let toRemove = document.getElementById("canvas").children; //remove duplicated canvas
-	Array.from(toRemove).forEach(item=> {	
-	if(item.style.display == "none")
-		item.remove();
-	})
-	*/
 }
 	
 
-
-
-
-$("#feedbackRequest").click(function(){
+$("#feedbackRequest").click(function() {
 	document.getElementById("feedback").innerHTML = feedback;
 	
 	$("#fid").click(function(e){ if(e.currentTarget==e.target)$("#fid").remove();})
@@ -1024,11 +797,6 @@ $("#feedbackRequest").click(function(){
 	$("#plsw").click(function(event) {
 	event.preventDefault(); 
 	//obj start
-
-
-
-
-
 	let projectData = {
 		objects:[],
 		walls:[],
@@ -1036,11 +804,10 @@ $("#feedbackRequest").click(function(){
 		columns:[],
 		blocks:[],
 	}
-		
 		container2d.children.forEach(item => {
 			projectData.objects.push(item.saveIt());
 		});
-	if(projectData  != ''){
+	if(projectData  != '') {
 		projectData = JSON.stringify(projectData );
 	}
 
@@ -1129,54 +896,23 @@ $('#loadPJ').change(function() {
 	let decoded;
 	fr.onload=function(){
 		decoded = JSON.parse(fr.result);
-		//console.log(decoded);
 		decoded.objects.forEach(item => {
-				if(item.name=="LOKOLOGIS") {
-					configuratorview = new LokoLogis(container2d, app);
-					//console.log(item.kazyrek);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.depth, item.x, item.y, item.rotation);
+				console.log(item);
+				if(item.name) itemcontroller.addItem(item.name,"",item.x,item.y,item.rotation,item.colors);
+				else {
+					switch(item.userData.name) {
+						// case "LOKOLOGIS": configuratorview = new LokoLogis(container2d, app); break;
+						// case "LOKOFRESH": configuratorview = new LokoFresh(container2d, app); break;
+						// case "ECOLOGIS": configuratorview = new EcoLogis(container2d, app); break;
+						// case "LOKOACCESSORIES": configuratorview = new LokoAccessories(container2d, app); break;
+						// case "SHELF": configuratorview = new Shelf(container2d, app); break;
+						// case "DOUBLESHELF": configuratorview = new DoubleShelf(container2d, app); break;
+						// case "FRIDGE": configuratorview = new Fridge(container2d, app); break;
+						case "CHECKOUT": configuratorview = new CheckOut(container2d, app); break;
+					}
+					configuratorview.loadPostBox(item);
 					configuratorview.spawnConfigurated();
 				}
-				if(item.name=="LOKOFRESH") {
-					//console.log(item.configuration);
-					configuratorview = new LokoFresh(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="ECOLOGIS") {
-					configuratorview = new EcoLogis(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.depth, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="LOKOACCESSORIES") {
-					configuratorview = new LokoAccessories(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.depth, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="SHELF") {
-					configuratorview = new Shelf(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.userData.colors,item.userData.height,item.userData.depth,item.userData.extBot,item.userData.x, item.userData.y, item.userData.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="DOUBLESHELF") {
-					configuratorview = new DoubleShelf(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.userData.colors,item.userData.height,item.userData.depth,item.userData.extBot,item.userData.x, item.userData.y, item.userData.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="FRIDGE") {
-					configuratorview = new Fridge(container2d, app);
-					configuratorview.loadPostBox(item.configuration, item.userData.colors, item.userData.faceborderR,item.userData.faceborderL, item.userData.extCooling, item.userData.editionalBordersEm, item.userData.nameTag, item.userData.x, item.userData.y, item.userData.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="CHECKOUT") {
-					configuratorview = new CheckOut(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, 0, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=='LOKOLOCAL') itemcontroller.addItem('LOKOLOCAL',item.x,item.y,item.rotation,item.colors);
-				if(item.name=='GREORA') itemcontroller.addItem('GREORA',item.x,item.y,item.rotation,item.colors);
-				if(item.name=='LOKOCOMMON') itemcontroller.addItem('LOKOCOMMON',item.x,item.y,item.rotation,item.colors);
-				//console.log(item)
 		})
 		builder.testLoadFromJson(decoded);
 		floordrower.testLoadFromJson(decoded);
@@ -1186,58 +922,7 @@ $('#loadPJ').change(function() {
 	  
 	fr.readAsText(document.getElementById('loadPJ').files[0]);
 })
-/*
-$('#loadPJ').change(function() {
-	$('.hide-nav-controls').css("display", "flex");
-	$('.init-but-cont').css("top", "-200px");
-	$('.logo-icon').css({"left": "0%", "width":"72px"});
-	$('.logo-bar').css("height","30px");
-	$('.hide-nav-controls').css("height","60px");
-	$('#loadscreen3').css("height", "0%");
-	var fr=new FileReader();
-	let decoded;
-	fr.onload=function(){
-		decoded = JSON.parse(fr.result);
-		console.log(decoded);
-		decoded.objects.forEach(item => {
-				if(item.name=="LOKOLOGIS") {
-					configuratorview = new LokoLogis(container2d, app);
-					console.log(item.kazyrek);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.depth, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="LOKOFRESH") {
-					console.log(item.configuration);
-					configuratorview = new LokoFresh(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="ECOLOGIS") {
-					configuratorview = new EcoLogis(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.depth, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="LOKOACCESSORIES") {
-					configuratorview = new LokoAccessories(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.colors, item.kazyrek, item.depth, item.x, item.y, item.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=="SHELF") {
-					configuratorview = new Shelf(container2d, app);
-					configuratorview.loadPostBox(item.configuration,item.userData.colors,item.userData.height,item.userData.depth,item.userData.extBot,item.userData.x, item.userData.y, item.userData.rotation);
-					configuratorview.spawnConfigurated();
-				}
-				if(item.name=='LOKOLOCAL') itemcontroller.addItem('LOKOLOCAL',item.x,item.y,item.rotation,item.colors);
-				if(item.name=='LOKOCOMMON') itemcontroller.addItem('LOKOCOMMON',item.x,item.y,item.rotation,item.colors);
-				console.log(item)
-		})
-	document.getElementById('cameraswitcher').disabled = false;
-	document.getElementById('lock').className= "dropdown" ;
-	document.getElementById("block_4").style.display="block";
-	}
-	  
-	fr.readAsText(document.getElementById('loadPJ').files[0]);
-})*/
+
 
 document.addEventListener('keydown', (e) => {
 	if(e.code=='ShiftLeft') app.userData.snapvert = true;
@@ -1248,6 +933,21 @@ document.addEventListener('keydown', (e) => {
 
 document.addEventListener('keyup', (e) => {
 	if(e.code=='ShiftLeft') app.userData.snapvert = false;
+	if ($(".snapCF")){
+		$(".snapCF").removeClass('close-main-menus');
+	}
+})
+
+document.addEventListener('keydown', (e) => {
+	if(e.code=='ControlLeft') app.userData.snapwall = true;
+	if ($(".snapCF")){
+	$(".snapCF").addClass('close-main-menus');
+
+	}
+});
+
+document.addEventListener('keyup', (e) => {
+	if(e.code=='ControlLeft') app.userData.snapwall = false;
 	if ($(".snapCF")){
 		$(".snapCF").removeClass('close-main-menus');
 	}

@@ -353,9 +353,33 @@ export const ConfigurableList = {
     },
 
     "CHECKOUT": {
-        "Name":"CHECK OUT",
+        "Name":"CheckOut",
+        "Description":"The modular design of shelving systems allows adapting them to any sales conditions, whereas the wide range of accessories and possible combinations allow transforming basic designs into individual solutions.",
+        "Cons":[
+            "Wide range of modifications",
+            "Huge quantity of accessory",
+            "Reinforced solution for heavy loads",
+            "Storage racks integration",
+            "LED lightings for hinged shelves",
+            "Normal position of hinged shelf is",
+            "-1° to horizon", 
+        ],
+        "InfoImage":"./sprites/configurator/CHECKOUT/InfoBar/InfoPreview.svg",
+        "CaruImages":[
+            "./sprites/configurator/CHECKOUT/InfoBar/1.png",
+            "./sprites/configurator/CHECKOUT/InfoBar/2.png",
+            "./sprites/configurator/CHECKOUT/InfoBar/3.png",
+            "./sprites/configurator/CHECKOUT/InfoBar/4.png",
+        ],
         "Image":"./sprites/configurator/CHECKOUT/CHECKOUT.png",
         "Category":"CheckOut",
+        "InnerCategory":{
+            "Cat1":{
+                "Name":"Possible stack",
+                "Items":['Grid','GridSO','Shelf','ShelfSO','ShelfLarge']
+            }
+        },
+
         "ElementsBorders":{
             "usual": ['Grid','GridSO','Shelf','ShelfSO','ShelfLarge'],
             "All":['Grid','GridSO','Shelf','ShelfSO','ShelfLarge']
@@ -396,8 +420,31 @@ export const ConfigurableList = {
 
     "FRIDGE": {
         "Name":"COOLES SlimDeck",
+        "Description":"The modular design of shelving systems allows adapting them to any sales conditions, whereas the wide range of accessories and possible combinations allow transforming basic designs into individual solutions.",
+        "Cons":[
+            "Wide range of modifications",
+            "Huge quantity of accessory",
+            "Reinforced solution for heavy loads",
+            "Storage racks integration",
+            "LED lightings for hinged shelves",
+            "Normal position of hinged shelf is",
+            "-1° to horizon", 
+        ],
+        "InfoImage":"./sprites/configurator/CHECKOUT/InfoBar/InfoPreview.svg",
+        "CaruImages":[
+            "./sprites/configurator/CHECKOUT/InfoBar/1.png",
+            "./sprites/configurator/CHECKOUT/InfoBar/2.png",
+            "./sprites/configurator/CHECKOUT/InfoBar/3.png",
+            "./sprites/configurator/CHECKOUT/InfoBar/4.png",
+        ],
         "Image":"./sprites/configurator/FRIDGE/FRIDGE.png",
         "Category":"Convinian",
+        "InnerCategory":{
+            "Cat1":{
+                "Name":"Possible stack",
+                "Items":['standart'/*,'pro'*/,'freeze']
+            }
+        },
         "ElementsBorders":{
             "fresh" : ["freeze"],
             "usual": ['standart'/*,'pro'*/,'freeze'],

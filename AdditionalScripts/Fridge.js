@@ -1,74 +1,66 @@
 import * as THREE from '../jsm/three.module.js';
-import {OrbitControls} from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
-import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
-import {Functions} from './FunctionsForConf.js';
+import {Functions,ConfiguratorInterface, ConfiguratorView, modelLoader} from './FunctionsForConf.js';
 import {SlimDeck} from './DataSet.js';
-import {MainWindow, fridgeconf, RBMmenuConf, addStackButtonsFridge, FridgesConfiguration, fridgeWidthSet, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
+import {RBMmenuConf, FridgesConfiguration, fridgeWidthSet, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.FRIDGE.Elements;
 const listBorders = ConfigurableList.FRIDGE.ElementsBorders;
-const needToFixIt = "FRIDGE";
 let arr_build=[],CopyThisConfigeration=[];
 let timer;
 var Fridge = function(container2d, app) 
 {
+    const mainName = 'FRIDGE';
+    var configuratorView;
+
     var prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, StackControl= 0;
-    var hdrCubeRenderTarget;
 
 
     function setUpInterface(){
-        $("#setconfigurator").append(MainWindow);
-        $("#confmenu").append(fridgeconf);
-        $("#PostBoxconf").append(addStackButtonsFridge);
+        ConfiguratorInterface.SetGeneralElements("Fridge","FRIDGE");
         sceneElement= document.getElementById("confmenu");
         prrect = sceneElement.getBoundingClientRect();
         $(".wrapper, .radio, .radio-height, #bottom_ext").click(function() {
-            configurateItem();
+            configuratorView.configurateItem(arr_build);
         })
-
-
-
         $(".add-right").click(function() {
-            add_Conf_stack("right",...CopyThisConfigeration);
-            configurateItem();
-            
+            add_Conf_stack("right",CopyThisConfigeration);
+            configuratorView.configurateItem(arr_build);
         });
         $(".add-left").click(function() {
-            add_Conf_stack("left",...CopyThisConfigeration);
-            configurateItem();
-        });
-
-        
+            add_Conf_stack("left",CopyThisConfigeration);
+            configuratorView.configurateItem(arr_build);
+        });     
         $("#spawnconfigurated").click(function(){
+            configuratorView.configurateItem(arr_build);
             spawnConfigurated();
-            hideConfigurator();
-            arr_build = ClearArray ();
+            configuratorView.hideConfigurator();
+            arr_build = ConfiguratorInterface.ClearArray ();
             $("#confarea").remove();
           });
         
         $(".closeconf").click(function(){
             $("#confarea").remove();
-            hideConfigurator();
+            configuratorView.hideConfigurator();
             StackControl=0;
-            arr_build = ClearArray();
+            arr_build = ConfiguratorInterface.ClearArray();
         
         });
         $("#substactSP").click(function(){
             const info = document.getElementById("akrile");
             if (+info.innerHTML > +info.dataset.min){
                 info.innerHTML = +info.innerHTML-1;
-                configurateItem();
-                }
+                configuratorView.configurateItem(arr_build);
+            }
         });
         $("#addSP").click(function(){
             const info = document.getElementById("akrile");
             if (+info.innerHTML < +info.dataset.max){
                 info.innerHTML = +info.innerHTML+1;
-                configurateItem();
-                }
+                configuratorView.configurateItem(arr_build);
+            }
         });
     }
 
@@ -77,18 +69,17 @@ var Fridge = function(container2d, app)
     function startConfigurator(){
         selectedItem = null;
         setUpInterface();
-        clean_conf_stack();    
         add_Conf_stack();
-		showConfigurator();
+        configuratorView = new ConfiguratorView(prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, confreqv, arr_build, asyncLoadFresh,spriteFreshBox);
+        configuratorView.showConfigurator(mainName);
     }
 
     
 
     function reloadConfigurator(item){
-        clean_conf_stack();
         setUpInterface();
-        item.configuration.forEach(item=>{
-            add_Conf_stack("right", item.ObjType, item.width,item.shAmount,item.shDepth, item.isDoor, item.doorType);
+        item.userData.configuration.forEach(item=>{
+            add_Conf_stack("right", item);
         })        
 
         //color set
@@ -117,30 +108,12 @@ var Fridge = function(container2d, app)
         if(item.userData.extCooling != 0)
             bottom.checked = true;
         document.getElementById("akrile").innerHTML=item.userData.editionalBordersEm;
-        showConfigurator();
-        configurateItem();
+        configuratorView = new ConfiguratorView(prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, confreqv, arr_build, asyncLoadFresh,spriteFreshBox);
+        configuratorView.showConfigurator(mainName);
+        configuratorView.configurateItem(arr_build);
     }
 
-    function CopyStack(item){
-        if($(item.currentTarget).hasClass('active-copy')){
-            $(".active-copy").addClass('deactive-copy');
-            $(".active-copy").removeClass('active-copy');
-            CopyThisConfigeration =[];
-        }
-        else{
-            $(".active-copy").addClass('deactive-copy');
-            $(".active-copy").removeClass('active-copy');
-            $(item.currentTarget).addClass('active-copy');
-            $(item.currentTarget).removeClass('deactive-copy');
-            let itemToCopy=arr_build[arr_build.findIndex(e => e.id == +item.currentTarget.id.replace(/[^0-9]/g,''))];
-            CopyThisConfigeration =[itemToCopy.ObjType, itemToCopy.width,itemToCopy.shAmount,itemToCopy.shDepth, itemToCopy.isDoor, itemToCopy.doorType];
-        }    
-    }
 
-    function ClearCopyBuffer(){
-        $(".active-copy").removeClass('active-copy');
-        CopyThisConfigeration =[];
-    }
 
 
     function UpDateValueInArray (arr,itemId, ObjType=-1, width=-1, shAmount=-1, shDepth=-1,isDoor=-1, doorType=-1){
@@ -150,26 +123,6 @@ var Fridge = function(container2d, app)
         if(shDepth!=-1)arr[arr.findIndex(obj => obj.id ==itemId)].shDepth=shDepth;
         if(isDoor!=-1)arr[arr.findIndex(obj => obj.id ==itemId)].isDoor=isDoor;
         if(doorType!=-1)arr[arr.findIndex(obj => obj.id ==itemId)].doorType=doorType;
-    }
-
-    function AddToArray (arr, Push, place="right"){
-        if (place == "right")
-        arr.push(Push);
-        else
-        arr.unshift(Push);
-    }
-
-    function CarrentValue (arr, searchFor){
-        return arr[arr.findIndex(e => e.id == searchFor)].ObjType;
-    }
-
-    function RemoveFromArray (arr, itemId){
-    return arr.filter(e => e.id != itemId);
-    }
-
-
-    function ClearArray (){
-        return	[];
     }
 
  
@@ -187,23 +140,14 @@ var Fridge = function(container2d, app)
         }
     }
 
-    function clean_conf_stack()
-    {
-    var buttons = document.getElementsByClassName('caru-box');
-    for (var  i=buttons.length-1; i>=0; i--)
-            buttons[i].remove();
-    }
+    
+
+
     function CloseF(e){
         var id =e.target.id.replace(/[^0-9]/g,'');
         $("#Collecton"+id).remove();
-        arr_build = RemoveFromArray(arr_build, id);
-        CreateButtonControl();
-        configurateItem();
-    }
-
-    function CreateButtonControl ()
-    {
-            document.getElementById("spawnconfigurated").disabled = false;
+        arr_build = ConfiguratorInterface.RemoveFromArray(arr_build, id);
+        configuratorView.configurateItem(arr_build);
     }
 
 
@@ -221,7 +165,7 @@ var Fridge = function(container2d, app)
         if(e.target.name[0]=="t")
         UpDateValueInArray(arr_build,id,-1,-1,-1,-1,-1,value);
 
-        configurateItem(); 
+        configuratorView.configurateItem(arr_build);
     }
 
     function UpdateInterface(id,width,shAmount,shDepth, isDoor, doorType){
@@ -246,10 +190,23 @@ var Fridge = function(container2d, app)
 
 
 
-    function add_Conf_stack (side="right", ObjType="standart", width="937",shAmount="4",shDepth="360", isDoor=false, doorType="FrontOpen")
+    function add_Conf_stack (side="right", item=[])
     {
+        let ObjType="standart", width="937",shAmount="4",shDepth=ObjType=="freeze"?"300":"360", isDoor=false, doorType="FrontOpen";
+        if(item.ObjType)    
+            ObjType=item.ObjType;
+        if(item.width)
+            width=item.width;
+        if(item.shAmount)
+            shAmount=item.shAmount;
+        if(item.shDepth)
+            shDepth=item.shDepth;
+        if(item.isDoor)
+            isDoor=item.isDoor;
+        if(item.doorType)
+            doorType=item.doorType;    
 
-        console.log(ObjType, width,shAmount,shDepth, isDoor, doorType);
+
         StackControl=StackControl+1;       
         let buttonType, CloseButton = ``;
         
@@ -257,7 +214,7 @@ var Fridge = function(container2d, app)
         if (arr_build.length != 0)
             CloseButton = `<button class="remove_post"> <img id="Close${StackControl}" class="bar-iconC" src="./Media/SVG/Cross.svg"> </button>`;
         
-        CreateButtonControl();
+        ConfiguratorInterface.CreateButtonControl();
         for (let key in listBorders){   
             if (listBorders[key].includes(ObjType)){
                 buttonType=key;
@@ -289,18 +246,17 @@ var Fridge = function(container2d, app)
     
         if (arr_build.length != 0)
             document.getElementById("Close"+StackControl).addEventListener( 'click', (e)=>CloseF(e));
-        AddToArray(arr_build,{id:StackControl, ObjType: ObjType, width: width, shAmount: shAmount, shDepth:shDepth, isDoor:isDoor, doorType:doorType}, side =="right" ? "right" : "left");
+        ConfiguratorInterface.AddToArray(arr_build,{id:StackControl, ObjType: ObjType, width: width, shAmount: shAmount, shDepth:shDepth, isDoor:isDoor, doorType:doorType}, side =="right" ? "right" : "left");
         SetInterface(StackControl, ObjType);
         UpdateInterface(StackControl,width,shAmount,shDepth, isDoor, doorType);
         $(".bottomCt").click((e)=>ExtendedBottom(e));
-        $("#Copy"+StackControl).click((e)=>{ CopyStack(e);})
+        $("#Copy"+StackControl).click((e)=>{CopyThisConfigeration=ConfiguratorInterface.CopyStack(e, arr_build);})
         $(".obj-item").click((e)=>SelectStack(e));
         $("#settingsButton").click((e)=>OpenConfigurationMenu(e));
     }
 
 
     function OpenConfigurationMenu(){
-        console.log("5634");
         let MenuBody =`
             <div class="right-menu">
             </div>
@@ -314,162 +270,13 @@ var Fridge = function(container2d, app)
         $("#Img"+id[0]).attr("src", list[id[1]].imageName);
         $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
         UpDateValueInArray(arr_build,...id);
-        ClearCopyBuffer();
-        configurateItem();
+        CopyThisConfigeration=ConfiguratorInterface.ClearCopyBuffer();
+        configuratorView.configurateItem(arr_build);
     }
 
 //
 var confreqv;
-
-function onWindowResize()
-{	//3dView
-    var cont = document.getElementById('canvas');
-    var	rect = cont.getBoundingClientRect();
-    app.renderer.resize(rect.width, rect.height);
-
-    //configuratorview
-    prrect = sceneElement.getBoundingClientRect();
-    if(prcamera)
-    {
-    prcamera.aspect = prrect.width/prrect.height;
-    prcamera.updateProjectionMatrix();
-    prrenderer.setSize(prrect.width, prrect.height);
-    }
-}
-
-
-function showConfigurator()
-{	
-    
-    //
-    //const id = needToFixIt;
-    const id = 'FRIDGE';
-	prscene = new THREE.Scene();
-	prscene.background = new THREE.Color(0xCBCED6);
-	prrect = sceneElement.getBoundingClientRect();
-	prscene.userData.element = sceneElement;
-	prcamera = new THREE.PerspectiveCamera( 50, 1, 0.1, 10 );
-	prcamera.position.z = 2;
-	prcamera.position.y = 0.5;
-	prscene.userData.camera = prcamera;
-
-    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
-	directionalLight.position.set( -3, -3, 3 );
-    prscene.add( directionalLight );
-
-	const alight = new THREE.AmbientLight( 0xffffff, 0.3 );
-	prscene.add( alight );
-	
-	prrenderer = new THREE.WebGLRenderer({ antialias: true});
-	prrenderer.setSize( prrect.width, 400 );
-	sceneElement.appendChild(prrenderer.domElement);
-
-    prrenderer.physicallyCorrectLights = true;
-	prrenderer.toneMapping = THREE.ACESFilmicToneMapping;
-	prrenderer.toneMappingExposure = 3;
-	
-	prgroup = new THREE.Group();
-	prscene.add(prgroup);
-
-
-	preloadMeshesObject(id);
-	
-	prcontrols =  new OrbitControls(prcamera, prrenderer.domElement);
-	prcontrols.maxDistance = 20;
-    prcamera.position.set(-2.5, 2.5, 2.5);
-
-    prcontrols.target = new THREE.Vector3(0, 0.7, 0);
-    prcontrols.update();
-
-	confreqv = window.requestAnimationFrame(pranimate);
-	onWindowResize();
-	if (+$(".configurator").css('height').replace(/px/i, '') > 698) {$(".configurator, .loader2").css('top', window.innerHeight/2-350); }
-}
-
-function hideConfigurator()
-{
-	sceneElement.removeChild(prrenderer.domElement);
-	prscene = null;
-	prcamera = null;
-	prrenderer = null;
-	window.cancelAnimationFrame(confreqv);
-	//var spawn = document.getElementById('spawnconfigurated');
-	//spawn.removeEventListener('click', ()=>spawnConfigurated());
-}
-
-function pranimate()
-{
-	prcontrols.update();
-	if(prrenderer)
-	{
-        
-    if(prgroup.children[0]){
-        prgroup.children[0].children.forEach(obj => {
-            if(obj.name === "billboardL") {
-                var dx = prcamera.position.x - obj.position.x;
-                var dy = prcamera.position.z - obj.position.z;
-                var rotation = Math.atan2(dy, dx);
-                obj.rotation.set(0,-rotation+Math.PI/2,0);
-            }
-            if(obj.name === "billboardH") {
-                var dx = prcamera.position.x - obj.position.x;
-                var dy = prcamera.position.z - obj.position.z;
-                var rotation = Math.atan2(dy, dx);
-                obj.rotation.set(0,-rotation+Math.PI/2,-Math.PI/2);
-            }
-        })
-    }
-
-	prrenderer.render(prscene, prcamera);
-	window.requestAnimationFrame( pranimate );
-	}
-};
-
-
-
-var preloadedMeshes= {};
-var sprites=[];
 var renderedsprite = null;
-var menuDiv;
-var clickTimer = null;
-
-function localWorld(item)
-{
-    var p = {x: (item.getGlobalPosition().x - app.stage.x) / (app.stage.scale.x*64), y: (item.getGlobalPosition().y - app.stage.y)/(app.stage.scale.y*64)};
-    return p;
-}
-
-
-function preloadMeshesObject(id)
-{
-    //console.log("Preloading "+id);
-    preloadedMeshes = {};
-    const loader = new GLTFLoader();
-        loader.load(
-            '../../sprites/configurator/'+id+'/'+'CORN.glb',
-            function(gltf){
-                for(var i = 0; i<gltf.scene.children.length; i++)
-                {
-                    preloadedMeshes[gltf.scene.children[i].name] = gltf.scene.children[i];
-                }
-                document.getElementById("loadscreen2").style.display="none";
-                configurateItem();
-            },
-            function ( xhr ) {
-                if(typeof(xhr.loaded / xhr.total)=='number' && xhr.loaded / xhr.total!="Infinity") {
-                    $("#loadingPR").html(Math.round( xhr.loaded / xhr.total * 100 ) + '%' );
-                }
-                else
-                $("#loadingPR").html("In progress");
-            },
-            function ( error ) {
-                console.log( 'An error happened' );
-            });
-} 
-    
-function formItemsArray() {
-    return arr_build.map(item=> item.value);
-}
 
 
 function addToArray(arr, from, name, qnt) {
@@ -482,18 +289,18 @@ function addMultipleToArray(arr, from, name, qnt) {
     } 
 }
 
-function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, editionalBordersEm, nameTag="", x=0, y=0, rot=0) {
+function spriteFreshBox(configObject) {
     renderedsprite = new PIXI.Container();
-    renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
-    renderedsprite.name = "FRIDGE";
-    renderedsprite.configuration = arr_build;
+    renderedsprite.x = configObject.x;     renderedsprite.y = configObject.y;     renderedsprite.rotation = configObject.rotation;
     renderedsprite.userData = {};
-    renderedsprite.userData.colors = colors;
-    renderedsprite.userData.faceborderL = faceborderL;
-    renderedsprite.userData.faceborderR = faceborderR;
-    renderedsprite.userData.extCooling = extCooling;
-    renderedsprite.userData.editionalBordersEm = editionalBordersEm;
-    renderedsprite.userData.nameTag = nameTag;
+    renderedsprite.userData.name = "FRIDGE";
+    renderedsprite.userData.configuration = configObject.userData.configuration;;
+    renderedsprite.userData.colors = configObject.userData.colors;
+    renderedsprite.userData.faceborderL = configObject.userData.faceborderL;
+    renderedsprite.userData.faceborderR = configObject.userData.faceborderR;
+    renderedsprite.userData.extCooling = configObject.userData.extCooling;
+    renderedsprite.userData.editionalBordersEm = configObject.userData.editionalBordersEm;
+    renderedsprite.userData.nameTag = configObject.userData.nameTag;
 
     renderedsprite.sayHi = function() {
         var color = getColorCode(this.userData.colors)
@@ -501,13 +308,13 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
 
         var ext = this.userData.extCooling==true?'Ext':'Int';
 
-        var name = this.configuration[0].ObjType+this.userData.faceborderL;
+        var name = this.userData.configuration[0].ObjType+this.userData.faceborderL;
         addToArray(arr, SlimDeck, name, 1);
-        name = this.configuration[this.configuration.length-1].ObjType+this.userData.faceborderR;
+        name = this.userData.configuration[this.userData.configuration.length-1].ObjType+this.userData.faceborderR;
         addToArray(arr, SlimDeck, name, 1);
 
         var itemSet = {};
-        this.configuration.forEach(stack => {
+        this.userData.configuration.forEach(stack => {
             if(stack.isDoor)
                 name = stack.ObjType+ext+stack.doorType+stack.width;
             else
@@ -516,8 +323,8 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
         })
 
         var dividerSet = {};
-        const CheckSet =this.configuration;
-        this.configuration.forEach((stack,it) => {
+        const CheckSet =this.userData.configuration;
+        this.userData.configuration.forEach((stack,it) => {
             if (CheckSet[it+1]){
                 let Ldoor='',Rdoor=''
                 if(stack.isDoor) Ldoor="doors"
@@ -527,11 +334,10 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
             }
         })
         for(var key in dividerSet){
-            //console.log(key);
             addToArray(arr, SlimDeck, key, dividerSet[key]);
         }
         var shelvesObj = {};
-        this.configuration.forEach(function(a){
+        this.userData.configuration.forEach(function(a){
             var realWidth=+a.width, realAmount=+a.shAmount;
             if(a.width == 2500) {
                 realWidth = 1250;
@@ -552,15 +358,12 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
             shelvesObj[name] = shelvesObj[name] ? +shelvesObj[name]+realAmount : +realAmount;
         });
         for(var key in shelvesObj) {
-            //console.log(key);
-            //console.log(SlimDeck[key]);
             addToArray(arr, SlimDeck, key, shelvesObj[key]);
         }
 
 
 
         for(var key in itemSet){
-            //console.log(key);
             addMultipleToArray(arr, SlimDeck, key, itemSet[key]);
         }
 
@@ -575,28 +378,27 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
     }
     renderedsprite.clone = function() {
         selectedItem = null;
-        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.faceborderR, this.faceborderL, this.userData.extCooling, this.userData.editionalBordersEm, this.userData.nameTag, this.x+20, this.y+20, this.rotation);
+        var configObject = {
+            userData: this.userData,
+            x: this.x+15,
+            y: this.y+15,
+            rotation: this.rotation,
+        }
+        renderedsprite = spriteFreshBox(configObject);
         spawnConfigurated();
     }
+
     renderedsprite.saveIt = function() {
         var thisObject = {
-            name:this.name,
-            configuration: this.configuration,
-            userData: {
-                colors: this.userData.colors,
-                x:this.x,
-                y:this.y,
-                rotation:this.rotation,
-                extCooling: this.userData.extCooling,
-                faceborderL: this.faceborderL,
-                faceborderR: this.faceborderR,
-                nameTag: this.userData.nameTag,
-            }
+            userData: this.userData,
+            x:this.x,
+            y:this.y,
+            rotation:this.rotation,
         }
         return thisObject;
     }
 
-    renderedsprite.create3D = asyncLoad;
+    renderedsprite.create3D = asyncLoadFresh;
 
     var helper = new PIXI.Container();
     renderedsprite.addChild(helper);
@@ -608,19 +410,19 @@ function spriteItem(arr_build, colors, faceborderR,faceborderL, extCooling, edit
     renderedsprite.addChild(helper);
 
     var dist=0;
-    for(var i = 0; i<arr_build.length; i++)
+    for(var i = 0; i<configObject.userData.configuration.length; i++)
     {
         var sprite = new PIXI.Sprite.from("sprites/configurator/FRIDGE/PixiPreview/Fridge.svg");
-        var tint = Category[ConfigurableList.FRIDGE.Category].Color;;
+        var tint = Category[ConfigurableList.FRIDGE.Category].Color;
         sprite.tint = tint;
 
         renderedsprite.addChild(sprite);        
         sprite.anchor.set(0.5);
-        sprite.x+=(arr_build[i].width/1000*32 + dist*64);
-        sprite.scale.x = arr_build[i].width/1000;
+        sprite.x+=(configObject.userData.configuration[i].width/1000*32 + dist*64);
+        sprite.scale.x = configObject.userData.configuration[i].width/1000;
         sprite.scale.y = 0.674;
-        dist += arr_build[i].width/1000;
-        const text = new PIXI.Text(ConfigurableList.FRIDGE.Elements[arr_build[i].ObjType].itname.replace('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        dist += configObject.userData.configuration[i].width/1000;
+        const text = new PIXI.Text(ConfigurableList.FRIDGE.Elements[configObject.userData.configuration[i].ObjType].itname.replace('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
         text.anchor.set(0.5);
         text.scale.x = 1/sprite.scale.x;
         text.scale.y = 1/sprite.scale.y;
@@ -648,15 +450,15 @@ function showContextMenu(x,y)
     menuDiv.innerHTML = RBMmenuConf;
     document.body.appendChild(menuDiv);
     $("#menu").css({"position":"absolute","top":y+"px","left":x+30+"px"});
-    $("#ORclose").click(()=>{hideContextMenu()});
-    $("#ORremove").click(()=>{container2d.removeChild(selectedItem); hideContextMenu();});
-    $("#copyObject").click(()=>{selectedItem.clone(); hideContextMenu();});
+    $("#ORclose").click(()=>{Functions.hideContextMenu()});
+    $("#ORremove").click(()=>{container2d.removeChild(selectedItem); Functions.hideContextMenu();});
+    $("#copyObject").click(()=>{selectedItem.clone(); Functions.hideContextMenu();});
     $("#ORrotate").on("input change",(item)=>{selectedItem.rotation = (+item.target.value/180*Math.PI);});
     $("#nameTag").val(selectedItem.userData.nameTag);
     $("#nameTag").on("input change",(item)=>{selectedItem.userData.nameTag=item.target.value});
     $("#ORClick").click(function(e){ if(e.currentTarget==e.target)$("#ORClick").remove();})
     $("#ORconf").click(()=>{
-        hideContextMenu();
+        Functions.hideContextMenu();
         reloadConfigurator(selectedItem);     
     });
     $("#depthST").text("Depth: " + " 0.660 m");
@@ -664,34 +466,7 @@ function showContextMenu(x,y)
     $("#lengthST").text("Length: " + Math.round(selectedItem.breadth*100)/100 + "m");
 }
 
-function hideContextMenu()
-{
-    document.getElementById("ORClick").remove();
-}
 
-    
-function configurateItem()
-{
-    prgroup.remove(...prgroup.children);
-    //замютив глибину
-    arr_build.forEach(stack => {
-        if(stack.ObjType == "freeze") stack.shDepth = 300;
-        if(stack.ObjType == "standart") stack.shDepth = 360;
-        if(stack.ObjType == "pro")  stack.shDepth = 360;
-    })
-    var item = {
-        configuration: arr_build,
-        userData: {
-            colors: document.querySelector('input[name="color"]:checked').value.split(' '),
-            faceborderR: document.querySelector('input[name="borderR"]:checked').value,
-            faceborderL: document.querySelector('input[name="borderL"]:checked').value,
-            extCooling: document.getElementById("bottom_ext").checked,
-            editionalBordersEm: +document.getElementById("akrile").innerHTML,
-        }
-    }
-    asyncLoad(item,prgroup,preloadedMeshes);
-    spriteItem(item.configuration, item.userData.colors, item.userData.faceborderR, item.userData.faceborderL, item.userData.extCooling, item.userData.editionalBordersEm);
-}
 
 function spawnConfigurated() {
     if(selectedItem) {
@@ -727,9 +502,16 @@ renderedsprite
             Functions.filterOff(this)
         })
         .on('touchstart',function(event) {
-            //console.log(timer);
             if (!timer) {
-                timer = setTimeout(function() {onlongtouch(event);}, 2000);
+                timer = setTimeout(function() {
+                    timer = null;
+                    if(app.userData.canTranslate)
+                    Functions.showContextMenu(event.data.global.x, event.data.global.y);
+                    $("#ORconf").click(()=>{
+                        document.getElementById("ORClick").remove();;
+                        reloadConfigurator(selectedItem);     
+                    });
+                }, 2000);
             }      
          })
          
@@ -740,16 +522,14 @@ renderedsprite
             }
          }) 
         .on('rightclick',function(event){
-            showContextMenu(event.data.global.x, event.data.global.y);
+            Functions.showContextMenu(event.data.global.x, event.data.global.y);
+            $("#ORconf").click(()=>{
+                document.getElementById("ORClick").remove();;
+                reloadConfigurator(selectedItem);     
+            });
         });
 }
 
-function onlongtouch(event) { 
-	//console.log(timer);
-	timer = null;
-    if(app.userData.canTranslate)
-	showContextMenu(event.data.global.x, event.data.global.y);
-};
     
 
     function setMeshColor(mesh,colors) {
@@ -759,19 +539,8 @@ function onlongtouch(event) {
     }
 
 
-    async function asyncLoad(item, _shopitems3d, preloadedMeshes)
+    async function asyncLoadFresh(item, _shopitems3d, preloadedMeshes)
     { 
-        if(preloadedMeshes) {
-            const pmremGenerator = new THREE.PMREMGenerator( prrenderer );
-            hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
-            pmremGenerator.compileCubemapShader();
-        }
-        else {
-            const pmremGenerator = new THREE.PMREMGenerator( app.userData.renderer );
-            hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
-            pmremGenerator.compileCubemapShader();
-        }
-    
         var akrylicBorders = 0;
         var colors = item.userData.colors;
         var meshesObject = {};
@@ -807,10 +576,10 @@ function onlongtouch(event) {
     
     
         var dist = 0;
-        for(var i = 0; i<item.configuration.length; i++)
+        for(var i = 0; i<item.userData.configuration.length; i++)
         {
-            var currentStack = item.configuration[i];
-            var nextStack = item.configuration[i+1];
+            var currentStack = item.userData.configuration[i];
+            var nextStack = item.userData.configuration[i+1];
     
             var mesh = meshesObject['Main'].clone();
             setMeshColor(mesh,colors)
@@ -938,28 +707,10 @@ function onlongtouch(event) {
             mesh.translateX(dist);
             _group.add(mesh);
         }
-    
-        let renderTarget = hdrCubeRenderTarget;
-        const newEnvMap = renderTarget ? renderTarget.texture : null;
-        _group.children.forEach(child => {
-            if (newEnvMap)
-            {
-                child.children.forEach(ch=>{
-                    //ch.castShadow = true;
-                    ch.material.envMap = newEnvMap;
-                })
-                //child.children[0].material.color.r = colors[0]/255;
-                //child.children[0].material.color.g = colors[1]/255;
-                //child.children[0].material.color.b = colors[2]/255;
-            }
-        });
-
-
 
         if(!preloadedMeshes) _group.rotation.set(Math.PI/2,-item.rotation,0);
         if(item.position) _group.position.set(item.x/64, -item.y/64, 0);
         _group.children.forEach( item => {item.position.x-=dist/2;});
-        //console.log(akrylicBorders);
         if(document.getElementById("akrile"))
             document.getElementById("akrile").dataset.max=akrylicBorders;
 
@@ -969,10 +720,8 @@ function onlongtouch(event) {
     }
 
 
-this.configurateItem = configurateItem;
-this.preloadMeshes = preloadMeshesObject;
 this.spawnConfigurated = spawnConfigurated;
-this.loadPostBox = spriteItem;
+this.loadPostBox = spriteFreshBox;
 this.startConfigurator = startConfigurator;
 
 };
@@ -984,34 +733,7 @@ export {Fridge}
 
 var selectedItem = null;
 
-const outlineFilterBlue = new PIXI.filters.OutlineFilter(10, 0x99ff99);
-
-
-
-
-var x_pos = document.getElementById("x_pos");
-var y_pos = document.getElementById("y_pos");
-
-function distanceTo(point1, point2)
-{
-    return (Math.sqrt((point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)))/64;
-}
-
-function realPosition(item)
-{
-    var p = {x: item.x/64, y: item.y/64};
-    return p;
-}
-
 function getDifference(item1, item2) {
     if(!item1 || !item2) return false;
     return (!(item1.ObjType==item2.ObjType && item1.isDoor==item2.isDoor));
-}
-
-
-function modelLoader(url) {
-    const loader = new GLTFLoader();
-    return new Promise((resolve, reject) => {
-        loader.load(url, data => resolve(data), null, reject);
-    });
 }

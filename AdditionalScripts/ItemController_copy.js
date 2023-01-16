@@ -21,7 +21,7 @@ import {
 	TextureLoader,
 	RepeatWrapping
 } from '../jsm/three.module.js';
-import {RMBmenu} from './ConfiguratorInterfaceModuls.js';
+import {RMBmenu} from './InterfaceForConf.js';
 import { GLTFExporter } from '../jsm/exporters/GLTFExporter.js';
 import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from '../jsm/loaders/OBJLoader.js';
@@ -39,7 +39,6 @@ import {CSG} from './EnviromentTools/three-csg-ts/lib/esm/CSG.js'
 
 var ItemController = function(container2d, _domElement, app, _shopitems3d)
 {   
-	var hdrCubeRenderTarget;
 	let timer;
     app.loader.baseUrl = "sprites/ordinary/PixiPreview";
 	for (let i in OrdinaryObjects) {
@@ -97,10 +96,9 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
 
 
 
-    function addItem(name,nameTag="",x=0,y=0,rot=0,colors=[127,134,138])
+    function addItem(name, nameTag="" ,x=0 ,y=0 ,rot=0 ,colors=[127,134,138])
     {
-
-        let item = PIXI.Sprite.from(app.loader.resources[name].texture);
+		let item = PIXI.Sprite.from(app.loader.resources[name].texture);
 		var tint = Category[OrdinaryObjects[name].Category].Color;
         item.tint = tint;
 		
@@ -132,9 +130,6 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
 			return thisObject;
 		}
 		item.create3D = async function loadOrdinaryItem(item) {
-				const pmremGenerator = new THREE.PMREMGenerator( app.userData.renderer );
-				hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
-				pmremGenerator.compileCubemapShader();
 			
 			const name = item.name;
 			const gltfData = await modelLoader('./sprites/ordinary/Models/'+name+'.gltf');
@@ -149,12 +144,6 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
 				mergedmesh.material[1].color.r = item.colors[0]/255;
 				mergedmesh.material[1].color.g = item.colors[1]/255;
 				mergedmesh.material[1].color.b = item.colors[2]/255;
-				let renderTarget = hdrCubeRenderTarget;
-				const newEnvMap = renderTarget ? renderTarget.texture : null;
-				if ( newEnvMap && newEnvMap !== mergedmesh.material.envMap )
-				{
-					mergedmesh.material.forEach(mat=>mat.envMap = newEnvMap);
-				}
 				mergedmesh.castShadow = true;
 			}
 			else
@@ -191,8 +180,6 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
 				Functions.filterOff(this)
 			})
 			.on('touchstart',function(event) {
-				//console.log(timer);
-				//console.log(event)
 				if (!timer) {
 					timer = setTimeout(function() {onlongtouch(event);}, 2000);
 				}      
@@ -207,8 +194,6 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
 			.on('rightclick',function(event){
 				showContextMenu(event.data.global.x, event.data.global.y);
             });
-        //filterOff.call(item);
-        //item.x = 0; item.y = 0;
 
         var helper = new PIXI.Container();
         helper.x = item.texture.width/2;
@@ -241,96 +226,17 @@ var ItemController = function(container2d, _domElement, app, _shopitems3d)
 
 
 	function onlongtouch(event) { 
-        //console.log(timer);
         timer = null;
 		if(app.userData.canTranslate)
         showContextMenu(event.data.global.x, event.data.global.y);
     };
 
-	function findObjectsInRange()
-	{
-        var objectsInRange = [];
-        if(selectedItem)
-        {
-            container2d.children.forEach(element => {
-                if(element!=selectedItem)
-                {
-                    if(distanceTo(selectedItem, element)<11) objectsInRange.push(element);
-                }
-            });
-        }
-        return objectsInRange;
-	}
-
-    function findClosestPoint(selecteditem, rangeitemsarray)
-    {
-        var selectedpoints = selecteditem.children;
-        var _distance = 5000;
-        var selectedpoint, closestpoint;
-        for(var i = 0; i<rangeitemsarray.length; i++)
-        {
-            for(var j = 0; j<4; j++)
-            {
-                for(var k = 0; k<4; k++)
-                {
-                    var firstpos = localWorld(selectedpoints[j]);
-                    var secpos = localWorld(rangeitemsarray[i].children[k]);
-                    var distance = distanceTo(firstpos,secpos)*64;
-                    if(distance<_distance)
-                    {
-                        _distance = distance;
-                        selectedpoint = selectedpoints[j];
-                        closestpoint = localWorld(rangeitemsarray[i].children[k]);
-                    }
-                }
-            }
-        }
-        return [selectedpoint, closestpoint, _distance];
-    }
-
-	function stickToItem(closestpointsarr)
-	{
-		if(closestpointsarr[2]<1)
-		{
-            var clp = localWorld(closestpointsarr[0]);
-            var clp2 = realPosition(selectedItem);
-            var offset = {x: (clp.x-clp2.x)*64,y: (clp.y-clp2.y)*64};
-            var newItemPosition = {x: closestpointsarr[1].x*64, y: closestpointsarr[1].y*64};
-			selectedItem.x = newItemPosition.x; selectedItem.y = newItemPosition.y;
-            selectedItem.x-=offset.x; selectedItem.y-=offset.y;
-		}
-	}
-
     this.addItem = addItem;
-    this.findObjectsInRange = findObjectsInRange;
-
-	function localWorld(item)
-	{
-		var p = {x: (item.getGlobalPosition().x - app.stage.x) / (app.stage.scale.x*64), y: (item.getGlobalPosition().y - app.stage.y)/(app.stage.scale.y*64)};
-		return p;
-	}
 };
 
 var selectedItem = null;
 
 
-
-var x_pos = document.getElementById("x_pos");
-var y_pos = document.getElementById("y_pos");
-
-
-function distanceTo(point1, point2)
-{
-    return (Math.sqrt((point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)))/64;
-}
-
-
-
-function realPosition(item)
-{
-    var p = {x: item.x/64, y: item.y/64};
-    return p;
-}
 
 var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _edgegroup3d, _floorgroup3d, _columngroup, WallGeometry, renderer, _blockgroup)
 {
@@ -380,23 +286,6 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
         );
     }
 
-
-
-	var hdrCubeRenderTarget, mem, hdrCubeMap;
-	THREE.DefaultLoadingManager.onLoad = function ( ) {
-		pmremGenerator.dispose();
-	};
-
-	const hdrUrls = [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ];
-	hdrCubeMap = new HDRCubeTextureLoader()
-		.setPath( '../Media/HDR/' )
-		.setDataType( THREE.UnsignedByteType )
-		.load( hdrUrls, function () {
-			hdrCubeRenderTarget = pmremGenerator.fromCubemap( hdrCubeMap );
-			} );
-	
-	const pmremGenerator = new THREE.PMREMGenerator( renderer );
-	pmremGenerator.compileCubemapShader();
 
 	async function exportGLTF(input)
 	{
@@ -456,242 +345,6 @@ var Parser3d = function(_container2d, _edgegroup, _floorgroup, _shopitems3d, _ed
     }
 
 
-
-
-async function asyncLoadPostBox(item) {
-	var meshesObject = {};
-	const gltfData = await modelLoader('../../sprites/configurator/LOKOLOGIS/CORN.glb');
-	for(var i = 0; i< gltfData.scene.children.length; i++) {
-		meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
-	}
-	var _group = new THREE.Group();
-	_shopitems3d.add(_group);
-    let depth = item.depth;
-    var dist=0;
-    var seq = item.configuration;
-    var offset = '';
-    if(depth == 500) offset = 'N';
-    if(depth==500 && seq[0]!="Fridge") _group.add(meshesObject['EndwallN'].clone())
-    else _group.add(meshesObject['Endwall'].clone());
-    
-    var pc_idx;
-    if(item.kazyrek)
-    {
-        if(seq.length == 2)
-        {
-            var kaz1;
-            kaz1 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
-            kaz1.translateX(0.485/2);
-            _group.add(kaz1);
-
-            var kaz2;
-            kaz2 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
-            kaz2.translateX(0.485+0.485/2);
-            _group.add(kaz2);
-        }
-        else
-        {
-            for(var i = 0; i<seq.length; i++) {
-                if(seq[i]=='TerminalPro' || seq[i]=='TerminalST' || seq[i]=='TerminalSTFR') {pc_idx = i; break; }
-            }
-        }
-    }
-
-    var colors = item.colors;
-
-
-    for(var i = 0; i<seq.length; i++)
-    {
-        var mesh = meshesObject[seq[i]+offset].clone();
-        _group.add(mesh);
-        mesh.children[0].material.color.r = colors[0]/255;
-        mesh.children[0].material.color.g = colors[1]/255;
-        mesh.children[0].material.color.b = colors[2]/255;
-        mesh.translateX(getPostCoef(seq[i])/2+dist);
-		let renderTarget = hdrCubeRenderTarget;
-		const newEnvMap = renderTarget ? renderTarget.texture : null;
-		if (newEnvMap)
-		{
-			mesh.children.forEach(ch=>{
-				ch.castShadow = true;
-				ch.material.envMap = newEnvMap;});
-		}
-        
-        if(seq.length>2 && item.kazyrek)
-        {
-            if((pc_idx!=0 && pc_idx!=seq.length-1) && (i==pc_idx-1 || i==pc_idx || i==pc_idx+1))
-            {
-                var kaz = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
-                kaz.translateX(0.485/2+dist);
-                _group.add(kaz);
-            }
-        }
-        dist += getPostCoef(seq[i]);
-    }
-    var lastwall;
-    if(depth==500 && seq[seq.length-1]!="Fridge") lastwall=meshesObject['EndwallN'].clone();
-    else lastwall=meshesObject['Endwall'].clone();
-    lastwall.children[0].material.color.r = colors[0]/255;
-    lastwall.children[0].material.color.g = colors[1]/255;
-    lastwall.children[0].material.color.b = colors[2]/255;
-    lastwall.translateX(dist);
-    _group.add(lastwall);
-	_group.rotation.set(Math.PI/2,-item.rotation,0);
-	_group.position.set(item.x/64, -item.y/64, 0);
-	_group.children.forEach( item => {item.position.x-=dist/2;});
-}
-
-	async function asyncLoadFresh(item) {
-		var meshesObject = {};
-		const gltfData = await modelLoader('../../sprites/configurator/LOKOFRESH/CORN.glb');
-		for(var i = 0; i< gltfData.scene.children.length; i++) {
-			meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
-		}
-		var _group = new THREE.Group();
-		_shopitems3d.add(_group);
-
-		var dist=0;
-		var seq = item.configuration;
-		var colors = item.colors;
-		var pc_idx;
-		if(item.kazyrek) {
-			if(seq.length == 2) {
-				var kaz1 = meshesObject['Roof'].clone();
-				kaz1.translateX(0.699/2);
-				_group.add(kaz1);
-				var kaz2 = meshesObject['Roof'].clone();
-				kaz2.translateX(0.699+0.699/2);
-				_group.add(kaz2);
-			}
-			else {
-				for(var i = 0; i<seq.length; i++) {
-					if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(seq[i])) {pc_idx = i; break;}
-				}
-				if(pc_idx!=0 && pc_idx!=(seq.length-1)) {
-					var locdist = 0.699*(pc_idx-1);
-					var kaz1 = meshesObject['Roof'].clone();
-					kaz1.translateX(locdist+0.699/2);
-					locdist+=0.699;
-					_group.add(kaz1);
-					var kaz2 = meshesObject['Roof'].clone();
-					kaz2.translateX(locdist+0.699/2);
-					locdist+=0.699;
-					_group.add(kaz2);
-					var kaz3 = meshesObject['Roof'].clone();
-					kaz3.translateX(locdist+0.699/2);
-					_group.add(kaz3);
-				}
-			}
-		}
-		_group.add(meshesObject['Endwall'].clone());
-		for(var i = 0; i<seq.length; i++)
-		{
-			var mesh = meshesObject[seq[i]].clone();
-			_group.add(mesh);
-			mesh.children[0].material.color.r = colors[0]/255;
-			mesh.children[0].material.color.g = colors[1]/255;
-			mesh.children[0].material.color.b = colors[2]/255;    
-			mesh.translateX(0.699/2+dist);
-			dist += 0.699;
-
-			let renderTarget = hdrCubeRenderTarget;
-			const newEnvMap = renderTarget ? renderTarget.texture : null;
-			if (newEnvMap)
-			{
-				mesh.children.forEach(ch=>{
-					ch.castShadow = true;
-					ch.material.envMap = newEnvMap;});
-			}
-		}
-		var lastwall = meshesObject['Endwall'].clone();
-		lastwall.children[0].material.color.r = colors[0]/255;
-		lastwall.children[0].material.color.g = colors[1]/255;
-		lastwall.children[0].material.color.b = colors[2]/255;
-		lastwall.translateX(dist);
-		_group.add(lastwall);
-		_group.rotation.set(Math.PI/2,-item.rotation,0);
-		_group.position.set(item.x/64, -item.y/64, 0);
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-	}
-
-	async function asyncLoadEcoLogis(item)
-	{
-		var meshesObject = {};
-		const gltfData = await modelLoader('../../sprites/configurator/ECOLOGIS/CORN.glb');
-		for(var i = 0; i< gltfData.scene.children.length; i++) {
-			meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
-		}
-		var _group = new THREE.Group();
-		_shopitems3d.add(_group);
-		var dist=0;
-		var seq = item.configuration;
-		let depth = item.depth;
-		var offset = '';
-		if(depth == 500) offset = 'N';
-	
-		_group.add(meshesObject['Endwall'+offset].clone());
-		if(item.kazyrek)
-		{
-				var kaz1;
-				kaz1 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
-				kaz1.translateX(0.485/2);
-				_group.add(kaz1);
-				var kaz2;
-				kaz2 = depth==700?meshesObject['Roof'].clone():meshesObject['RoofN'].clone();
-				kaz2.translateX(0.485+0.485/2);
-				_group.add(kaz2);
-		}
-		for(var i = 0; i<2; i++)
-		{
-			var mesh = meshesObject[seq[i]+offset].clone();
-			_group.add(mesh);
-			var colors = item.colors;
-			mesh.children[0].material.color.r = colors[0]/255;
-			mesh.children[0].material.color.g = colors[1]/255;
-			mesh.children[0].material.color.b = colors[2]/255;
-			mesh.translateX(0.49/2+dist);
-			dist += 0.49;
-		}
-		var lastwall = meshesObject['Endwall'+offset].clone();
-		lastwall.children[0].material.color.r = colors[0]/255;
-		lastwall.children[0].material.color.g = colors[1]/255;
-		lastwall.children[0].material.color.b = colors[2]/255;
-		lastwall.translateX(dist);
-		_group.add(lastwall);
-		_group.rotation.set(Math.PI/2,-item.rotation,0);
-		_group.position.set(item.x/64, -item.y/64, 0);
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-	}
-
-
-	async function asyncLoadLokoAccesories(item)
-	{
-		var meshesObject = {};
-		const gltfData = await modelLoader('../../sprites/configurator/LOKOACCESSORIES/CORN.glb');
-		for(var i = 0; i< gltfData.scene.children.length; i++) {
-			meshesObject[gltfData.scene.children[i].name] = gltfData.scene.children[i];
-		}
-		var _group = new THREE.Group();
-		_shopitems3d.add(_group);
-
-		var dist=0;
-		var seq = item.configuration;
-		var colors = item.colors;
-		for(var i = 0; i<seq.length; i++)
-		{
-			var mesh = meshesObject[seq[i]].clone();
-			_group.add(mesh);
-			mesh.children[0].material.color.r = colors[0]/255;
-			mesh.children[0].material.color.g = colors[1]/255;
-			mesh.children[0].material.color.b = colors[2]/255;   
-			mesh.translateX(getBanchCoef(1)/2+dist);
-			dist += getBanchCoef(1);
-		}
-		_group.rotation.set(Math.PI/2,-item.rotation,0);
-		_group.position.set(item.x/64, -item.y/64, 0);
-		_group.children.forEach( item => {item.position.x-=dist/2;});
-	}
-
 	async function loadOrdinaryItem(item) {
 		const name = item.name;
 		const gltfData = await modelLoader('./sprites/ordinary/Models/'+name+'.gltf');
@@ -706,12 +359,6 @@ async function asyncLoadPostBox(item) {
 			mergedmesh.material[1].color.r = item.colors[0]/255;
 			mergedmesh.material[1].color.g = item.colors[1]/255;
 			mergedmesh.material[1].color.b = item.colors[2]/255;
-			let renderTarget = hdrCubeRenderTarget;
-			const newEnvMap = renderTarget ? renderTarget.texture : null;
-			if ( newEnvMap && newEnvMap !== mergedmesh.material.envMap )
-			{
-				mergedmesh.material.forEach(mat=>mat.envMap = newEnvMap);
-			}
 			mergedmesh.castShadow = true;
 		}
 		else
@@ -737,11 +384,8 @@ async function asyncLoadPostBox(item) {
 
 
     async function asyncLoad3DItem(item) {
-		if(item.configuration) {
-			if(item.name=='LOKOLOGIS') await asyncLoadPostBox(item);
-			if(item.name=='LOKOACCESSORIES') await asyncLoadLokoAccesories(item);
-			if(item.name=='LOKOFRESH') await asyncLoadFresh(item);
-			if(item.name=='ECOLOGIS') await asyncLoadEcoLogis(item);
+		if(item.configuration || item.userData.configuration) {
+				await item.create3D(item,_shopitems3d);
 		}
 		else await loadOrdinaryItem(item);
     }
@@ -805,17 +449,11 @@ async function asyncLoadPostBox(item) {
 		});
 	}
 
-	function vertnumbers(edge) {
-		var number = -1;
-		for(var i = 0; i<edge.geometry.attributes.position.count; i++) {
-			if(edge.geometry.attributes.position.getX(i) == -0.5 && edge.geometry.attributes.position.getY(i)==0.5) console.log(i);
-		}
-	}
 
 
     async function asyncLoadWall(wall) {
         var geometry = WallGeometry.clone();
-        var material = new MeshPhongMaterial({color: 0xffffff , flatShading: false});
+        var material = new MeshStandardMaterial({color: 0xA5A5A5 , flatShading: false});
 		var wallheight = wall.userData.height;
         const box = new THREE.Mesh(geometry, material);
 		var left = wall.children[4].x/64;
@@ -825,8 +463,6 @@ async function asyncLoadPostBox(item) {
 		var leftdown = wall.children[2].x/64;
 		var leftup = wall.children[0].x/64;
 
-
-		//vertnumbers(box);
 		moveGeometryVertexes(box, 0, {x:left});
 		moveGeometryVertexes(box, 2, {x:right});
 		moveGeometryVertexes(box, 3, {x:rightup});
@@ -944,153 +580,6 @@ async function asyncLoadPostBox(item) {
 		mesh.position.y = -floor.y/64;
 	}
 	
-	function getBanchCoef(id)
-	{
-		switch(id)
-		{
-			case 1: return 0.49;
-			case 2: return 0.2;
-		}
-	}
-	
-	function loadBanch(item)
-	{
-		var _group = new THREE.Group();
-		_shopitems3d.add(_group);
-		var meshes = [];
-		const loader = new GLTFLoader();
-		loader.load(
-			'../../sprites/configurator/5/'+'BN'+'.glb',
-			function(gltf){
-				for(var i = 0; i<gltf.scene.children.length; i++)
-				{
-					meshes.push(gltf.scene.children[i]);
-				}
-				var dist=0;
-				var seq = item.configuration;
-				
-				for(var i = 0; i<seq.length; i++)
-				{
-					var mesh = meshes[+seq[i]-1].clone();
-					_group.add(mesh);
-				
-					mesh.children[0].material.color.r = item.colors[0]/255;
-					mesh.children[0].material.color.g = item.colors[1]/255;
-					mesh.children[0].material.color.b = item.colors[2]/255;
-
-					let renderTarget = hdrCubeRenderTarget;
-					const newEnvMap = renderTarget ? renderTarget.texture : null;
-					if (newEnvMap)
-					{
-						mesh.children.forEach(ch=>{
-							ch.castShadow = true;
-							ch.material.envMap = newEnvMap;});
-					}
-										
-					mesh.translateX(getBanchCoef(+seq[i])/2+dist);
-					dist += getBanchCoef(+seq[i]);
-				}
-				_group.rotation.set(Math.PI/2,-item.rotation,0);
-				_group.position.set(item.x/64, -item.y/64, 0);
-				_group.children.forEach( item => {item.position.x-=dist/2;});
-			},
-			function ( xhr ) {
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			function ( error ) {
-				console.log( 'An error happened' );
-			});
-	}
-
-	function compareGLTF(a,b)
-	{
-		if(a.name<b.name) return -1;
-		if(a.name>b.name) return 1;
-		return 0;
-	}
-
-	function getPlantCoef(id)
-	{
-		return 0.49;
-	}
-
-	function loadPlant(item)
-	{
-		var _group = new THREE.Group();
-		_shopitems3d.add(_group);
-		var meshes = [];
-		const loader = new GLTFLoader();
-		loader.load(
-				'../../sprites/configurator/6/'+'1'+'.glb',
-			function(gltf){
-				for(var i = 0; i<gltf.scene.children.length; i++)
-				{
-					meshes.push(gltf.scene.children[i]);
-				}
-				var dist=0;
-				var seq = item.configuration;
-				for(var i = 0; i<seq.length; i++)
-				{
-					var mesh = meshes[+seq[i]-1].clone();
-					_group.add(mesh);
-					mesh.children[1].material.color.r = item.colors[0]/255;
-					mesh.children[1].material.color.g = item.colors[1]/255;
-					mesh.children[1].material.color.b = item.colors[2]/255;
-					
-					let renderTarget = hdrCubeRenderTarget;
-					const newEnvMap = renderTarget ? renderTarget.texture : null;
-					if (newEnvMap)
-					{
-						mesh.children.forEach(ch=>{
-							ch.castShadow = true;
-							ch.material.envMap = newEnvMap;});
-					}
-
-					mesh.translateX(getPlantCoef(+seq[i])/2+dist);
-					dist += getPlantCoef(+seq[i]);
-				}
-				_group.rotation.set(Math.PI/2,-item.rotation,0);
-				_group.position.set(item.x/64, -item.y/64, 0);
-				_group.children.forEach( item => {item.position.x-=dist/2;});
-			},
-			function ( xhr ) {console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );},
-			function ( error ) {console.log( 'An error happened' );});
-	}
-
-	function getRoofCoef(id)
-	{
-		return 0.485;
-	}	
-
-	function loadRoof(item)
-	{
-		var _group = new THREE.Group();
-		_shopitems3d.add(_group);
-		var meshes = [];
-		const loader = new GLTFLoader();
-		loader.load(
-				'../../sprites/configurator/8/'+'Roof'+'.glb',
-			function(gltf){
-				for(var i = 0; i<gltf.scene.children.length; i++) meshes.push(gltf.scene.children[i]);
-				var dist=0;
-				var seq = item.configuration;
-				for(var i = 0; i<seq.length; i++)
-				{
-					var mesh = meshes[+seq[i]-1].clone();
-					_group.add(mesh);
-					let renderTarget = hdrCubeRenderTarget;
-					const newEnvMap = renderTarget ? renderTarget.texture : null;
-					if (newEnvMap) mesh.children.forEach(ch=>ch.material.envMap = newEnvMap);
-					mesh.translateX(getRoofCoef(+seq[i])/2+dist);
-					dist += getRoofCoef(+seq[i]);
-				}
-				_group.rotation.set(Math.PI/2,-item.rotation,0);
-				_group.position.set(item.x/64, -item.y/64, 0);
-				_group.children.forEach( item => {item.position.x-=dist/2;});
-			},
-			function ( xhr ) {console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );},
-			function ( error ) {console.log( 'An error happened' );});
-	}
 
 	function createMesh(insertedMeshes)
 	{

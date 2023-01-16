@@ -3,8 +3,7 @@ var CameraControls = function(app, _domElement, grid)
     var lastPos = null;
     var ongoingTouches = [];
     var scaling =false, carrentScale;
-    function zoom(s,x,y)
-    {
+    function zoom(s,x,y) {
         s = s > 0 ? 0.9 : 1.1;
         if(app.stage.scale.x > 4 && s == 1.1) s = 1;
         if(app.stage.scale.x < 0.25 && s == 0.9) s = 1;
@@ -13,9 +12,9 @@ var CameraControls = function(app, _domElement, grid)
         var newScreenPos = {x: (worldPos.x ) * newScale.x + app.stage.x, y: (worldPos.y) * newScale.y + app.stage.y};
         app.stage.x -= (newScreenPos.x-x) ;
         app.stage.y -= (newScreenPos.y-y) ;
-        
         app.stage.scale.x = newScale.x;
         app.stage.scale.y = newScale.y;
+        scaleGrid();
     }
 
     function zoom2(s,x,y)
@@ -31,70 +30,56 @@ var CameraControls = function(app, _domElement, grid)
     }
 
 
-    function scaleGrid()
-    {
-      var appscale = Math.floor(app.stage.scale.x);
-      if(appscale!=0)
-      {
-        if(appscale>5)
-        {
-          grid.scale.x = 0.1;
-          grid.scale.y = 0.1;
-        }
-        if(appscale<=5 && appscale>=1)
-        {
-          grid.scale.x = 1;
-          grid.scale.y = 1;
-        }
+    function scaleGrid() {
+      var appscale = app.stage.scale.x;
+      if(appscale>0 && appscale<1) {
+        grid.scale.x = 5;
+        grid.scale.y = 5;
       }
-      else
-      {
-        grid.scale.x = 10;
-        grid.scale.y = 10;
+      if(appscale>=1) {
+        grid.scale.x = 1;
+        grid.scale.y = 1;
       }
     }
 
 
-    function activate()
-    {
-		_domElement.addEventListener( 'mousemove', onPointerMove );
-    _domElement.addEventListener( 'touchend', onTouchEnd );
-    _domElement.addEventListener( 'touchstart', onTouchStart );
-    _domElement.addEventListener( 'touchmove', onTouchMove );
-		_domElement.addEventListener( 'mousedown', onPointerDown );
-		_domElement.addEventListener( 'pointerup', onPointerCancel );
-		_domElement.addEventListener( 'pointerleave', onPointerCancel );
-    _domElement.addEventListener( 'wheel', onMouseWheel );
+    function activate() {
+      _domElement.addEventListener( 'mousemove', onPointerMove );
+      _domElement.addEventListener( 'touchend', onTouchEnd );
+      _domElement.addEventListener( 'touchstart', onTouchStart );
+      _domElement.addEventListener( 'touchmove', onTouchMove );
+      _domElement.addEventListener( 'mousedown', onPointerDown );
+      _domElement.addEventListener( 'pointerup', onPointerCancel );
+      _domElement.addEventListener( 'pointerleave', onPointerCancel );
+      _domElement.addEventListener( 'wheel', onMouseWheel );
     }
 
    
  
 
-    function deactivate()
-    {
-		_domElement.removeEventListener( 'mousemove', onPointerMove );
-    _domElement.removeEventListener( 'touchend', onTouchEnd );
-    _domElement.removeEventListener( 'touchstart', onTouchStart );
-    _domElement.removeEventListener( 'touchmove', onTouchMove );
-		_domElement.removeEventListener( 'pointerdown', onPointerDown );
-		_domElement.removeEventListener( 'pointerup', onPointerCancel );
-		_domElement.removeEventListener( 'pointerleave', onPointerCancel );
-    _domElement.removeEventListener( 'wheel', onMouseWheel );
-    _domElement.style.cursor = ''; 
+    function deactivate() {
+      _domElement.removeEventListener( 'mousemove', onPointerMove );
+      _domElement.removeEventListener( 'touchend', onTouchEnd );
+      _domElement.removeEventListener( 'touchstart', onTouchStart );
+      _domElement.removeEventListener( 'touchmove', onTouchMove );
+      _domElement.removeEventListener( 'pointerdown', onPointerDown );
+      _domElement.removeEventListener( 'pointerup', onPointerCancel );
+      _domElement.removeEventListener( 'pointerleave', onPointerCancel );
+      _domElement.removeEventListener( 'wheel', onMouseWheel );
+      _domElement.style.cursor = ''; 
     }
 
 
 
 
-    function onPointerDown(e)
-    { 
+    function onPointerDown(e) {
       //console.log(app.canMove);
 //		if(e.button == 1 && app.canMove == 1 && ![1,2,3,4,5].includes(app.userData.mod))
     if(e.button == 1 && app.canMove == 1 && ![1].includes(app.userData.mod))
 
         {
           document.getElementById('canvas').style.cursor = 'move';
-		e.preventDefault();
+		      e.preventDefault();
         lastPos = {x:e.offsetX,y:e.offsetY};
         }
     }
@@ -150,28 +135,25 @@ var CameraControls = function(app, _domElement, grid)
         }
     }
 
-    function pinchStart(e){
+    function pinchStart(e) {
       carrentScale=app.stage.scale.x/Math.hypot(e.touches[0].pageX - e.touches[1].pageX,e.touches[0].pageY - e.touches[1].pageY);
     }
-    function pinch(e){
+    function pinch(e) {
       let zoomfactor=carrentScale*Math.hypot(e.touches[0].pageX - e.touches[1].pageX,e.touches[0].pageY - e.touches[1].pageY);
       zoomfactor = zoomfactor<0.3 ? 0.3 : zoomfactor;
       zoomfactor = zoomfactor>3 ? 3 : zoomfactor;
       zoom2(zoomfactor, _domElement.getBoundingClientRect().width/2, _domElement.getBoundingClientRect().height/2);
     }
 
-    function onPointerCancel(e)
-    { 
-      if (app.canMove == 1)
-        {
+    function onPointerCancel(e) { 
+      if (app.canMove == 1) {
           document.getElementById('canvas').style.cursor = 'default';
           e.preventDefault();
         lastPos = null;
         }
     }
 
-    function onMouseWheel(e)
-    {
+    function onMouseWheel(e) {
         zoom(e.deltaY, e.offsetX, e.offsetY);
     }
 

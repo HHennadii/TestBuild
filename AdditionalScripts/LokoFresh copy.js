@@ -1,23 +1,24 @@
 import * as THREE from '../jsm/three.module.js';
+import {OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
-import { Functions, ConfiguratorView, modelLoader } from './FunctionsForConf.js';
+import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
+import {Functions} from './FunctionsForConf.js';
 import {Postbox_parts,D700,Fresh} from './DataSet.js';
+import {getPostCoef} from './Coefs.js';
 import {MainWindow, colorSelect, addStackButtons, isRoof, RBMmenuConf, CopyButton, ItemCatalogPostBox} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList,Category} from './ConfigurableList.js';
 import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.LOKOFRESH.Elements;
 const listBorders = ConfigurableList.LOKOFRESH.ElementsBorders;
-let arr_build=[],CopyThisConfigeration=[];
-
+const needToFixIt = "LOKOFRESH";
 
 var LokoFresh = function(container2d, app) 
 {
-    const mainName = 'LOKOFRESH';
-    var configuratorView;
-
     var prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, StackControl= 0;
+    let arr_build=[],CopyThisConfigeration=[];
     let timer;
+	var hdrCubeRenderTarget;
 
     function setUpInterface(){
         $("#setconfigurator").append(MainWindow);
@@ -27,29 +28,29 @@ var LokoFresh = function(container2d, app)
         sceneElement= document.getElementById("confmenu");
         prrect = sceneElement.getBoundingClientRect();
         $(".wrapper, .radio, #access3").click(function() {
-            configuratorView.configurateItem(arr_build);
+            configurateItem();
         })
         $(".add-right").click(function() {
             add_Conf_stack("right",...CopyThisConfigeration);
-            configuratorView.configurateItem(arr_build);
+            configurateItem();
+            
         });
         $(".add-left").click(function() {
             add_Conf_stack("left",...CopyThisConfigeration);
-            configuratorView.configurateItem(arr_build);
+            configurateItem();
         });
 
 
         $("#spawnconfigurated").click(function(){
-            configuratorView.configurateItem(arr_build);
             spawnConfigurated();
-            configuratorView.hideConfigurator();
+            hideConfigurator();
             arr_build = ClearArray ();
             $("#confarea").remove();
           });
         
         $(".closeconf").click(function(){
             $("#confarea").remove();
-            configuratorView.hideConfigurator();
+            hideConfigurator();
             StackControl=0;
             arr_build = ClearArray();
         
@@ -63,21 +64,20 @@ var LokoFresh = function(container2d, app)
         setUpInterface();
         clean_conf_stack();    
         add_Conf_stack("right",'TerminalCooling');
-        configuratorView = new ConfiguratorView(prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, confreqv, arr_build, asyncLoadFresh,spriteFreshBox);
-        configuratorView.showConfigurator(mainName);
+		showConfigurator();
     }
 
 
     function reloadConfigurator(item){
         clean_conf_stack();
         setUpInterface();
-        item.userData.configuration.forEach(item=>{
-            add_Conf_stack("right",item.value);
+        item.configuration.forEach(item=>{
+            add_Conf_stack("right",item);
         })        
 
         //color set
         const colorSet = document.querySelectorAll('input[name="test"]');
-        const selected_color=item.userData.colors.join(' ');
+        const selected_color=item.colors.join(' ');
         colorSet.forEach(i=> {if(selected_color == i.value) 
                                        i.checked = true;
                             });
@@ -85,12 +85,12 @@ var LokoFresh = function(container2d, app)
         //depth set                    
         //roof
         const roof = document.getElementById("access3");
-        if(item.userData.kazyrek != 0)
+        if(item.kazyrek != 0)
              roof.checked = true;
 
-        configuratorView = new ConfiguratorView(prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, confreqv, arr_build, asyncLoadFresh,spriteFreshBox);
-        configuratorView.showConfigurator(mainName);
-        configuratorView.configurateItem(arr_build);
+
+        showConfigurator();
+        configurateItem();
     }
 
 
@@ -167,7 +167,7 @@ var LokoFresh = function(container2d, app)
         arr_build = RemoveFromArray(arr_build, id);
         CreateButtonControl();
         IsRoof(arr_build);
-        configuratorView.configurateItem(arr_build);
+        configurateItem();
     }
 
 
@@ -198,7 +198,7 @@ var LokoFresh = function(container2d, app)
         UpDateValueInArray(arr_build,id,value);
         IsRoof(arr_build);
         ClearCopyBuffer();
-        configuratorView.configurateItem(arr_build);
+        configurateItem(); 
          
     }
 
@@ -215,7 +215,7 @@ var LokoFresh = function(container2d, app)
         UpDateValueInArray(arr_build,id,value);
         IsRoof(arr_build);
         ClearCopyBuffer();
-        configuratorView.configurateItem(arr_build);
+        configurateItem();  
     }
 
     function add_Conf_stack (side="right", itemToInsert="Cooling")
@@ -273,15 +273,177 @@ var LokoFresh = function(container2d, app)
         $("#alt"+id[0]).children('.name-tag').html(list[id[1]].itname + "<br />" + list[id[1]].cellemount);
         UpDateValueInArray(arr_build,...id);
         ClearCopyBuffer();
-        configuratorView.configurateItem(arr_build);
+        configurateItem();
     }
 
 
 
 var confreqv;
+
+function onWindowResize()
+{	//3dView
+    var cont = document.getElementById('canvas');
+    var	rect = cont.getBoundingClientRect();
+    app.renderer.resize(rect.width, rect.height);
+
+    //configuratorview
+    prrect = sceneElement.getBoundingClientRect();
+    if(prcamera)
+    {
+    prcamera.aspect = prrect.width/prrect.height;
+    prcamera.updateProjectionMatrix();
+    prrenderer.setSize(prrect.width, prrect.height);
+    }
+}
+
+
+function showConfigurator()
+{		
+    const id = "LOKOFRESH";
+	prscene = new THREE.Scene();
+	prscene.background = new THREE.Color(0xCBCED6);
+	prrect = sceneElement.getBoundingClientRect();
+	prscene.userData.element = sceneElement;
+	prcamera = new THREE.PerspectiveCamera( 50, 1, 0.1, 10 );
+	prcamera.position.z = 2;
+	prcamera.position.y = 0.5;
+	prscene.userData.camera = prcamera;
+
+    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
+	directionalLight.position.set( -3, -3, 3 );
+    prscene.add( directionalLight );
+
+	const alight = new THREE.AmbientLight( 0xffffff, 0.3 );
+	prscene.add( alight );
+	
+	prrenderer = new THREE.WebGLRenderer({ antialias: true});
+	prrenderer.setSize( prrect.width, 400 );
+	sceneElement.appendChild(prrenderer.domElement);
+	
+    prrenderer.physicallyCorrectLights = true;
+	prrenderer.toneMapping = THREE.ACESFilmicToneMapping;
+	prrenderer.toneMappingExposure = 3;
+    
+	prgroup = new THREE.Group();
+	prscene.add(prgroup);
+
+
+	preloadMeshesObject(id);
+    //console.log(id);
+	
+	prcontrols =  new OrbitControls(prcamera, prrenderer.domElement);
+	//prcontrols.screenSpacePanning = false;
+	//prcontrols.minDistance = 4;
+	prcontrols.maxDistance = 20;
+	//prcontrols.maxPolarAngle = Math.PI / 3;
+	
+	//prcamera.position.z = 2;
+    prcamera.position.set(-2.5, 2.5, 2.5);
+
+    prcontrols.target = new THREE.Vector3(0, 0.7, 0);
+    prcontrols.update();
+	
+	prcamera.position.z = 2;
+	confreqv = window.requestAnimationFrame(pranimate);
+	onWindowResize();
+	if (+$(".configurator").css('height').replace(/px/i, '') > 698) {$(".configurator, .loader2").css('top', window.innerHeight/2-350); }
+}
+
+function hideConfigurator()
+{
+	sceneElement.removeChild(prrenderer.domElement);
+	prscene = null;
+	prcamera = null;
+	prrenderer = null;
+	window.cancelAnimationFrame(confreqv);
+	//var spawn = document.getElementById('spawnconfigurated');
+	//spawn.removeEventListener('click', ()=>spawnConfigurated());
+}
+
+function pranimate()
+{
+	prcontrols.update();
+	if(prrenderer)
+	{
+        
+    if(prgroup.children[0]){
+        prgroup.children[0].children.forEach(obj => {
+            if(obj.name === "billboardL") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,0);
+            }
+            if(obj.name === "billboardH") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,-Math.PI/2);
+            }
+        })
+    }
+
+	prrenderer.render(prscene, prcamera);
+	window.requestAnimationFrame( pranimate );
+	}
+};
+
+
+
+var preloadedMeshes = {};
+var sprites=[];
 var renderedsprite = null;
+var menuDiv;
+var clickTimer = null;
+
+function localWorld(item)
+{
+    var p = {x: (item.getGlobalPosition().x - app.stage.x) / (app.stage.scale.x*64), y: (item.getGlobalPosition().y - app.stage.y)/(app.stage.scale.y*64)};
+    return p;
+}
 
 
+function preloadMeshesObject(id)
+{
+    //console.log("Preloading "+id);
+    preloadedMeshes = {};
+    const loader = new GLTFLoader();
+        loader.load(
+            '../../sprites/configurator/'+id+'/'+'CORN.glb',
+            function(gltf){
+                for(var i = 0; i<gltf.scene.children.length; i++)
+                {
+                    preloadedMeshes[gltf.scene.children[i].name] = gltf.scene.children[i];
+                }
+                document.getElementById("loadscreen2").style.display="none";
+                //if(id=="LOKOFRESH") configurateFreshBoxObject();
+                var item = {
+                    configuration:formFreshBoxItemsArray(),
+                    colors:document.querySelector('input[name="test"]:checked').value.split(' '),
+                    kazyrek:getKazyrek(),
+                }
+                asyncLoadFresh(item,prgroup,preloadedMeshes);
+            },
+            function ( xhr ) {
+                if(typeof(xhr.loaded / xhr.total)=='number' && xhr.loaded / xhr.total!="Infinity") {
+                    $("#loadingPR").html(Math.round( xhr.loaded / xhr.total * 100 ) + '%' );
+                }
+                else
+                $("#loadingPR").html("In progress");
+            },
+            function ( error ) {
+                console.log( 'An error happened' );
+            });
+} 
+    
+function formFreshBoxItemsArray() {
+    return arr_build.map(item=> item.value);
+}
+
+function getKazyrek()
+{
+    return document.getElementById("access3").checked ? true : false;
+}
 
 function fillOnes(l)
 {
@@ -335,7 +497,7 @@ function fridgeCannopiesRoof(cannopyarray) {
     var pc_idx, roof_arr=[0,1,0];
     var leftPart,rightPart;
     for(var i = 0; i < cannopyarray.length; i++) {
-        if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(cannopyarray[i].value)) {
+        if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(cannopyarray[i])) {
             pc_idx = i;
             break;
         }
@@ -383,71 +545,132 @@ function layoutRoof(itemsArray,kazyrek) //countedblocks, seq, kazyrek
 
     if(itemsArray.length > 3) {
         if(kazyrek) {
+            //console.log(fridgeCannopiesRoof(itemsArray)); 
             return fridgeCannopiesRoof(itemsArray);
         }
         else {
+            //console.log(fridgeCannopies(fillOnes(itemsArray.length)));
             return fridgeCannopies(fillOnes(itemsArray.length));
         }
     }
+
 }
 
+function configurateFreshBoxObject() {
+    var dist=0;
+    var seq = formFreshBoxItemsArray();
+    var pc_idx;
+    if(getKazyrek()) {
+        if(seq.length == 2) {
+            var kaz1 = meshesObject['Roof'].clone();
+            kaz1.translateX(0.699/2);
+            prgroup.add(kaz1);
+            var kaz2 = meshesObject['Roof'].clone();
+            kaz2.translateX(0.699+0.699/2);
+            prgroup.add(kaz2);
+        }
+        else {
+            for(var i = 0; i<seq.length; i++) {
+                if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(seq[i])) {pc_idx = i; break;}
+            }
+            if(pc_idx!=0 && pc_idx!=(seq.length-1)) {
+                var locdist = 0.699*(pc_idx-1);
+                var kaz1 = meshesObject['Roof'].clone();
+                kaz1.translateX(locdist+0.699/2);
+                locdist+=0.699;
+                prgroup.add(kaz1);
+                var kaz2 = meshesObject['Roof'].clone();
+                kaz2.translateX(locdist+0.699/2);
+                locdist+=0.699;
+                prgroup.add(kaz2);
+                var kaz3 = meshesObject['Roof'].clone();
+                kaz3.translateX(locdist+0.699/2);
+                prgroup.add(kaz3);
+            }
+        }
+    }
+    prgroup.add(meshesObject['Endwall'].clone());
+    for(var i = 0; i<seq.length; i++)
+    {
+        var mesh = meshesObject[seq[i]].clone();
+        prgroup.add(mesh);
+        var colors = document.querySelector('input[name="test"]:checked').value.split(' ');
+        mesh.children[0].material.color.r = colors[0]/255;
+        mesh.children[0].material.color.g = colors[1]/255;
+        mesh.children[0].material.color.b = colors[2]/255;    
+        mesh.translateX(0.699/2+dist);
+        dist += 0.699;
+    }
+    var lastwall = meshesObject['Endwall'].clone();
+    lastwall.children[0].material.color.r = colors[0]/255;
+    lastwall.children[0].material.color.g = colors[1]/255;
+    lastwall.children[0].material.color.b = colors[2]/255;
+    lastwall.translateX(dist);
+    prgroup.add(lastwall);
+    prgroup.children.forEach( item => {item.position.x-=dist/2;});
+    prcamera.position.z = 5;
+    prcamera.position.y = 1.2;
+    spriteFreshBox(seq, colors, getKazyrek());
+}
 
-function spriteFreshBox(configObject) {
+function spriteFreshBox(seq, colors, kazyrek, x=0, y=0, rot=0) {
     var pc_idx;
 
     renderedsprite = new PIXI.Container();
-    renderedsprite.x = configObject.x;     renderedsprite.y = configObject.y;     renderedsprite.rotation = configObject.rotation;
+    renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
+    renderedsprite.name = "LOKOFRESH";
+    renderedsprite.colors = colors;
+    renderedsprite.configuration = seq;
+    renderedsprite.kazyrek = kazyrek;
+    renderedsprite.depth = 700;
     renderedsprite.userData = {};
-    renderedsprite.userData.name = "LOKOFRESH";
-    renderedsprite.userData.configuration = configObject.userData.configuration;
-    renderedsprite.userData.colors = configObject.userData.colors;
-    renderedsprite.userData.depth = 700;
-    renderedsprite.userData.kazyrek = configObject.userData.kazyrek;
     renderedsprite.userData.nameTag = "";
 
-    renderedsprite.userData.roofconfiguration = layoutRoof(configObject.userData.configuration, configObject.userData.kazyrek);
+    renderedsprite.roofconfiguration = layoutRoof(seq, kazyrek);
 
     renderedsprite.sayHi = function() {
+        //console.log(this.configuration);
+        //console.log(this.roofconfiguration);
         var arr = [];
-        const name = this.userData.name;
-        const color = getColorCode(this.userData.colors);
+        const name = this.name;
+        const color = getColorCode(this.colors);
         arr.push([name+' '+color]);
         var itemSet = {};
-        this.userData.configuration.forEach(function(a){
-            itemSet[a.value] = itemSet[a.value] + 1 || 1;
+        this.configuration.forEach(function(a){
+            itemSet[a] = itemSet[a] + 1 || 1;
         });
         for(var key in itemSet){
             arr.push([Fresh[key].art,Fresh[key].name,itemSet[key],Fresh[key].price,Fresh[key].price*itemSet[key]]);
         }
 
-        const floorBlocks = fillOnes(this.userData.configuration.length);
+        const floorBlocks = fillOnes(this.configuration.length);
 
         if(floorBlocks[0]) arr.push([Fresh.Base1.art,Fresh.Base1.name,floorBlocks[0],Fresh.Base1.price,Fresh.Base1.price*floorBlocks[0]]);
         if(floorBlocks[1]) arr.push([Fresh.Base2.art,Fresh.Base2.name,floorBlocks[1],Fresh.Base2.price,Fresh.Base2.price*floorBlocks[1]]);
         if(floorBlocks[2]) arr.push([Fresh.Base3.art,Fresh.Base3.name,floorBlocks[2],Fresh.Base3.price,Fresh.Base3.price*floorBlocks[2]]);
 
     // [leftVolume, rightVolume, mid1Qnt, mid2Qnt, mid3Qnt, SelfSt2, SelfSt3,SelfSt2R, SelfSt3R, LeftRoof, MidlRoof, RightRoof]
-        if(this.userData.roofconfiguration[0] == 1) arr.push([Fresh.LeftCan1.art,Fresh.LeftCan1.name,1,Fresh.LeftCan1.price,Fresh.LeftCan1.price])
-        if(this.userData.roofconfiguration[0] == 2) arr.push([Fresh.LeftCan2.art,Fresh.LeftCan2.name,1,Fresh.LeftCan2.price,Fresh.LeftCan2.price])
-        if(this.userData.roofconfiguration[0] == 3) arr.push([Fresh.LeftCan3.art,Fresh.LeftCan3.name,1,Fresh.LeftCan3.price,Fresh.LeftCan3.price])
+        if(this.roofconfiguration[0] == 1) arr.push([Fresh.LeftCan1.art,Fresh.LeftCan1.name,1,Fresh.LeftCan1.price,Fresh.LeftCan1.price])
+        if(this.roofconfiguration[0] == 2) arr.push([Fresh.LeftCan2.art,Fresh.LeftCan2.name,1,Fresh.LeftCan2.price,Fresh.LeftCan2.price])
+        if(this.roofconfiguration[0] == 3) arr.push([Fresh.LeftCan3.art,Fresh.LeftCan3.name,1,Fresh.LeftCan3.price,Fresh.LeftCan3.price])
 
-        if(this.userData.roofconfiguration[1] == 1) arr.push([Fresh.RightCan1.art,Fresh.RightCan1.name,1,Fresh.RightCan1.price,Fresh.RightCan1.price])
-        if(this.userData.roofconfiguration[1] == 2) arr.push([Fresh.RightCan2.art,Fresh.RightCan2.name,1,Fresh.RightCan2.price,Fresh.RightCan2.price])
-        if(this.userData.roofconfiguration[1] == 3) arr.push([Fresh.RightCan3.art,Fresh.RightCan3.name,1,Fresh.RightCan3.price,Fresh.RightCan3.price])
+        if(this.roofconfiguration[1] == 1) arr.push([Fresh.RightCan1.art,Fresh.RightCan1.name,1,Fresh.RightCan1.price,Fresh.RightCan1.price])
+        if(this.roofconfiguration[1] == 2) arr.push([Fresh.RightCan2.art,Fresh.RightCan2.name,1,Fresh.RightCan2.price,Fresh.RightCan2.price])
+        if(this.roofconfiguration[1] == 3) arr.push([Fresh.RightCan3.art,Fresh.RightCan3.name,1,Fresh.RightCan3.price,Fresh.RightCan3.price])
 
-        if(this.userData.roofconfiguration[2]) arr.push([Fresh.MidCan1.art,Fresh.MidCan1.name,this.userData.roofconfiguration[2],Fresh.MidCan1.price,Fresh.MidCan1.price*this.userData.roofconfiguration[2]])
-        if(this.userData.roofconfiguration[3]) arr.push([Fresh.MidCan2.art,Fresh.MidCan2.name,this.userData.roofconfiguration[3],Fresh.MidCan2.price,Fresh.MidCan2.price*this.userData.roofconfiguration[3]])
-        if(this.userData.roofconfiguration[4]) arr.push([Fresh.MidCan3.art,Fresh.MidCan3.name,this.userData.roofconfiguration[4],Fresh.MidCan3.price,Fresh.MidCan3.price*this.userData.roofconfiguration[4]])
+        if(this.roofconfiguration[2]) arr.push([Fresh.MidCan1.art,Fresh.MidCan1.name,this.roofconfiguration[2],Fresh.MidCan1.price,Fresh.MidCan1.price*this.roofconfiguration[2]])
+        if(this.roofconfiguration[3]) arr.push([Fresh.MidCan2.art,Fresh.MidCan2.name,this.roofconfiguration[3],Fresh.MidCan2.price,Fresh.MidCan2.price*this.roofconfiguration[3]])
+        if(this.roofconfiguration[4]) arr.push([Fresh.MidCan3.art,Fresh.MidCan3.name,this.roofconfiguration[4],Fresh.MidCan3.price,Fresh.MidCan3.price*this.roofconfiguration[4]])
 
-        if(this.userData.roofconfiguration[5]) arr.push([Fresh.Can2.art,Fresh.Can2.name,this.userData.roofconfiguration[5],Fresh.Can2.price,Fresh.Can2.price*this.userData.roofconfiguration[5]])
-        if(this.userData.roofconfiguration[6]) arr.push([Fresh.Can3.art,Fresh.Can3.name,this.userData.roofconfiguration[6],Fresh.Can3.price,Fresh.Can3.price*this.userData.roofconfiguration[6]])
+        if(this.roofconfiguration[5]) arr.push([Fresh.Can2.art,Fresh.Can2.name,this.roofconfiguration[5],Fresh.Can2.price,Fresh.Can2.price*this.roofconfiguration[5]])
+        if(this.roofconfiguration[6]) arr.push([Fresh.Can3.art,Fresh.Can3.name,this.roofconfiguration[6],Fresh.Can3.price,Fresh.Can3.price*this.roofconfiguration[6]])
 
-        if(this.userData.roofconfiguration[7]) arr.push([Fresh.Can2R.art,Fresh.Can2R.name,this.userData.roofconfiguration[7],Fresh.Can2R.price,Fresh.Can2R.price*this.userData.roofconfiguration[7]])
-        if(this.userData.roofconfiguration[8]) arr.push([Fresh.Can3R.art,Fresh.Can3R.name,this.userData.roofconfiguration[8],Fresh.Can3R.price,Fresh.Can3R.price*this.userData.roofconfiguration[8]])
+        if(this.roofconfiguration[7]) arr.push([Fresh.Can2R.art,Fresh.Can2R.name,this.roofconfiguration[7],Fresh.Can2R.price,Fresh.Can2R.price*this.roofconfiguration[7]])
+        if(this.roofconfiguration[8]) arr.push([Fresh.Can3R.art,Fresh.Can3R.name,this.roofconfiguration[8],Fresh.Can3R.price,Fresh.Can3R.price*this.roofconfiguration[8]])
 
-        if(this.userData.roofconfiguration[9]) arr.push([Fresh.LeftCan3R.art,Fresh.LeftCan3R.name,this.userData.roofconfiguration[9],Fresh.LeftCan3R.price,Fresh.LeftCan3R.price*this.userData.roofconfiguration[9]])
-        if(this.userData.roofconfiguration[10]) arr.push([Fresh.MidCan3R.art,Fresh.MidCan3R.name,this.userData.roofconfiguration[10],Fresh.MidCan3R.price,Fresh.MidCan3R.price*this.userData.roofconfiguration[10]])
-        if(this.userData.roofconfiguration[11]) arr.push([Fresh.RightCan3R.art,Fresh.RightCan3R.name,this.userData.roofconfiguration[11],Fresh.RightCan3R.price,Fresh.RightCan3R.price*this.userData.roofconfiguration[11]])
+        if(this.roofconfiguration[9]) arr.push([Fresh.LeftCan3R.art,Fresh.LeftCan3R.name,this.roofconfiguration[9],Fresh.LeftCan3R.price,Fresh.LeftCan3R.price*this.roofconfiguration[9]])
+        if(this.roofconfiguration[10]) arr.push([Fresh.MidCan3R.art,Fresh.MidCan3R.name,this.roofconfiguration[10],Fresh.MidCan3R.price,Fresh.MidCan3R.price*this.roofconfiguration[10]])
+        if(this.roofconfiguration[11]) arr.push([Fresh.RightCan3R.art,Fresh.RightCan3R.name,this.roofconfiguration[11],Fresh.RightCan3R.price,Fresh.RightCan3R.price*this.roofconfiguration[11]])
 
         arr.push([Fresh.EndwallL.art,Fresh.EndwallL.name,1,Fresh.EndwallL.price,Fresh.EndwallL.price]);
         arr.push([Fresh.EndwallR.art,Fresh.EndwallR.name,1,Fresh.EndwallR.price,Fresh.EndwallR.price]);
@@ -464,22 +687,19 @@ function spriteFreshBox(configObject) {
 
     renderedsprite.clone = function() {
         selectedItem = null;
-        var configObject = {
-            userData: this.userData,
-            x: this.x+15,
-            y: this.y+15,
-            rotation: this.rotation,
-        }
-        renderedsprite = spriteFreshBox(configObject);
+        renderedsprite = spriteFreshBox(this.configuration, this.colors, this.kazyrek, this.x+20, this.y+20, this.rotation);
         spawnConfigurated();
     }
 
     renderedsprite.saveIt = function() {
         var thisObject = {
-            userData: this.userData,
+            name:this.name,
+            configuration: this.configuration,
+            colors: this.colors,
             x:this.x,
             y:this.y,
             rotation:this.rotation,
+            kazyrek:this.kazyrek,
         }
         return thisObject;
     }
@@ -497,9 +717,9 @@ function spriteFreshBox(configObject) {
 
     var dist=0;
 
-    for(var i = 0; i<configObject.userData.configuration.length; i++) {
-        var sprite = new PIXI.Sprite.from("sprites/configurator/LOKOFRESH/PixiPreview/"+configObject.userData.configuration[i].value+".svg");
-        const text = new PIXI.Text(ConfigurableList.LOKOFRESH.Elements[configObject.userData.configuration[i].value].name2D.replaceAll('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+    for(var i = 0; i<seq.length; i++) {
+        var sprite = new PIXI.Sprite.from("sprites/configurator/LOKOFRESH/PixiPreview/"+seq[i]+".svg");
+        const text = new PIXI.Text(ConfigurableList.LOKOFRESH.Elements[seq[i]].name2D.replaceAll('<br>','\n'),{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
         text.anchor.set(0.5);
         sprite.addChild(text);
         renderedsprite.addChild(sprite);
@@ -508,8 +728,8 @@ function spriteFreshBox(configObject) {
         dist += 0.699;
     }
 
-    if(configObject.userData.kazyrek) {
-        if(configObject.userData.configuration.length==2) {
+    if(kazyrek) {
+        if(seq.length==2) {
             var kaz2d = new PIXI.Sprite.from("sprites/configurator/LOKOFRESH/PixiPreview/Roof.svg");
             kaz2d.y-=30;
             renderedsprite.addChild(kaz2d);
@@ -519,10 +739,10 @@ function spriteFreshBox(configObject) {
             renderedsprite.addChild(kaz2d);
         }
         else {
-            for(var i = 0; i<configObject.userData.configuration.length; i++) {
-                if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(configObject.userData.configuration[i].value)) {pc_idx = i; break;}
+            for(var i = 0; i<seq.length; i++) {
+                if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(seq[i])) {pc_idx = i; break;}
             }
-            if(pc_idx!=0 && pc_idx!=(configObject.userData.configuration.length-1))
+            if(pc_idx!=0 && pc_idx!=(seq.length-1))
             {
                 var locdist = 0;
                 var kaz2d = new PIXI.Sprite.from("sprites/configurator/LOKOFRESH/PixiPreview/Roof.svg");
@@ -593,6 +813,19 @@ function hideContextMenu()
     document.getElementById("ORClick").remove();
 }
 
+    
+function configurateItem()
+{
+    prgroup.remove(...prgroup.children);
+    var item = {
+        configuration:formFreshBoxItemsArray(),
+        colors:document.querySelector('input[name="test"]:checked').value.split(' '),
+        kazyrek:getKazyrek(),
+    }
+    //configurateFreshBoxObject();
+    asyncLoadFresh(item,prgroup,preloadedMeshes);
+    spriteFreshBox(item.configuration, item.colors,item.kazyrek, 0,0,0);
+}
 
 function spawnConfigurated() {
     if(selectedItem) {
@@ -650,8 +883,73 @@ function onlongtouch(event) {
 	showContextMenu(event.data.global.x, event.data.global.y);
 };
 
+    function findObjectsInRange()
+    {
+        var objectsInRange = [];
+        if(selectedItem)
+        {
+            container2d.children.forEach(element => {
+                if(element!=selectedItem)
+                {
+                    if(distanceTo(selectedItem, element)<11) objectsInRange.push(element);
+                }
+            });
+        }
+        return objectsInRange;
+    }
+
+
+    function findClosestPoint(selecteditem, rangeitemsarray)
+    {
+        var selectedpoints = selecteditem.children;
+        var _distance = 5000;
+        var selectedpoint, closestpoint;
+        for(var i = 0; i<rangeitemsarray.length; i++)
+        {
+            for(var j = 0; j<4; j++)
+            {
+                for(var k = 0; k<4; k++)
+                {
+                    var firstpos = localWorld(selectedpoints[j]);
+                    var secpos = localWorld(rangeitemsarray[i].children[k]);
+                    var distance = distanceTo(firstpos,secpos)*64;
+                    if(distance<_distance)
+                    {
+                        _distance = distance;
+                        selectedpoint = selectedpoints[j];
+                        closestpoint = localWorld(rangeitemsarray[i].children[k]);
+                    }
+                }
+            }
+        }
+        return [selectedpoint, closestpoint, _distance];
+    }
+
+    function stickToItem(closestpointsarr)
+    {
+        if(closestpointsarr[2]<1)
+        {
+            var clp = localWorld(closestpointsarr[0]);
+            var clp2 = realPosition(selectedItem);
+            var offset = {x: (clp.x-clp2.x)*64,y: (clp.y-clp2.y)*64};
+            var newItemPosition = {x: closestpointsarr[1].x*64, y: closestpointsarr[1].y*64};
+            selectedItem.x = newItemPosition.x; selectedItem.y = newItemPosition.y;
+            selectedItem.x-=offset.x; selectedItem.y-=offset.y;
+        }
+
+    }
 
     async function asyncLoadFresh(item,_shopitems3d,preloadedMeshes) {
+        if(preloadedMeshes) {
+            const pmremGenerator = new THREE.PMREMGenerator( prrenderer );
+            hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
+            pmremGenerator.compileCubemapShader();
+        }
+        else {
+            const pmremGenerator = new THREE.PMREMGenerator( app.userData.renderer );
+            hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
+            pmremGenerator.compileCubemapShader();
+        }
         var meshesObject = {};
         if(preloadedMeshes) {
             meshesObject = preloadedMeshes;
@@ -667,10 +965,10 @@ function onlongtouch(event) {
         _shopitems3d.add(_group);
     
         var dist=0;
-        var seq = item.userData.configuration;
-        var colors = item.userData.colors;
+        var seq = item.configuration;
+        var colors = item.colors;
         var pc_idx;
-        if(item.userData.kazyrek) {
+        if(item.kazyrek) {
             if(seq.length == 2) {
                 var kaz1 = meshesObject['Roof'].clone();
                 kaz1.translateX(0.699/2);
@@ -681,7 +979,7 @@ function onlongtouch(event) {
             }
             else {
                 for(var i = 0; i<seq.length; i++) {
-                    if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(seq[i].value)) {pc_idx = i; break;}
+                    if(ConfigurableList.LOKOFRESH.ElementsBorders.terminal.includes(seq[i])) {pc_idx = i; break;}
                 }
                 if(pc_idx!=0 && pc_idx!=(seq.length-1)) {
                     var locdist = 0.699*(pc_idx-1);
@@ -702,13 +1000,22 @@ function onlongtouch(event) {
         _group.add(meshesObject['Endwall'].clone());
         for(var i = 0; i<seq.length; i++)
         {
-            var mesh = meshesObject[seq[i].value].clone();
+            var mesh = meshesObject[seq[i]].clone();
             _group.add(mesh);
             mesh.children[0].material.color.r = colors[0]/255;
             mesh.children[0].material.color.g = colors[1]/255;
             mesh.children[0].material.color.b = colors[2]/255;    
             mesh.translateX(0.699/2+dist);
             dist += 0.699;
+    
+            // let renderTarget = hdrCubeRenderTarget;
+            // const newEnvMap = renderTarget ? renderTarget.texture : null;
+            // if (newEnvMap)
+            // {
+            //     mesh.children.forEach(ch=>{
+            //         ch.castShadow = true;
+            //         ch.material.envMap = newEnvMap;});
+            // }
         }
         var lastwall = meshesObject['Endwall'].clone();
         lastwall.children[0].material.color.r = colors[0]/255;
@@ -717,14 +1024,33 @@ function onlongtouch(event) {
         lastwall.translateX(dist);
         _group.add(lastwall);
 
+
+        let renderTarget = hdrCubeRenderTarget;
+        const newEnvMap = renderTarget ? renderTarget.texture : null;
+        _group.children.forEach(child => {
+            if (newEnvMap) {
+                //console.log('in if loop')
+                //child.material.envMap = newEnvMap;
+                child.children.forEach(ch=>{
+                    //console.log(ch.material);
+                    //ch.castShadow = true;
+                    ch.material.envMap = newEnvMap;
+                })
+            }
+        });
+
+
         if(!preloadedMeshes) _group.rotation.set(Math.PI/2,-item.rotation,0);
         if(item.position) _group.position.set(item.x/64, -item.y/64, 0);
         _group.children.forEach( item => {item.position.x-=dist/2;});
 
         if(preloadedMeshes) Functions.addDimensions( _group );
+
         return
     }
 
+this.configurateItem = configurateItem;
+this.preloadMeshes = preloadMeshesObject;
 this.spawnConfigurated = spawnConfigurated;
 this.loadPostBox = spriteFreshBox;
 this.startConfigurator = startConfigurator;
@@ -737,3 +1063,25 @@ LokoFresh.prototype.constructor = LokoFresh;
 export {LokoFresh}
 
 var selectedItem = null;
+
+
+var x_pos = document.getElementById("x_pos");
+var y_pos = document.getElementById("y_pos");
+
+function distanceTo(point1, point2)
+{
+    return (Math.sqrt((point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)))/64;
+}
+
+function realPosition(item)
+{
+    var p = {x: item.x/64, y: item.y/64};
+    return p;
+}
+
+function modelLoader(url) {
+    const loader = new GLTFLoader();
+    return new Promise((resolve, reject) => {
+        loader.load(url, data => resolve(data), null, reject);
+    });
+}

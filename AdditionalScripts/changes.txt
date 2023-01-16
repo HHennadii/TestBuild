@@ -1,0 +1,11 @@
+remove clean_conf_stack function
+
+addStackButtons now is a function with name param
+
+add_Conf_stack changed input vars to object
+
+copy trasferd
+
+copyselecteditem need proper rewatch in each cofiguration
+
+showContextMenu

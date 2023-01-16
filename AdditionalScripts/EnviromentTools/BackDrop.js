@@ -1,5 +1,8 @@
 var BackDrop = function(app, _domElement, applic)
 {
+
+    var _PDF_DOC;
+
     var startPosition = null;
     var endPosition = null;
     var selectedItem = null;
@@ -9,15 +12,83 @@ var BackDrop = function(app, _domElement, applic)
     function onBlueprintChange(e) {
         if(bdimage) app.removeChild(bdimage);
         if(e.target.files[0]) {
-            $('#editbplabel').css("display", "flex");    
-            var userImage = e.target.files[0]; 
-            var userImageURL = URL.createObjectURL( userImage );
-            bdimage = PIXI.Sprite.from(userImageURL);
-            bdimage.interactive = true;
-            //bdimage.buttonMode = true;
-            bdimage.anchor.set(0.5);
-            app.addChild(bdimage);
-            bdimage
+            if(["png","jpg","jpeg"].includes(e.target.files[0].name.split('.').pop())) {
+                $('#editbplabel').css("display", "flex");    
+                console.log(e.target.files[0]);
+                var userImage = e.target.files[0]; 
+                var userImageURL = URL.createObjectURL( userImage );
+                console.log(userImageURL);
+                bdimage = PIXI.Sprite.from(userImageURL);
+                bdimage.interactive = true;
+                //bdimage.buttonMode = true;
+                bdimage.anchor.set(0.5);
+                app.addChild(bdimage);
+                bdimage
+                    //.on('pointerdown', onDragStart)
+                    //.on('pointerup', onDragEnd)
+                    //.on('pointerupoutside', onDragEnd)
+                    //.on('pointermove', onDragMove)
+                    .on('rightclick',function(event){
+                        showContextMenutool(event.data.global.x, event.data.global.y);
+                    })
+                    .on('touchstart',function(event) {
+                        console.log(timer);
+                        if (!timer) {
+                            timer = setTimeout(function() {onlongtouch(event);}, 2000);
+                        }      
+                     })
+                    
+                     .on('touchend',function() {
+                        if (timer) {
+                            clearTimeout(timer);
+                            timer = null;
+                        }
+                     });
+            }
+            if(e.target.files[0].name.split('.').pop() === "pdf") {
+                var userImageURL = URL.createObjectURL(e.target.files[0]);
+                showPage(userImageURL, 1);
+            }
+
+        }
+        else
+     
+        $('#editbplabel').css("display", "none");
+    }
+
+    async function showPage(pdf_url, page_no) {
+        var _CANVAS = document.createElement('canvas');
+        _CANVAS.id = "PDFID";
+        _CANVAS.width = 500;
+        _CANVAS.height = 400;
+
+        try {
+            _PDF_DOC = await pdfjsLib.getDocument({ url: pdf_url });
+            var page = await _PDF_DOC.getPage(page_no);
+        }
+        catch(error) {
+            alert(error.message);
+        }
+        var pdf_original_width = page.getViewport(1).width;
+        var scale_required = _CANVAS.width / pdf_original_width;
+        var viewport = page.getViewport(scale_required);
+        _CANVAS.height = viewport.height;
+        var render_context = {
+            canvasContext: _CANVAS.getContext('2d'),
+            viewport: viewport
+        };
+        try {
+            await page.render(render_context);
+            var canvasImageURL;
+            _CANVAS.toBlob((blob) => {
+                $('#editbplabel').css("display", "flex");    
+                let file = new File([blob], "fileName.png", { type: "image/png" })
+                canvasImageURL = URL.createObjectURL(file);
+                bdimage = PIXI.Sprite.from(canvasImageURL);
+                bdimage.interactive = true;
+                bdimage.anchor.set(0.5);
+                app.addChild(bdimage);
+                bdimage
                 //.on('pointerdown', onDragStart)
                 //.on('pointerup', onDragEnd)
                 //.on('pointerupoutside', onDragEnd)
@@ -38,11 +109,15 @@ var BackDrop = function(app, _domElement, applic)
                         timer = null;
                     }
                  });
+              }, 'image/png');
+
         }
-        else
-     
-        $('#editbplabel').css("display", "none");
+        catch(error) {
+            alert(error.message);
+        }
+        _CANVAS.remove();
     }
+
 
      function onlongtouch(event) { 
         console.log(timer);

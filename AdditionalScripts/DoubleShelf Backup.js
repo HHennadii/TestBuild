@@ -1,6 +1,10 @@
 import * as THREE from '../jsm/three.module.js';
+import {OrbitControls } from '../jsm/controls/OrbitControls.js';
 import {EventDispatcher} from '../jsm/three.module.js';
-import { Functions, ConfiguratorView, modelLoader } from './FunctionsForConf.js';
+import { GLTFLoader } from '../jsm/loaders/GLTFLoader.js';
+import {Functions} from './FunctionsForConf.js';
+import {Postbox_parts,D700,Fresh} from './DataSet.js';
+import {getPostCoef} from './Coefs.js';
 import {shelf} from './DataSet.js';
 import {MainWindow, shelfconf, RBMmenuConf, addStackButtonsShelf, ShelfsConfiguration, CopyButton, ItemCatalog} from './ConfiguratorInterfaceModuls.js';
 import {ConfigurableList,Category} from './ConfigurableList.js';
@@ -8,14 +12,13 @@ import {getColorCode} from './Coefs.js';
 
 const list = ConfigurableList.DOUBLESHELF.Elements;
 const listBorders = ConfigurableList.DOUBLESHELF.ElementsBorders;
+const needToFixIt = "SHELF";
 let arr_build=[],CopyThisConfigeration=[];
 let timer;
 var DoubleShelf = function(container2d, app) 
 {
-    const mainName = 'SHELF';
-    var configuratorView;
-
     var prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, StackControl= 0;
+    var hdrCubeRenderTarget;
 
 
     function setUpInterface(){
@@ -25,26 +28,25 @@ var DoubleShelf = function(container2d, app)
         sceneElement= document.getElementById("confmenu");
         prrect = sceneElement.getBoundingClientRect();
         $(".wrapper, .radio, .radio-height, #bottom_ext").click(function() {
-            configuratorView.configurateItem(arr_build);
+            configurateItem();
         })
 
 
 
         $(".add-right").click(function() {
             add_Conf_stack("right",...CopyThisConfigeration);
-            configuratorView.configurateItem(arr_build);
+            configurateItem();
             
         });
         $(".add-left").click(function() {
             add_Conf_stack("left",...CopyThisConfigeration);
-            configuratorView.configurateItem(arr_build);
+            configurateItem();
         });
 
         
         $("#spawnconfigurated").click(function(){
-            configuratorView.configurateItem(arr_build);
             spawnConfigurated();
-            configuratorView.hideConfigurator();
+            hideConfigurator();
             console.log(arr_build);
             arr_build = ClearArray ();
             $("#confarea").remove();
@@ -52,7 +54,7 @@ var DoubleShelf = function(container2d, app)
         
         $(".closeconf").click(function(){
             $("#confarea").remove();
-            configuratorView.hideConfigurator();
+            hideConfigurator();
             StackControl=0;
             arr_build = ClearArray();
         
@@ -66,18 +68,21 @@ var DoubleShelf = function(container2d, app)
         setUpInterface();
         clean_conf_stack();    
         add_Conf_stack();
-        configuratorView = new ConfiguratorView(prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, confreqv, arr_build, asyncLoadFresh,spriteFreshBox);
-        configuratorView.showConfigurator(mainName);
+		showConfigurator();
     }
 
 
     function reloadConfigurator(item){
         clean_conf_stack();
         setUpInterface();
-        item.userData.configuration.forEach((itemMain,it)=>{
+       
+
+
+
+        item.configuration.forEach((itemMain,it)=>{
             if(itemMain.id>0){
-            const itemMirror =  item.userData.configuration[it+1];
-            add_Conf_stack("right",itemMain.objType,itemMirror.objType);
+            const itemMirror =  item.configuration[it+1];
+            add_Conf_stack("right",itemMain,itemMirror);
             }
         })        
 
@@ -106,9 +111,8 @@ var DoubleShelf = function(container2d, app)
             bottom.checked = true;
 
 
-        configuratorView = new ConfiguratorView(prscene, prgroup, prcamera, prrenderer, prrect, prcontrols, sceneElement, confreqv, arr_build, asyncLoadFresh,spriteFreshBox);
-        configuratorView.showConfigurator(mainName);
-        configuratorView.configurateItem(arr_build);
+        showConfigurator();
+        configurateItem();
     }
 
     function CopyStack(item){
@@ -220,7 +224,7 @@ var DoubleShelf = function(container2d, app)
         UpDateValueInArray(arr_build,id,-1,-1,-1,-1,-1,-1,-1,e.target.checked);
         if(e.target.name[0]=="H")
         UpDateValueInArray(arr_build,id,-1,-1,-1,-1,-1,-1,-1,-1,value);
-        configuratorView.configurateItem(arr_build);
+        configurateItem(); 
     }
     function UpdateInterface(id,width,gridtype,amount, gridheight,borderamount,mianborder,innerborder, hooksA){
         const borderamountS = document.querySelectorAll('input[name="borderamount'+id+'"]');
@@ -265,7 +269,7 @@ var DoubleShelf = function(container2d, app)
         $("#Collecton"+id).remove();
         arr_build = RemoveFromArray(arr_build, id);
         CreateButtonControl();
-        configuratorView.configurateItem(arr_build);
+        configurateItem();
     }
 
     function CreateButtonControl ()
@@ -310,7 +314,7 @@ var DoubleShelf = function(container2d, app)
         UpDateValueInArray(arr_build,+(side+id),-1,-1,value);
         SetInterface(id, value); 
         ClearCopyBuffer();
-        configuratorView.configurateItem(arr_build);
+        configurateItem();
         if(stupidlateinformation(value,depth)){return NextObj(e)} 
     }
 
@@ -332,7 +336,7 @@ var DoubleShelf = function(container2d, app)
         UpDateValueInArray(arr_build,+(side+id),-1,-1,value);
         SetInterface(id, value); 
         ClearCopyBuffer();
-        configuratorView.configurateItem(arr_build);
+        configurateItem();  
         if(stupidlateinformation(value,depth)){return PrevObj(e)}
     }
 
@@ -435,10 +439,115 @@ var DoubleShelf = function(container2d, app)
 
 var confreqv;
 
+function onWindowResize()
+{	//3dView
+    var cont = document.getElementById('canvas');
+    var	rect = cont.getBoundingClientRect();
+    app.renderer.resize(rect.width, rect.height);
+
+    //configuratorview
+    prrect = sceneElement.getBoundingClientRect();
+    if(prcamera)
+    {
+    prcamera.aspect = prrect.width/prrect.height;
+    prcamera.updateProjectionMatrix();
+    prrenderer.setSize(prrect.width, prrect.height);
+    }
+}
+
+
+function showConfigurator()
+{		
+    const id = needToFixIt;
+	prscene = new THREE.Scene();
+	prscene.background = new THREE.Color(0xCBCED6);
+	prrect = sceneElement.getBoundingClientRect();
+	prscene.userData.element = sceneElement;
+	prcamera = new THREE.PerspectiveCamera( 50, 1, 0.1, 10 );
+	prcamera.position.z = 2;
+	prcamera.position.y = 0.5;
+	prscene.userData.camera = prcamera;
+
+    const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
+	directionalLight.position.set( -3, -3, 3 );
+    prscene.add( directionalLight );
+
+	const alight = new THREE.AmbientLight( 0xffffff, 0.3 );
+	prscene.add( alight );
+	
+	prrenderer = new THREE.WebGLRenderer({ antialias: true});
+	prrenderer.setSize( prrect.width, 400 );
+	sceneElement.appendChild(prrenderer.domElement);
+
+    prrenderer.physicallyCorrectLights = true;
+	prrenderer.toneMapping = THREE.ACESFilmicToneMapping;
+	prrenderer.toneMappingExposure = 3;
+	
+	prgroup = new THREE.Group();
+	prscene.add(prgroup);
+
+
+	preloadMeshesObject(id);
+	
+	prcontrols =  new OrbitControls(prcamera, prrenderer.domElement);
+	prcontrols.maxDistance = 20;
+    prcamera.position.set(-2.5, 2.5, 2.5);
+
+    prcontrols.target = new THREE.Vector3(0, 0.7, 0);
+    prcontrols.update();
+	
+	prcamera.position.z = 2;
+	confreqv = window.requestAnimationFrame(pranimate);
+	onWindowResize();
+	if (+$(".configurator").css('height').replace(/px/i, '') > 698) {$(".configurator, .loader2").css('top', window.innerHeight/2-350); }
+}
+
+function hideConfigurator()
+{
+	sceneElement.removeChild(prrenderer.domElement);
+	prscene = null;
+	prcamera = null;
+	prrenderer = null;
+	window.cancelAnimationFrame(confreqv);
+	//var spawn = document.getElementById('spawnconfigurated');
+	//spawn.removeEventListener('click', ()=>spawnConfigurated());
+}
+
+function pranimate()
+{
+	prcontrols.update();
+	if(prrenderer)
+	{
+        
+    if(prgroup.children[0]){
+        prgroup.children[0].children.forEach(obj => {
+            if(obj.name === "billboardL") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,0);
+            }
+            if(obj.name === "billboardH") {
+                var dx = prcamera.position.x - obj.position.x;
+                var dy = prcamera.position.z - obj.position.z;
+                var rotation = Math.atan2(dy, dx);
+                obj.rotation.set(0,-rotation+Math.PI/2,-Math.PI/2);
+            }
+        })
+    }
+
+	prrenderer.render(prscene, prcamera);
+	window.requestAnimationFrame( pranimate );
+	}
+};
+
 
 
 var preloadedMeshes= {};
+var sprites=[];
 var renderedsprite = null;
+var menuDiv;
+var clickTimer = null;
 
 function localWorld(item)
 {
@@ -455,11 +564,11 @@ function frontPanelAndLeg(arr,mainObj){
     var frontPanelSet = {};
     let RLeg=0;
     
-    mainObj.userData.configuration.forEach(function(a,index){
+    mainObj.configuration.forEach(function(a,index){
         if(a.ObjType=="Type4"){
             let frontPanel = 'reinforcedfrontPanel'+a.width;
             frontPanelSet[frontPanel] = frontPanelSet[frontPanel] + 1 || 1;
-            if(!mainObj.configuration[index-1] && mainObj.configuration[index-1].ObjType=="Type4"){
+            if(!mainObj.configuration[index-1] && mainObj.configuration[index-1]=="Type4"){
                 RLeg+=1;
             }
             else{
@@ -471,7 +580,7 @@ function frontPanelAndLeg(arr,mainObj){
             frontPanelSet[frontPanel] = frontPanelSet[frontPanel] + 1 || 1;
         }
     });
-    const leg = mainObj.userData.configuration.length;
+    const leg = mainObj.configuration.length;
     arr.push([shelf["leg"+mainObj.userData.height].art,shelf["leg"+mainObj.userData.height].name,leg/2+1,shelf["leg"+mainObj.userData.height].price,shelf["leg"+mainObj.userData.height].price*leg/2+1]);
     arr.push([shelf["legBottomEnd"].art,shelf["legBottomEnd"].name,leg/2+1,shelf["legBottomEnd"].price,shelf["legBottomEnd"].price*leg/2+1]);
     arr.push([shelf["legTopEnd"].art,shelf["legTopEnd"].name,leg/2+1,shelf["legTopEnd"].price,shelf["legTopEnd"].price*leg+1]);
@@ -483,7 +592,7 @@ function frontPanelAndLeg(arr,mainObj){
     }
      //buttom L
      var name = "bottomleg"+mainObj.userData.depth;
-     arr.push([shelf[name].art,shelf[name].name,mainObj.userData.configuration.length+2,shelf[name].price,shelf[name].price*mainObj.userData.configuration.length+2]);
+     arr.push([shelf[name].art,shelf[name].name,mainObj.configuration.length+2,shelf[name].price,shelf[name].price*mainObj.configuration.length+2]);
 
     for(var key in frontPanelSet){
         //console.log(key);
@@ -493,7 +602,7 @@ function frontPanelAndLeg(arr,mainObj){
 
 function backWall(arr,mainObj){
     var backWallSet = {};
-    mainObj.userData.configuration.forEach(function(a){
+    mainObj.configuration.forEach(function(a){
         const name1 = 'backWall300x'+a.width;
         const name2 = 'backWall450x'+a.width;
         
@@ -527,7 +636,7 @@ function priceListShelfs(arr,mainObj){
     var hooks = 'hook'+(+mainObj.userData.depth<=400?+mainObj.userData.depth:450);
     //console.log(hooks);
     
-    mainObj.userData.configuration.forEach(function(a){   
+    mainObj.configuration.forEach(function(a){   
         if(a.ObjType=="Type1"){
             baseShelf = 'shelf'+(+mainObj.userData.depth)+'x'+a.width;
             baseShelfSet[baseShelf] = baseShelfSet[baseShelf] + (+a.amount) || +a.amount;
@@ -734,7 +843,7 @@ function preloadMeshesObject(id)
                     preloadedMeshes[gltf.scene.children[i].name] = gltf.scene.children[i];
                 }
                 document.getElementById("loadscreen2").style.display="none";
-                configuratorView.configurateItem(arr_build);
+                configurateItem();
             },
             function ( xhr ) {
                 if(typeof(xhr.loaded / xhr.total)=='number' && xhr.loaded / xhr.total!="Infinity") {
@@ -753,18 +862,21 @@ const backWallArr = {
     "450":{'1320':2, "1473":3, '1625':2, '1778':3, '1930':4, '2082':3,'2235':4,'2387':5,'2540':4},
 }
 
+function formItemsArray() {
+    return arr_build.map(item=> item.value);
+}
 
-function spriteFreshBox(configObject) {
+function spriteItem(arr_build, colors, height, depth, extBot, x=0, y=0, rot=0) {
     renderedsprite = new PIXI.Container();
-    renderedsprite.x = configObject.x;     renderedsprite.y = configObject.y;     renderedsprite.rotation = configObject.rotation;
+    renderedsprite.x = x;     renderedsprite.y = y;     renderedsprite.rotation = rot;
+    renderedsprite.name = "DOUBLESHELF";
+    renderedsprite.configuration = arr_build;
     renderedsprite.userData = {};
-    renderedsprite.userData.name = "DOUBLESHELF";
-    renderedsprite.userData.configuration = configObject.userData.configuration;;
     renderedsprite.userData.nameTag = "";
-    renderedsprite.userData.colors = configObject.userData.colors;
-    renderedsprite.userData.height = configObject.userData.height;
-    renderedsprite.userData.depth = configObject.userData.depth;
-    renderedsprite.userData.extBot = configObject.userData.extBot;
+    renderedsprite.userData.colors = colors;
+    renderedsprite.userData.height = height;
+    renderedsprite.userData.depth = depth;
+    renderedsprite.userData.extBot = extBot;
 
     renderedsprite.sayHi = function() {
         var color = getColorCode(this.userData.colors)
@@ -781,27 +893,27 @@ function spriteFreshBox(configObject) {
     }
     renderedsprite.clone = function() {
         selectedItem = null;
-        console.log(this.userData);
-        var configObject = {
-            userData: this.userData,
-            x: this.x+15,
-            y: this.y+15,
-            rotation: this.rotation,
-        }
-        renderedsprite = spriteFreshBox(configObject);
+        renderedsprite = spriteItem(this.configuration, this.userData.colors, this.userData.height, this.userData.depth, this.userData.extBot, this.x+20, this.y+20, this.rotation);
         spawnConfigurated();
     }
     renderedsprite.saveIt = function() {
         var thisObject = {
-            userData: this.userData,
-            x:this.x,
-            y:this.y,
-            rotation:this.rotation,
+            name:this.name,
+            configuration: this.configuration,
+            userData: {
+                colors: this.userData.colors,
+                height: this.userData.height,
+                x:this.x,
+                y:this.y,
+                rotation:this.rotation,
+                depth:this.userData.depth,
+                extBot: this.userData.extBot,
+            }
         }
         return thisObject;
     }
 
-    renderedsprite.create3D = asyncLoadFresh;
+    renderedsprite.create3D = asyncLoad;
 
     var helper = new PIXI.Container();
     renderedsprite.addChild(helper);
@@ -813,7 +925,7 @@ function spriteFreshBox(configObject) {
     renderedsprite.addChild(helper);
 
     var dist=0;
-    for(var i = 0; i<configObject.userData.configuration.length; i++)
+    for(var i = 0; i<arr_build.length; i++)
     {
         var sprite = new PIXI.Sprite.from("sprites/configurator/SHELF/PixiPreview/Shelf.svg");
         var tint = Category[ConfigurableList.DOUBLESHELF.Category].Color;;
@@ -821,21 +933,21 @@ function spriteFreshBox(configObject) {
 
         renderedsprite.addChild(sprite);
         sprite.anchor.set(0.5);
-        sprite.x+=(configObject.userData.configuration[i].width/1000*32 + dist*64);
+        sprite.x+=(arr_build[i].width/1000*32 + dist*64);
 
-        sprite.scale.x = configObject.userData.configuration[i].width/1000;
-        if(configObject.userData.extBot) {
+        sprite.scale.x = arr_build[i].width/1000;
+        if(extBot) {
             sprite.scale.y = (+depth+100)/1000;
-            if(configObject.userData.configuration[i].id<0) sprite.y -= sprite.scale.y/2*64;
+            if(arr_build[i].id<0) sprite.y -= sprite.scale.y/2*64;
             else sprite.y += sprite.scale.y/2*64;
         } else {
-            sprite.scale.y = configObject.userData.depth/1000;
-            if(configObject.userData.configuration[i].id<0) sprite.y -= sprite.scale.y/2*64;
+            sprite.scale.y = depth/1000;
+            if(arr_build[i].id<0) sprite.y -= sprite.scale.y/2*64;
             else sprite.y += sprite.scale.y/2*64;
         }
-        if(configObject.userData.configuration[i].id<0) dist += configObject.userData.configuration[i].width/1000;
+        if(arr_build[i].id<0) dist += arr_build[i].width/1000;
 
-        const text = new PIXI.Text(ConfigurableList.SHELF.Elements[configObject.userData.configuration[i].ObjType].itname,{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
+        const text = new PIXI.Text(ConfigurableList.SHELF.Elements[arr_build[i].ObjType].itname,{fontFamily : 'Arial', fontSize: 10, fill : 0x000000, align : 'center'});
         text.anchor.set(0.5);
         text.scale.x = 1/sprite.scale.x;
         text.scale.y = 1/sprite.scale.y;
@@ -851,16 +963,16 @@ function spriteFreshBox(configObject) {
     renderedsprite.children[1].x = dist*32; renderedsprite.children[1].y = -32;
     renderedsprite.children[2].x = -dist*32; renderedsprite.children[2].y = 32;
     renderedsprite.children[3].x = dist*32; renderedsprite.children[3].y = 32;
-    if(configObject.userData.extBot) {
-        renderedsprite.children[0].y = -64*(+configObject.userData.depth+100)/1000;
-        renderedsprite.children[1].y = -64*(+configObject.userData.depth+100)/1000;
-        renderedsprite.children[2].y = 64*(+configObject.userData.depth+100)/1000;
-        renderedsprite.children[3].y = 64*(+configObject.userData.depth+100)/1000;
+    if(extBot) {
+        renderedsprite.children[0].y = -64*(+depth+100)/1000;
+        renderedsprite.children[1].y = -64*(+depth+100)/1000;
+        renderedsprite.children[2].y = 64*(+depth+100)/1000;
+        renderedsprite.children[3].y = 64*(+depth+100)/1000;
     } else {
-        renderedsprite.children[0].y = -64*(+configObject.userData.epth)/1000;
-        renderedsprite.children[1].y = -64*(+configObject.userData.depth)/1000;
-        renderedsprite.children[2].y = 64*(+configObject.userData.depth)/1000;
-        renderedsprite.children[3].y = 64*(+configObject.userData.depth)/1000;
+        renderedsprite.children[0].y = -64*(+depth)/1000;
+        renderedsprite.children[1].y = -64*(+depth)/1000;
+        renderedsprite.children[2].y = 64*(+depth)/1000;
+        renderedsprite.children[3].y = 64*(+depth)/1000;
     }
     return renderedsprite;
 }
@@ -897,6 +1009,22 @@ function hideContextMenu()
     document.getElementById("ORClick").remove();
 }
 
+    
+function configurateItem()
+{
+    prgroup.remove(...prgroup.children);
+    var item = {
+        configuration: arr_build,
+        userData: {
+            colors: document.querySelector('input[name="color"]:checked').value.split(' '),
+            height: document.querySelector('input[name="height"]:checked').value,
+            depth: document.querySelector('input[name="depth"]:checked').value,
+            extBot: document.getElementById("bottom_ext").checked,
+        }
+    }
+    asyncLoad(item,prgroup,preloadedMeshes);
+    spriteItem(arr_build, item.userData.colors, item.userData.height, item.userData.depth, item.userData.extBot);
+}
 
 function spawnConfigurated() {
     if(selectedItem) {
@@ -954,8 +1082,75 @@ function onlongtouch(event) {
 	showContextMenu(event.data.global.x, event.data.global.y);
 };   
 
-    async function asyncLoadFresh(item, _shopitems3d, preloadedMeshes)
+    function findObjectsInRange()
     {
+        var objectsInRange = [];
+        if(selectedItem)
+        {
+            container2d.children.forEach(element => {
+                if(element!=selectedItem)
+                {
+                    if(distanceTo(selectedItem, element)<11) objectsInRange.push(element);
+                }
+            });
+        }
+        return objectsInRange;
+    }
+
+
+    function findClosestPoint(selecteditem, rangeitemsarray)
+    {
+        var selectedpoints = selecteditem.children;
+        var _distance = 5000;
+        var selectedpoint, closestpoint;
+        for(var i = 0; i<rangeitemsarray.length; i++)
+        {
+            for(var j = 0; j<4; j++)
+            {
+                for(var k = 0; k<4; k++)
+                {
+                    var firstpos = localWorld(selectedpoints[j]);
+                    var secpos = localWorld(rangeitemsarray[i].children[k]);
+                    var distance = distanceTo(firstpos,secpos)*64;
+                    if(distance<_distance)
+                    {
+                        _distance = distance;
+                        selectedpoint = selectedpoints[j];
+                        closestpoint = localWorld(rangeitemsarray[i].children[k]);
+                    }
+                }
+            }
+        }
+        return [selectedpoint, closestpoint, _distance];
+    }
+
+    function stickToItem(closestpointsarr)
+    {
+        if(closestpointsarr[2]<1)
+        {
+            var clp = localWorld(closestpointsarr[0]);
+            var clp2 = realPosition(selectedItem);
+            var offset = {x: (clp.x-clp2.x)*64,y: (clp.y-clp2.y)*64};
+            var newItemPosition = {x: closestpointsarr[1].x*64, y: closestpointsarr[1].y*64};
+            selectedItem.x = newItemPosition.x; selectedItem.y = newItemPosition.y;
+            selectedItem.x-=offset.x; selectedItem.y-=offset.y;
+        }
+
+    }
+
+    async function asyncLoad(item, _shopitems3d, preloadedMeshes)
+    {
+        if(preloadedMeshes) {
+            const pmremGenerator = new THREE.PMREMGenerator( prrenderer );
+            hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
+            pmremGenerator.compileCubemapShader();
+        }
+        else {
+            const pmremGenerator = new THREE.PMREMGenerator( app.userData.renderer );
+            hdrCubeRenderTarget = pmremGenerator.fromCubemap( app.userData.hdrCubeMap );
+            pmremGenerator.compileCubemapShader();
+        }
+
     //console.log(item.configuration);
     var meshesObject = {};
     if(preloadedMeshes) {
@@ -987,9 +1182,9 @@ function onlongtouch(event) {
     else mesh.scale.z = -depth/1000;
     _group.add(mesh);
 
-    for(var i = 1; i<item.userData.configuration.length; i+=2)
+    for(var i = 1; i<item.configuration.length; i+=2)
     {
-        var currentStack = item.userData.configuration[i];
+        var currentStack = item.configuration[i];
         if(currentStack.ObjType=='Type1') {
             for(var sh = 0; sh<currentStack.amount; sh++) {
                 var mesh = meshesObject[currentStack.ObjType].clone();
@@ -1330,9 +1525,9 @@ function onlongtouch(event) {
 _group.children.forEach( item => {item.scale.z=-item.scale.z;});
 
 dist = 0;
-for(var i = 0; i<item.userData.configuration.length; i+=2)
+for(var i = 0; i<item.configuration.length; i+=2)
 {
-    var currentStack = item.userData.configuration[i];
+    var currentStack = item.configuration[i];
     if(currentStack.ObjType=='Type1') {
         for(var sh = 0; sh<currentStack.amount; sh++) {
             var mesh = meshesObject[currentStack.ObjType].clone();
@@ -1668,9 +1863,23 @@ if(currentStack.ObjType=='Type7') {
     else mesh.scale.z = depth/1000;
     _group.add(mesh);
     mesh.translateX(dist);
-    }
+}
 }
 
+
+        let renderTarget = hdrCubeRenderTarget;
+        const newEnvMap = renderTarget ? renderTarget.texture : null;
+        _group.children.forEach(child => {
+            if (newEnvMap) {
+                //console.log('in if loop')
+                //child.material.envMap = newEnvMap;
+                child.children.forEach(ch=>{
+                    //console.log(ch.material);
+                    //ch.castShadow = true;
+                    ch.material.envMap = newEnvMap;
+                })
+            }
+        });
     if(!preloadedMeshes) _group.rotation.set(Math.PI/2,-item.rotation,0);
     if(item.position) _group.position.set(item.x/64, -item.y/64, 0);
     _group.children.forEach( item => {item.position.x-=dist/2;});
@@ -1680,8 +1889,10 @@ if(currentStack.ObjType=='Type7') {
     return
 }
 
+this.configurateItem = configurateItem;
+this.preloadMeshes = preloadMeshesObject;
 this.spawnConfigurated = spawnConfigurated;
-this.loadPostBox = spriteFreshBox;
+this.loadPostBox = spriteItem;
 this.startConfigurator = startConfigurator;
 
 };
@@ -1692,3 +1903,28 @@ DoubleShelf.prototype.constructor = DoubleShelf;
 export {DoubleShelf}
 
 var selectedItem = null;
+
+
+var x_pos = document.getElementById("x_pos");
+var y_pos = document.getElementById("y_pos");
+
+function distanceTo(point1, point2)
+{
+    return (Math.sqrt((point1.x-point2.x)*(point1.x-point2.x)+(point1.y-point2.y)*(point1.y-point2.y)))/64;
+}
+
+function realPosition(item)
+{
+    var p = {x: item.x/64, y: item.y/64};
+    return p;
+}
+
+
+
+
+function modelLoader(url) {
+    const loader = new GLTFLoader();
+    return new Promise((resolve, reject) => {
+        loader.load(url, data => resolve(data), null, reject);
+    });
+}
